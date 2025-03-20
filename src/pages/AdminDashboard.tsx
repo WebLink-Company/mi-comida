@@ -13,19 +13,37 @@ const AdminDashboard = () => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('users');
   const [isLoading, setIsLoading] = useState(true);
+  const [providers, setProviders] = useState<any[]>([]);
+
+  const fetchProviders = async () => {
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from('providers')
+        .select('*, profile:id(first_name, last_name, email)')
+        .order('business_name');
+        
+      if (error) throw error;
+      setProviders(data || []);
+    } catch (error) {
+      console.error('Error fetching providers:', error);
+      toast({
+        title: 'Error',
+        description: 'No se pudieron cargar los proveedores.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // You can fetch admin-specific data here
-    setIsLoading(false);
-  }, []);
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
+    if (activeTab === 'providers') {
+      fetchProviders();
+    } else {
+      setIsLoading(false);
+    }
+  }, [activeTab, toast]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -81,14 +99,69 @@ const AdminDashboard = () => {
             
             <TabsContent value="providers">
               <Card>
-                <CardHeader>
-                  <CardTitle>Gestión de Proveedores</CardTitle>
-                  <CardDescription>
-                    Administra los proveedores de servicios
-                  </CardDescription>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle>Gestión de Proveedores</CardTitle>
+                    <CardDescription>
+                      Administra los proveedores de servicios
+                    </CardDescription>
+                  </div>
+                  <Button>Nuevo Proveedor</Button>
                 </CardHeader>
                 <CardContent>
-                  <p>Aquí irá la tabla de proveedores.</p>
+                  {isLoading ? (
+                    <div className="py-10 flex justify-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                    </div>
+                  ) : providers.length > 0 ? (
+                    <div className="rounded-md border">
+                      <table className="min-w-full divide-y divide-border">
+                        <thead>
+                          <tr className="bg-muted/50">
+                            <th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">Empresa</th>
+                            <th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">Contacto</th>
+                            <th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">Estado</th>
+                            <th className="px-6 py-3 text-right text-sm font-medium text-muted-foreground">Acciones</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-background divide-y divide-border">
+                          {providers.map((provider) => (
+                            <tr key={provider.id}>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm font-medium">{provider.business_name}</div>
+                                <div className="text-sm text-muted-foreground">{provider.address}</div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm">{provider.contact_email}</div>
+                                <div className="text-sm text-muted-foreground">{provider.contact_phone}</div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                  provider.is_active 
+                                    ? 'bg-green-100 text-green-800' 
+                                    : 'bg-red-100 text-red-800'
+                                }`}>
+                                  {provider.is_active ? 'Activo' : 'Inactivo'}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <Button variant="ghost" className="h-8 px-2 text-blue-600 hover:text-blue-800">
+                                  Editar
+                                </Button>
+                                <Button variant="ghost" className="h-8 px-2 text-muted-foreground">
+                                  Ver menú
+                                </Button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="text-center py-10">
+                      <p className="text-muted-foreground">No hay proveedores registrados.</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>

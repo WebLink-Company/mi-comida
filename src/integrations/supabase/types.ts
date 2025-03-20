@@ -9,6 +9,45 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          action: string
+          changed_data: Json | null
+          id: string
+          ip_address: string | null
+          previous_data: Json | null
+          record_id: string
+          table_name: string
+          timestamp: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          changed_data?: Json | null
+          id?: string
+          ip_address?: string | null
+          previous_data?: Json | null
+          record_id: string
+          table_name: string
+          timestamp?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          changed_data?: Json | null
+          id?: string
+          ip_address?: string | null
+          previous_data?: Json | null
+          record_id?: string
+          table_name?: string
+          timestamp?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       companies: {
         Row: {
           created_at: string | null
@@ -53,10 +92,13 @@ export type Database = {
       lunch_options: {
         Row: {
           available: boolean | null
+          category_id: string | null
           created_at: string | null
           description: string
           id: string
           image: string
+          is_extra: boolean | null
+          menu_type: string | null
           name: string
           price: number
           provider_id: string | null
@@ -65,10 +107,13 @@ export type Database = {
         }
         Insert: {
           available?: boolean | null
+          category_id?: string | null
           created_at?: string | null
           description: string
           id?: string
           image: string
+          is_extra?: boolean | null
+          menu_type?: string | null
           name: string
           price: number
           provider_id?: string | null
@@ -77,10 +122,13 @@ export type Database = {
         }
         Update: {
           available?: boolean | null
+          category_id?: string | null
           created_at?: string | null
           description?: string
           id?: string
           image?: string
+          is_extra?: boolean | null
+          menu_type?: string | null
           name?: string
           price?: number
           provider_id?: string | null
@@ -89,10 +137,139 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "lunch_options_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "menu_categories"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "lunch_options_provider_id_fkey"
             columns: ["provider_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meal_components: {
+        Row: {
+          component_option_id: string
+          created_at: string | null
+          id: string
+          lunch_option_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          component_option_id: string
+          created_at?: string | null
+          id?: string
+          lunch_option_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          component_option_id?: string
+          created_at?: string | null
+          id?: string
+          lunch_option_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meal_components_component_option_id_fkey"
+            columns: ["component_option_id"]
+            isOneToOne: false
+            referencedRelation: "lunch_options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meal_components_lunch_option_id_fkey"
+            columns: ["lunch_option_id"]
+            isOneToOne: false
+            referencedRelation: "lunch_options"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      menu_categories: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          provider_id: string
+          sort_order: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          provider_id: string
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          provider_id?: string
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_categories_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_extras: {
+        Row: {
+          created_at: string | null
+          id: string
+          lunch_option_id: string
+          order_id: string
+          price: number
+          quantity: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          lunch_option_id: string
+          order_id: string
+          price: number
+          quantity?: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          lunch_option_id?: string
+          order_id?: string
+          price?: number
+          quantity?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_extras_lunch_option_id_fkey"
+            columns: ["lunch_option_id"]
+            isOneToOne: false
+            referencedRelation: "lunch_options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_extras_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
             referencedColumns: ["id"]
           },
         ]
@@ -170,6 +347,7 @@ export type Database = {
           first_name: string
           id: string
           last_name: string
+          provider_id: string | null
           role: Database["public"]["Enums"]["user_role"]
           updated_at: string | null
         }
@@ -180,6 +358,7 @@ export type Database = {
           first_name: string
           id: string
           last_name: string
+          provider_id?: string | null
           role: Database["public"]["Enums"]["user_role"]
           updated_at?: string | null
         }
@@ -190,6 +369,7 @@ export type Database = {
           first_name?: string
           id?: string
           last_name?: string
+          provider_id?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string | null
         }
@@ -201,11 +381,74 @@ export type Database = {
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "profiles_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "providers"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      providers: {
+        Row: {
+          address: string | null
+          business_name: string
+          contact_email: string
+          contact_phone: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          logo: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          business_name: string
+          contact_email: string
+          contact_phone?: string | null
+          created_at?: string | null
+          description?: string | null
+          id: string
+          is_active?: boolean | null
+          logo?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          business_name?: string
+          contact_email?: string
+          contact_phone?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          logo?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
     }
     Views: {
-      [_ in never]: never
+      admin_audit_logs: {
+        Row: {
+          action: string | null
+          changed_data: Json | null
+          id: string | null
+          ip_address: string | null
+          previous_data: Json | null
+          record_id: string | null
+          table_name: string | null
+          timestamp: string | null
+          user_agent: string | null
+          user_email: string | null
+          user_id: string | null
+          user_name: string | null
+          user_role: Database["public"]["Enums"]["user_role"] | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never

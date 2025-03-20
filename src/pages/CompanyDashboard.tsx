@@ -15,11 +15,41 @@ const CompanyDashboard = ({ activeTab = 'dashboard' }: CompanyDashboardProps) =>
   const { user } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
+  const [providerDetails, setProviderDetails] = useState<any>(null);
 
   useEffect(() => {
-    // You can fetch company-specific data here
-    setIsLoading(false);
-  }, []);
+    const fetchCompanyData = async () => {
+      try {
+        setIsLoading(true);
+        
+        if (user?.company_id) {
+          // Fetch company details to get the provider_id
+          const { data: companyData, error: companyError } = await supabase
+            .from('companies')
+            .select('*, provider:provider_id(*)')
+            .eq('id', user.company_id)
+            .single();
+            
+          if (companyError) throw companyError;
+          
+          if (companyData?.provider) {
+            setProviderDetails(companyData.provider);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching company data:', error);
+        toast({
+          title: 'Error',
+          description: 'No se pudo cargar la información de la empresa.',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchCompanyData();
+  }, [user, toast]);
 
   if (isLoading) {
     return (
@@ -40,6 +70,11 @@ const CompanyDashboard = ({ activeTab = 'dashboard' }: CompanyDashboardProps) =>
             <p className="text-muted-foreground">
               Administra tu empresa, empleados y reportes.
             </p>
+            {providerDetails && (
+              <p className="text-sm mt-2">
+                Proveedor de servicio: <span className="font-medium">{providerDetails.business_name}</span>
+              </p>
+            )}
           </div>
           
           <Tabs 

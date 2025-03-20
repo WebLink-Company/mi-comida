@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -59,8 +58,7 @@ const Auth = () => {
         .single();
 
       if (profile) {
-        // Make sure TypeScript knows that profile.role is a valid UserRole
-        const role: UserRole = profile.role;
+        const role = profile.role as UserRole;
         
         switch (role) {
           case 'admin':

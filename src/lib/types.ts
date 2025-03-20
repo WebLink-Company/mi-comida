@@ -1,19 +1,25 @@
 
-export type UserRole = 'employee' | 'supervisor' | 'provider';
+export type UserRole = 'admin' | 'provider' | 'supervisor' | 'employee';
 
 export interface User {
   id: string;
-  name: string;
+  first_name: string;
+  last_name: string;
   email: string;
   role: UserRole;
-  companyId: string;
+  company_id?: string; 
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Company {
   id: string;
   name: string;
-  subsidyPercentage: number;
+  subsidy_percentage: number;
   logo?: string;
+  provider_id: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface LunchOption {
@@ -24,16 +30,21 @@ export interface LunchOption {
   image: string;
   available: boolean;
   tags: string[];
+  provider_id: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Order {
   id: string;
-  userId: string;
-  lunchOptionId: string;
+  user_id: string;
+  lunch_option_id: string;
   date: string;
   status: 'pending' | 'approved' | 'rejected' | 'delivered';
-  createdAt: string;
-  approvedBy?: string;
+  approved_by?: string;
+  company_id: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface DashboardStats {
@@ -43,4 +54,9 @@ export interface DashboardStats {
   dailyRevenue: number;
   weeklyRevenue: number;
   monthlyRevenue: number;
+}
+
+export interface Session {
+  user: User | null;
+  expires_at?: number;
 }

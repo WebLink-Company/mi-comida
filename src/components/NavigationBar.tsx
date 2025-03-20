@@ -1,17 +1,22 @@
 
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/cn';
 import { UserRole } from '@/lib/types';
+import { useAuth } from '@/context/AuthContext';
 import { 
   Menu, 
   X, 
   User, 
   ClipboardList, 
   ChefHat,
-  LogOut
+  LogOut,
+  Building,
+  Users,
+  BarChart
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 interface NavigationBarProps {
   userRole: UserRole;
@@ -19,6 +24,9 @@ interface NavigationBarProps {
 }
 
 const NavigationBar = ({ userRole, userName }: NavigationBarProps) => {
+  const { signOut } = useAuth();
+  const { toast } = useToast();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
@@ -45,8 +53,33 @@ const NavigationBar = ({ userRole, userName }: NavigationBarProps) => {
     setIsOpen(false);
   };
 
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      toast({
+        title: 'Sesión cerrada',
+        description: 'Has cerrado sesión correctamente.'
+      });
+      navigate('/auth');
+    } catch (error) {
+      console.error('Error signing out:', error);
+      toast({
+        title: 'Error',
+        description: 'Ocurrió un error al cerrar sesión.',
+        variant: 'destructive'
+      });
+    }
+  };
+
   const getNavigationLinks = () => {
     switch (userRole) {
+      case 'admin':
+        return [
+          { name: 'Dashboard', path: '/admin', icon: <BarChart className="w-5 h-5 mr-2" /> },
+          { name: 'Usuarios', path: '/admin?tab=users', icon: <Users className="w-5 h-5 mr-2" /> },
+          { name: 'Empresas', path: '/admin?tab=companies', icon: <Building className="w-5 h-5 mr-2" /> },
+          { name: 'Proveedores', path: '/admin?tab=providers', icon: <ChefHat className="w-5 h-5 mr-2" /> },
+        ];
       case 'employee':
         return [
           { name: 'Mi Perfil', path: '/employee', icon: <User className="w-5 h-5 mr-2" /> },
@@ -109,7 +142,7 @@ const NavigationBar = ({ userRole, userName }: NavigationBarProps) => {
           <div className="text-sm font-medium text-muted-foreground">
             {userName}
           </div>
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" onClick={handleLogout}>
             <LogOut className="w-5 h-5" />
           </Button>
         </div>
@@ -153,7 +186,7 @@ const NavigationBar = ({ userRole, userName }: NavigationBarProps) => {
               <div className="text-sm font-medium text-muted-foreground">
                 {userName}
               </div>
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" onClick={handleLogout}>
                 <LogOut className="w-4 h-4 mr-2" />
                 Cerrar Sesión
               </Button>

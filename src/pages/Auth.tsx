@@ -22,6 +22,7 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('login');
   const [showDevTools, setShowDevTools] = useState(false);
+  const [clickCount, setClickCount] = useState(0);
 
   useEffect(() => {
     const checkSession = async () => {
@@ -168,17 +169,33 @@ const Auth = () => {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.shiftKey && e.altKey && e.key === 'D') {
+      if (e.metaKey && e.key === 'd') {
+        e.preventDefault();
         setShowDevTools(prev => !prev);
+        console.log("Dev tools visibility toggled:", !showDevTools);
       }
     };
     
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [showDevTools]);
+
+  useEffect(() => {
+    if (clickCount >= 3) {
+      setShowDevTools(true);
+      setClickCount(0);
+    }
+    
+    const timer = setTimeout(() => {
+      setClickCount(0);
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, [clickCount]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-background to-muted/30">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-background to-muted/30"
+         onClick={() => setClickCount(prev => prev + 1)}>
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -334,6 +351,16 @@ const Auth = () => {
           </Tabs>
         </Card>
       </motion.div>
+      
+      <div 
+        className="mt-4 text-xs text-muted-foreground cursor-pointer" 
+        onClick={(e) => {
+          e.stopPropagation();
+          setShowDevTools(true);
+        }}
+      >
+        Dev Mode
+      </div>
       
       {showDevTools && (
         <motion.div

@@ -1,3 +1,4 @@
+
 import { Company, LunchOption, Order, User, DashboardStats } from './types';
 
 export const mockCompanies: Company[] = [
@@ -6,6 +7,7 @@ export const mockCompanies: Company[] = [
     name: 'Acme Inc.',
     subsidy_percentage: 50,
     subsidyPercentage: 50,
+    fixed_subsidy_amount: 5000,
     logo: 'https://via.placeholder.com/150',
     provider_id: '3'
   },
@@ -14,6 +16,7 @@ export const mockCompanies: Company[] = [
     name: 'TechCorp',
     subsidy_percentage: 75,
     subsidyPercentage: 75,
+    fixed_subsidy_amount: 0,
     logo: 'https://via.placeholder.com/150',
     provider_id: '3'
   },
@@ -22,6 +25,7 @@ export const mockCompanies: Company[] = [
     name: 'Global Solutions',
     subsidy_percentage: 40,
     subsidyPercentage: 40,
+    fixed_subsidy_amount: 3000,
     logo: 'https://via.placeholder.com/150',
     provider_id: '3'
   }

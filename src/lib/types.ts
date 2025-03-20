@@ -19,7 +19,7 @@ export interface Company {
   name: string;
   subsidy_percentage: number;
   subsidyPercentage?: number; // Added for compatibility
-  fixed_subsidy_amount?: number; // Adding fixed subsidy amount
+  fixed_subsidy_amount?: number; // Fixed subsidy amount
   fixedSubsidyAmount?: number; // Added for compatibility
   logo?: string;
   provider_id: string;

@@ -1,10 +1,9 @@
-
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
-import { LunchOption, Order, User, Company } from '@/lib/types';
+import { LunchOption, Order, User, Company, UserRole } from '@/lib/types';
 import NavigationBar from '@/components/NavigationBar';
 import { format } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -52,13 +51,11 @@ const ProviderDashboard = ({ activeTab = 'dashboard' }: ProviderDashboardProps) 
   const { user: currentUser } = useAuth();
   const { toast } = useToast();
   
-  // Dashboard state
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [dailyRevenue, setDailyRevenue] = useState(0);
   const [pendingOrderCount, setPendingOrderCount] = useState(0);
   const [activeCustomerCount, setActiveCustomerCount] = useState(0);
   
-  // Menu state
   const [menuItems, setMenuItems] = useState<LunchOption[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isAddingMenuItem, setIsAddingMenuItem] = useState(false);
@@ -83,10 +80,8 @@ const ProviderDashboard = ({ activeTab = 'dashboard' }: ProviderDashboardProps) 
     sort_order: 0
   });
   
-  // Orders state
   const [pendingOrders, setPendingOrders] = useState<Order[]>([]);
   
-  // Companies state
   const [companies, setCompanies] = useState<Company[]>([]);
   const [isAddingCompany, setIsAddingCompany] = useState(false);
   const [newCompany, setNewCompany] = useState<Partial<Company>>({
@@ -95,7 +90,6 @@ const ProviderDashboard = ({ activeTab = 'dashboard' }: ProviderDashboardProps) 
     fixed_subsidy_amount: 0,
   });
   
-  // Users state
   const [users, setUsers] = useState<User[]>([]);
   const [isAddingUser, setIsAddingUser] = useState(false);
   const [newUser, setNewUser] = useState<Partial<User>>({
@@ -106,10 +100,8 @@ const ProviderDashboard = ({ activeTab = 'dashboard' }: ProviderDashboardProps) 
     company_id: '',
   });
   
-  // Tag input state 
   const [tagInput, setTagInput] = useState('');
 
-  // Load data on component mount
   useEffect(() => {
     loadData();
   }, [currentUser]);
@@ -118,7 +110,6 @@ const ProviderDashboard = ({ activeTab = 'dashboard' }: ProviderDashboardProps) 
     if (!currentUser?.id) return;
     
     try {
-      // Load menu categories
       const { data: categoriesData, error: categoriesError } = await supabase
         .from('menu_categories')
         .select('*')
@@ -128,7 +119,6 @@ const ProviderDashboard = ({ activeTab = 'dashboard' }: ProviderDashboardProps) 
       if (categoriesError) throw categoriesError;
       setCategories(categoriesData || []);
       
-      // Load menu items
       const { data: menuData, error: menuError } = await supabase
         .from('lunch_options')
         .select('*')
@@ -137,10 +127,8 @@ const ProviderDashboard = ({ activeTab = 'dashboard' }: ProviderDashboardProps) 
       if (menuError) throw menuError;
       setMenuItems(menuData || []);
       
-      // Calculate dashboard metrics
       setDailyRevenue(menuData ? menuData.reduce((acc, item) => acc + Number(item.price), 0) : 0);
       
-      // Load pending orders (mock for now)
       const pendingOrdersWithCorrectStatus = mockOrders
         .filter(order => order.status === 'pending')
         .map(order => ({
@@ -150,9 +138,8 @@ const ProviderDashboard = ({ activeTab = 'dashboard' }: ProviderDashboardProps) 
       
       setPendingOrders(pendingOrdersWithCorrectStatus);
       setPendingOrderCount(pendingOrdersWithCorrectStatus.length);
-      setActiveCustomerCount(12); // Mock data
+      setActiveCustomerCount(12);
       
-      // Load companies
       const { data: companiesData, error: companiesError } = await supabase
         .from('companies')
         .select('*')
@@ -161,7 +148,6 @@ const ProviderDashboard = ({ activeTab = 'dashboard' }: ProviderDashboardProps) 
       if (companiesError) throw companiesError;
       setCompanies(companiesData || []);
       
-      // Load users for this provider's companies
       if (companiesData && companiesData.length > 0) {
         const companyIds = companiesData.map(company => company.id);
         
@@ -188,7 +174,6 @@ const ProviderDashboard = ({ activeTab = 'dashboard' }: ProviderDashboardProps) 
     setSelectedDate(date);
   };
 
-  // Menu Functions
   const handleAddMenuItem = () => {
     setIsAddingMenuItem(true);
     setNewMenuItem({
@@ -358,7 +343,6 @@ const ProviderDashboard = ({ activeTab = 'dashboard' }: ProviderDashboardProps) 
     }
   };
 
-  // Orders Functions
   const handleApproveOrder = (orderId: string) => {
     const updatedOrders = pendingOrders.map(order =>
       order.id === orderId ? { ...order, status: 'approved' as const } : order
@@ -384,7 +368,6 @@ const ProviderDashboard = ({ activeTab = 'dashboard' }: ProviderDashboardProps) 
     });
   };
 
-  // Companies Functions
   const handleAddCompany = () => {
     setIsAddingCompany(true);
     setNewCompany({
@@ -445,7 +428,6 @@ const ProviderDashboard = ({ activeTab = 'dashboard' }: ProviderDashboardProps) 
     }
   };
 
-  // Users Functions
   const handleAddUser = () => {
     setIsAddingUser(true);
     setNewUser({
@@ -498,18 +480,15 @@ const ProviderDashboard = ({ activeTab = 'dashboard' }: ProviderDashboardProps) 
       return;
     }
 
-    // In a real implementation, you would:
-    // 1. Create an auth user with Supabase Auth
-    // 2. Then create or update the profile record
+    const userId = crypto.randomUUID();
+    
     try {
-      // Check if the role is compatible with the database enum
-      // Convert 'company' role to 'employee' for database storage if needed
-      // This is a temporary solution until the database enum is updated
       const dbRole = newUser.role === 'company' ? 'employee' : newUser.role;
       
       const { data, error } = await supabase
         .from('profiles')
         .insert({
+          id: userId,
           first_name: newUser.first_name,
           last_name: newUser.last_name,
           email: newUser.email,
@@ -601,7 +580,6 @@ const ProviderDashboard = ({ activeTab = 'dashboard' }: ProviderDashboardProps) 
             
             <TabsContent value="menu">
               <div className="space-y-6">
-                {/* Categories Section */}
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between">
                     <div>
@@ -708,7 +686,6 @@ const ProviderDashboard = ({ activeTab = 'dashboard' }: ProviderDashboardProps) 
                   </CardContent>
                 </Card>
                 
-                {/* Menu Items Section */}
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between">
                     <div>

@@ -1,5 +1,5 @@
-
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -20,7 +20,7 @@ import {
   getCompanyById
 } from '@/lib/mockData';
 import { Order, LunchOption } from '@/lib/types';
-import { Calendar as CalendarIcon, ChevronRight, ShoppingBag, Clock } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronRight, ShoppingBag, Clock, CheckCircle } from 'lucide-react';
 
 interface EmployeeDashboardProps {
   activeTab?: 'menu' | 'orders';
@@ -34,20 +34,16 @@ const EmployeeDashboard = ({ activeTab = 'menu' }: EmployeeDashboardProps) => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loadingAnimation, setLoadingAnimation] = useState(true);
 
-  // Get current user and company subsidy
   const currentUser = getCurrentUser();
   const userCompany = getCompanyById(currentUser.companyId);
   const subsidyPercentage = userCompany?.subsidyPercentage || 0;
 
-  // Filter available lunch options
   const availableLunchOptions = mockLunchOptions.filter(option => option.available);
 
-  // Load user orders
   useEffect(() => {
     const userOrders = getOrdersByUser(currentUser.id);
     setOrders(userOrders);
     
-    // Check if user already has an order for the selected date
     const existingOrder = userOrders.find(order => 
       isSameDay(new Date(order.date), selectedDate)
     );
@@ -58,7 +54,6 @@ const EmployeeDashboard = ({ activeTab = 'menu' }: EmployeeDashboardProps) => {
       setSelectedLunchId(null);
     }
 
-    // Simulate loading for animations
     const timer = setTimeout(() => {
       setLoadingAnimation(false);
     }, 500);
@@ -80,7 +75,6 @@ const EmployeeDashboard = ({ activeTab = 'menu' }: EmployeeDashboardProps) => {
       return;
     }
 
-    // Check if user already has an order for the selected date
     const existingOrderIndex = orders.findIndex(order => 
       isSameDay(new Date(order.date), selectedDate)
     );
@@ -95,7 +89,6 @@ const EmployeeDashboard = ({ activeTab = 'menu' }: EmployeeDashboardProps) => {
     };
 
     if (existingOrderIndex >= 0) {
-      // Update existing order
       const updatedOrders = [...orders];
       updatedOrders[existingOrderIndex] = newOrder;
       setOrders(updatedOrders);
@@ -105,7 +98,6 @@ const EmployeeDashboard = ({ activeTab = 'menu' }: EmployeeDashboardProps) => {
         description: `Tu pedido para el ${format(selectedDate, 'EEEE d MMMM', { locale: es })} ha sido actualizado.`,
       });
     } else {
-      // Create new order
       setOrders([...orders, newOrder]);
       
       toast({

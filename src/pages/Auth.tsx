@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
 import { Lock, User, Mail } from 'lucide-react';
 import SeedDataButton from '@/components/SeedDataButton';
+import { UserRole } from '@/lib/types';
 
 const Auth = () => {
   const { toast } = useToast();
@@ -57,7 +59,10 @@ const Auth = () => {
         .single();
 
       if (profile) {
-        switch (profile.role) {
+        // Make sure TypeScript knows that profile.role is a valid UserRole
+        const role: UserRole = profile.role;
+        
+        switch (role) {
           case 'admin':
             navigate('/admin');
             break;

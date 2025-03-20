@@ -13,6 +13,6 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-    storageKey: 'mialmuerzo-auth-token',
+    storageKey: 'lunchwise-auth-token',
   }
 });

@@ -27,27 +27,44 @@ const AddAdminButton = () => {
           description: 'The qaadmin@lunchwise.app user is already in the database.',
         });
         setIsCreated(true);
+        
+        // Try to ensure the password is set correctly
+        await resetAdminPassword();
         return;
       }
 
       // Create the user in auth
-      const { data, error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.admin.createUser({
         email: 'qaadmin@lunchwise.app',
         password: 'Prueba33',
-        options: {
-          data: {
-            first_name: 'QA',
-            last_name: 'Admin',
-            role: 'admin'
-          },
-          emailRedirectTo: window.location.origin,
+        email_confirm: true,
+        user_metadata: {
+          first_name: 'QA',
+          last_name: 'Admin',
+          role: 'admin'
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        // If admin API fails, try standard signup
+        const signUpResult = await supabase.auth.signUp({
+          email: 'qaadmin@lunchwise.app',
+          password: 'Prueba33',
+          options: {
+            data: {
+              first_name: 'QA',
+              last_name: 'Admin',
+              role: 'admin'
+            },
+            emailRedirectTo: window.location.origin,
+          }
+        });
+        
+        if (signUpResult.error) throw signUpResult.error;
+        data.user = signUpResult.data.user;
+      }
 
-      // The profile should be created automatically via trigger,
-      // but let's verify
+      // The profile should be created automatically via trigger
       if (data.user) {
         toast({
           title: 'Admin user created',
@@ -70,28 +87,26 @@ const AddAdminButton = () => {
   const resetAdminPassword = async () => {
     setIsResetting(true);
     try {
-      // First try to sign in with admin credentials
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: 'qaadmin@lunchwise.app',
-        password: 'Prueba33',
-      });
-
-      // If sign in fails, try to reset the password
-      if (signInError) {
-        console.log('Sign in failed, attempting password reset');
-        
-        // First check if the user exists
-        const { data: userData } = await supabase
+      // Check if the admin user exists in auth
+      const { data: authData, error: authError } = await supabase.auth.admin.getUserByEmail(
+        'qaadmin@lunchwise.app'
+      );
+      
+      if (authError || !authData.user) {
+        // If admin API fails or user doesn't exist, check profiles
+        const { data: profileData } = await supabase
           .from('profiles')
           .select('*')
           .eq('email', 'qaadmin@lunchwise.app')
           .limit(1);
-        
-        if (!userData || userData.length === 0) {
-          throw new Error('Admin user does not exist');
+          
+        if (!profileData || profileData.length === 0) {
+          // If user doesn't exist in profiles either, create it
+          await createAdminUser();
+          return;
         }
         
-        // Use password reset functionality
+        // User exists in profiles but not in auth, use password reset
         const { error: resetError } = await supabase.auth.resetPasswordForEmail(
           'qaadmin@lunchwise.app',
           {
@@ -105,22 +120,29 @@ const AddAdminButton = () => {
           title: 'Password reset email sent',
           description: 'Check qaadmin@lunchwise.app inbox for password reset instructions',
         });
-      } else {
-        // If sign in succeeds, we can update the password directly
-        const { error: updateError } = await supabase.auth.updateUser({
+        return;
+      }
+      
+      // User exists in auth, use admin API to set password
+      const { error: updateError } = await supabase.auth.admin.updateUserById(
+        authData.user.id,
+        { password: 'Prueba33', email_confirm: true }
+      );
+      
+      if (updateError) {
+        // If admin API fails, try direct update
+        const { error: directUpdateError } = await supabase.auth.updateUser({
           password: 'Prueba33'
         });
         
-        if (updateError) throw updateError;
-        
-        toast({
-          title: 'Password reset successful',
-          description: 'The password has been reset to: Prueba33',
-        });
-        
-        // Sign out after password reset
-        await supabase.auth.signOut();
+        if (directUpdateError) throw directUpdateError;
       }
+      
+      toast({
+        title: 'Password reset successful',
+        description: 'The password has been reset to: Prueba33',
+      });
+      
     } catch (error) {
       console.error('Error resetting admin password:', error);
       toast({
@@ -130,6 +152,33 @@ const AddAdminButton = () => {
       });
     } finally {
       setIsResetting(false);
+    }
+  };
+
+  const directLogin = async () => {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: 'qaadmin@lunchwise.app',
+        password: 'Prueba33',
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: 'Login successful',
+        description: 'You are now logged in as QA Admin',
+      });
+      
+      // Redirect to admin dashboard or appropriate page
+      window.location.href = '/admin';
+      
+    } catch (error) {
+      console.error('Login error:', error);
+      toast({
+        title: 'Login failed',
+        description: error instanceof Error ? error.message : 'Could not log in with QA admin credentials',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -173,6 +222,15 @@ const AddAdminButton = () => {
           ) : (
             'Reset Admin Password'
           )}
+        </Button>
+        
+        <Button 
+          onClick={directLogin} 
+          disabled={isCreating || isResetting}
+          variant="secondary"
+          className="w-full"
+        >
+          Direct Login as Admin
         </Button>
       </div>
     </div>

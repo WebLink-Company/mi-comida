@@ -13,56 +13,66 @@ const generateUUID = () => crypto.randomUUID();
 
 // Create a provider first so we can associate users with it
 const createProvider = async () => {
-  const providerId = generateUUID();
-  
-  const { data, error } = await supabase
-    .from('providers')
-    .insert({
-      id: providerId,
-      business_name: 'LunchWise Test Provider',
-      description: 'A test provider for development purposes',
-      contact_email: 'provider@lunchwise.app',
-      contact_phone: '+1234567890',
-      address: '123 Test Street, Test City',
-      logo: 'https://ui-avatars.com/api/?name=LunchWise+Provider&background=0D8ABC&color=fff',
-      is_active: true
-    })
-    .select()
-    .single();
+  try {
+    const providerId = generateUUID();
+    
+    const { data, error } = await supabase
+      .from('providers')
+      .insert({
+        id: providerId,
+        business_name: 'LunchWise Test Provider',
+        description: 'A test provider for development purposes',
+        contact_email: 'provider@lunchwise.app',
+        contact_phone: '+1234567890',
+        address: '123 Test Street, Test City',
+        logo: 'https://ui-avatars.com/api/?name=LunchWise+Provider&background=0D8ABC&color=fff',
+        is_active: true
+      })
+      .select()
+      .single();
 
-  if (error) {
-    console.error('Error creating provider:', error);
+    if (error) {
+      console.error('Error creating provider:', error);
+      throw error;
+    }
+
+    console.log('Provider created:', data);
+    return providerId;
+  } catch (error) {
+    console.error('Error in createProvider:', error);
     throw error;
   }
-
-  console.log('Provider created:', data);
-  return providerId;
 };
 
 // Create a company associated with a provider
 const createCompany = async (providerId: string) => {
-  const companyId = generateUUID();
-  
-  const { data, error } = await supabase
-    .from('companies')
-    .insert({
-      id: companyId,
-      name: 'LunchWise Test Company',
-      subsidy_percentage: 50,
-      fixed_subsidy_amount: 10,
-      logo: 'https://ui-avatars.com/api/?name=LunchWise+Company&background=0D8ABC&color=fff',
-      provider_id: providerId
-    })
-    .select()
-    .single();
+  try {
+    const companyId = generateUUID();
+    
+    const { data, error } = await supabase
+      .from('companies')
+      .insert({
+        id: companyId,
+        name: 'LunchWise Test Company',
+        subsidy_percentage: 50,
+        fixed_subsidy_amount: 10,
+        logo: 'https://ui-avatars.com/api/?name=LunchWise+Company&background=0D8ABC&color=fff',
+        provider_id: providerId
+      })
+      .select()
+      .single();
 
-  if (error) {
-    console.error('Error creating company:', error);
+    if (error) {
+      console.error('Error creating company:', error);
+      throw error;
+    }
+
+    console.log('Company created:', data);
+    return companyId;
+  } catch (error) {
+    console.error('Error in createCompany:', error);
     throw error;
   }
-
-  console.log('Company created:', data);
-  return companyId;
 };
 
 // Create a user with Supabase Auth and add to profiles
@@ -76,15 +86,29 @@ const createUser = async (
   companyId?: string
 ) => {
   try {
+    // Check if the user already exists
+    const { data: existingUsers } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('email', email)
+      .limit(1);
+    
+    if (existingUsers && existingUsers.length > 0) {
+      console.log(`User ${email} already exists, skipping...`);
+      return existingUsers[0].id;
+    }
+    
     // Create user in auth.users
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+    const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
-      email_confirm: true, // Auto-confirm email for testing
-      user_metadata: { 
-        first_name: firstName, 
-        last_name: lastName,
-        role
+      options: { 
+        data: { 
+          first_name: firstName, 
+          last_name: lastName,
+          role
+        },
+        emailRedirectTo: window.location.origin,
       }
     });
 
@@ -93,40 +117,48 @@ const createUser = async (
     }
 
     if (!authData.user) {
-      throw new Error('No user returned from auth.admin.createUser');
+      throw new Error('No user returned from auth.signUp');
     }
 
     console.log(`User created with email: ${email}`);
 
-    // Create profile in profiles table (this should happen automatically via trigger,
-    // but we'll do it manually to ensure provider_id and company_id are set correctly)
+    // The profile should be created automatically via trigger,
+    // but we'll update it with provider_id and company_id
     const userId = authData.user.id;
     
-    // We need to explicitly cast the role to the database type here
-    // to ensure TypeScript compatibility
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .upsert({
-        id: userId,
-        first_name: firstName,
-        last_name: lastName,
-        email,
-        role: role as any, // Type casting to resolve the compatibility issue
-        provider_id: providerId || null,
-        company_id: companyId || null
-      });
+    // Update profile with provider_id and company_id if they are provided
+    if (providerId || companyId) {
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          provider_id: providerId || null,
+          company_id: companyId || null
+        })
+        .eq('id', userId);
 
-    if (profileError) {
-      throw profileError;
+      if (profileError) {
+        throw profileError;
+      }
     }
 
     return userId;
   } catch (error) {
     console.error(`Error creating user ${email}:`, error);
     // If the error is because the user already exists, we can continue
-    if (error instanceof Error && error.message.includes('already exists')) {
+    if (error instanceof Error && 
+        (error.message.includes('already exists') || 
+         error.message.includes('already registered'))) {
       console.log(`User ${email} already exists, skipping...`);
-      return null;
+      // Try to fetch the user ID
+      const { data } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', email)
+        .limit(1);
+      
+      if (data && data.length > 0) {
+        return data[0].id;
+      }
     }
     throw error;
   }

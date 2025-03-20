@@ -451,10 +451,13 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      get_user_role: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
     }
     Enums: {
-      user_role: "admin" | "provider" | "supervisor" | "employee"
+      user_role: "admin" | "provider" | "supervisor" | "employee" | "company"
     }
     CompositeTypes: {
       [_ in never]: never

@@ -15,7 +15,7 @@ const DebugPoliciesButton = () => {
     try {
       // First try to get the raw SQL policies
       const { data: policiesData, error: policiesError } = await supabase.rpc(
-        'get_policies_info',
+        'get_policies_info' as any,
         { target_table: 'profiles' }
       );
 

@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { User, UserRole } from '@/lib/types';
 
@@ -14,7 +13,8 @@ const generateUUID = () => crypto.randomUUID();
 // Debug function to check for problematic RLS policies
 const checkForProblematicPolicies = async () => {
   try {
-    const { data, error } = await supabase.rpc('show_all_policies');
+    // Use type assertion to handle the RPC call
+    const { data, error } = await supabase.rpc('show_all_policies' as any);
     
     if (error) {
       console.error('Error checking policies:', error);

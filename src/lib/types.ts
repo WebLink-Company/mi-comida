@@ -1,5 +1,5 @@
 
-export type UserRole = 'admin' | 'provider' | 'supervisor' | 'employee';
+export type UserRole = 'admin' | 'provider' | 'supervisor' | 'employee' | 'company';
 
 export interface User {
   id: string;
@@ -19,6 +19,8 @@ export interface Company {
   name: string;
   subsidy_percentage: number;
   subsidyPercentage?: number; // Added for compatibility
+  fixed_subsidy_amount?: number; // Adding fixed subsidy amount
+  fixedSubsidyAmount?: number; // Added for compatibility
   logo?: string;
   provider_id: string;
   created_at?: string;

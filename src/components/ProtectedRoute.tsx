@@ -32,6 +32,8 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
         return <Navigate to="/admin" replace />;
       case 'provider':
         return <Navigate to="/provider" replace />;
+      case 'company':
+        return <Navigate to="/company" replace />;
       case 'supervisor':
         return <Navigate to="/supervisor" replace />;
       case 'employee':

@@ -12,6 +12,7 @@ import EmployeeDashboard from "./pages/EmployeeDashboard";
 import SupervisorDashboard from "./pages/SupervisorDashboard";
 import ProviderDashboard from "./pages/ProviderDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
+import CompanyDashboard from "./pages/CompanyDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,23 @@ const App = () => (
             <Route path="/admin" element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <AdminDashboard />
+              </ProtectedRoute>
+            } />
+            
+            {/* Company Routes */}
+            <Route path="/company" element={
+              <ProtectedRoute allowedRoles={['company']}>
+                <CompanyDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/company/employees" element={
+              <ProtectedRoute allowedRoles={['company']}>
+                <CompanyDashboard activeTab="employees" />
+              </ProtectedRoute>
+            } />
+            <Route path="/company/reports" element={
+              <ProtectedRoute allowedRoles={['company']}>
+                <CompanyDashboard activeTab="reports" />
               </ProtectedRoute>
             } />
             
@@ -62,6 +80,11 @@ const App = () => (
                 <SupervisorDashboard activeTab="reports" />
               </ProtectedRoute>
             } />
+            <Route path="/supervisor/subsidies" element={
+              <ProtectedRoute allowedRoles={['supervisor']}>
+                <SupervisorDashboard activeTab="subsidies" />
+              </ProtectedRoute>
+            } />
             
             {/* Provider Routes */}
             <Route path="/provider" element={
@@ -82,6 +105,16 @@ const App = () => (
             <Route path="/provider/billing" element={
               <ProtectedRoute allowedRoles={['provider']}>
                 <ProviderDashboard activeTab="billing" />
+              </ProtectedRoute>
+            } />
+            <Route path="/provider/companies" element={
+              <ProtectedRoute allowedRoles={['provider']}>
+                <ProviderDashboard activeTab="companies" />
+              </ProtectedRoute>
+            } />
+            <Route path="/provider/users" element={
+              <ProtectedRoute allowedRoles={['provider']}>
+                <ProviderDashboard activeTab="users" />
               </ProtectedRoute>
             } />
             

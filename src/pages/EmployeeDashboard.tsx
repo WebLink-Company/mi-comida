@@ -81,10 +81,13 @@ const EmployeeDashboard = ({ activeTab = 'menu' }: EmployeeDashboardProps) => {
 
     const newOrder: Order = {
       id: existingOrderIndex >= 0 ? orders[existingOrderIndex].id : `new-${Date.now()}`,
+      user_id: currentUser.id,
       userId: currentUser.id,
+      lunch_option_id: selectedLunchId,
       lunchOptionId: selectedLunchId,
       date: format(selectedDate, 'yyyy-MM-dd'),
       status: 'pending',
+      created_at: new Date().toISOString(),
       createdAt: new Date().toISOString()
     };
 

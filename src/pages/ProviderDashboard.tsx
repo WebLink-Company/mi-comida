@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
@@ -118,7 +117,8 @@ const ProviderDashboard = ({ activeTab = 'dashboard' }: ProviderDashboardProps) 
       price: newMenuItem.price,
       image: newMenuItem.image,
       available: newMenuItem.available || true,
-      tags: newMenuItem.tags || []
+      tags: newMenuItem.tags || [],
+      provider_id: currentUser.id
     };
 
     setMenuItems([...menuItems, newItem]);

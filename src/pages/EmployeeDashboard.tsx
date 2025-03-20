@@ -34,14 +34,19 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Calendar } from '@/components/ui/calendar';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useMediaQuery } from '@/hooks/use-mobile';
+import { useIsMobile, useMediaQuery } from '@/hooks/use-mobile';
 import LunchCard from '@/components/LunchCard';
 
+// Extend the Order type to include lunch details
 interface OrderWithLunch extends Order {
   lunch?: LunchOption;
 }
 
-const EmployeeDashboard = () => {
+interface EmployeeDashboardProps {
+  activeTab?: string;
+}
+
+const EmployeeDashboard = ({ activeTab: initialTab }: EmployeeDashboardProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const isMobile = useMediaQuery('(max-width: 768px)');
@@ -51,7 +56,7 @@ const EmployeeDashboard = () => {
   const [userOrders, setUserOrders] = useState<OrderWithLunch[]>([]);
   const [company, setCompany] = useState<Company | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [activeTab, setActiveTab] = useState('menu');
+  const [activeTab, setActiveTab] = useState(initialTab || 'menu');
   
   // Fetch data from Supabase on component mount
   useEffect(() => {
@@ -101,8 +106,18 @@ const EmployeeDashboard = () => {
           
         if (ordersError) throw ordersError;
         
+        if (ordersData) {
+          // Ensure the status is one of the allowed values
+          const typedOrdersData = ordersData.map(order => {
+            return {
+              ...order,
+              status: order.status as "pending" | "approved" | "rejected" | "delivered"
+            } as OrderWithLunch;
+          });
+          setUserOrders(typedOrdersData);
+        }
+        
         setLunchOptions(lunchData || []);
-        setUserOrders(ordersData || []);
       } catch (error) {
         console.error('Error fetching data:', error);
         toast({
@@ -118,7 +133,11 @@ const EmployeeDashboard = () => {
             .filter(order => order.user_id === user.id)
             .map(order => {
               const lunch = mockLunchOptions.find(option => option.id === order.lunch_option_id);
-              return { ...order, lunch };
+              return { 
+                ...order, 
+                lunch,
+                status: order.status as "pending" | "approved" | "rejected" | "delivered"
+              } as OrderWithLunch;
             });
           setUserOrders(ordersWithLunch);
           setCompany(mockCompanies[0]);
@@ -139,7 +158,7 @@ const EmployeeDashboard = () => {
         user_id: user.id,
         lunch_option_id: lunchOptionId,
         date: format(selectedDate, 'yyyy-MM-dd'),
-        status: 'pending',
+        status: 'pending' as const,
         company_id: company.id
       };
       
@@ -153,9 +172,15 @@ const EmployeeDashboard = () => {
       
       // Find the lunch option to attach to the order
       const lunch = lunchOptions.find(option => option.id === lunchOptionId);
-      const newOrderWithLunch = { ...data, lunch };
       
-      setUserOrders(prevOrders => [newOrderWithLunch, ...prevOrders]);
+      setUserOrders(prevOrders => [
+        { 
+          ...data, 
+          lunch,
+          status: data.status as "pending" | "approved" | "rejected" | "delivered"
+        } as OrderWithLunch, 
+        ...prevOrders
+      ]);
       
       toast({
         title: '¡Pedido realizado!',
@@ -234,13 +259,9 @@ const EmployeeDashboard = () => {
         {lunchOptions.map((option) => (
           <LunchCard
             key={option.id}
-            name={option.name}
-            description={option.description}
-            imageUrl={option.image}
-            price={option.price}
+            lunchOption={option}
             subsidizedPrice={calculateSubsidizedPrice(option.price)}
             onSelect={() => placeOrder(option.id)}
-            tags={option.tags}
           />
         ))}
       </div>

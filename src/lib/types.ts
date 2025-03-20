@@ -10,6 +10,7 @@ export interface User {
   role: UserRole;
   company_id?: string;
   companyId?: string; // Added for compatibility 
+  provider_id?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -36,6 +37,9 @@ export interface LunchOption {
   available: boolean;
   tags: string[];
   provider_id: string;
+  menu_type?: string; // Added for predefined/component options
+  is_extra?: boolean; // Added for extra items
+  category_id?: string; // Added for category association
   created_at?: string;
   updated_at?: string;
 }

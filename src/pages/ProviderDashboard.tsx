@@ -468,7 +468,7 @@ const ProviderDashboard = ({ activeTab = 'dashboard' }: ProviderDashboardProps) 
   const handleRoleChange = (value: string) => {
     setNewUser({
       ...newUser,
-      role: value as 'admin' | 'provider' | 'supervisor' | 'employee' | 'company',
+      role: value as UserRole,
     });
   };
 
@@ -502,13 +502,18 @@ const ProviderDashboard = ({ activeTab = 'dashboard' }: ProviderDashboardProps) 
     // 1. Create an auth user with Supabase Auth
     // 2. Then create or update the profile record
     try {
+      // Check if the role is compatible with the database enum
+      // Convert 'company' role to 'employee' for database storage if needed
+      // This is a temporary solution until the database enum is updated
+      const dbRole = newUser.role === 'company' ? 'employee' : newUser.role;
+      
       const { data, error } = await supabase
         .from('profiles')
         .insert({
           first_name: newUser.first_name,
           last_name: newUser.last_name,
           email: newUser.email,
-          role: newUser.role,
+          role: dbRole,
           company_id: newUser.company_id,
           provider_id: currentUser?.id,
         })

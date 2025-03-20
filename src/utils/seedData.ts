@@ -11,11 +11,46 @@ import { User, UserRole } from '@/lib/types';
 // Helper function to generate UUID
 const generateUUID = () => crypto.randomUUID();
 
+// Debug function to check for problematic RLS policies
+const checkForProblematicPolicies = async () => {
+  try {
+    const { data, error } = await supabase.rpc('show_all_policies');
+    
+    if (error) {
+      console.error('Error checking policies:', error);
+      
+      // Fallback to direct SQL query if RPC is not available
+      const { data: policiesData, error: policiesError } = await supabase
+        .from('audit_logs')
+        .select('*')
+        .limit(1);
+      
+      if (policiesError) {
+        console.error('Error in fallback policy check:', policiesError);
+        return `Policy check failed: ${policiesError.message}`;
+      }
+      
+      return `Attempted policy check - if you see this followed by an error, the profiles table has problematic policies`;
+    }
+    
+    return `Policy check completed successfully: ${JSON.stringify(data)}`;
+  } catch (error) {
+    console.error('Exception in policy check:', error);
+    return `Policy check exception: ${error instanceof Error ? error.message : String(error)}`;
+  }
+};
+
 // Create a provider first so we can associate users with it
 const createProvider = async () => {
   try {
+    // First check for problematic policies
+    const policyCheckResult = await checkForProblematicPolicies();
+    console.log('Policy check result:', policyCheckResult);
+    
     const providerId = generateUUID();
     
+    // Try the operation with detailed error logging
+    console.log('Attempting to create provider...');
     const { data, error } = await supabase
       .from('providers')
       .insert({
@@ -33,6 +68,12 @@ const createProvider = async () => {
 
     if (error) {
       console.error('Error creating provider:', error);
+      
+      // Try to log the full error details
+      if (error.details) console.error('Error details:', error.details);
+      if (error.hint) console.error('Error hint:', error.hint);
+      if (error.code) console.error('Error code:', error.code);
+      
       throw error;
     }
 
@@ -49,6 +90,7 @@ const createCompany = async (providerId: string) => {
   try {
     const companyId = generateUUID();
     
+    console.log('Attempting to create company...');
     const { data, error } = await supabase
       .from('companies')
       .insert({
@@ -169,6 +211,10 @@ export const seedTestData = async () => {
   console.log('Starting data seeding process...');
   
   try {
+    // Initial policy check before any operations
+    const initialPolicyCheck = await checkForProblematicPolicies();
+    console.log('Initial policy check:', initialPolicyCheck);
+    
     // Step 1: Create provider
     console.log('Creating provider...');
     const providerId = await createProvider();

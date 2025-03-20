@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import NavigationBar from '@/components/NavigationBar';
 import { User, Order, LunchOption, Company } from '@/lib/types';
-import { orders, users, lunches } from '@/lib/mockData';
+import { mockOrders, mockUsers, mockLunchOptions } from '@/lib/mockData';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Card,
@@ -77,12 +77,12 @@ const SupervisorDashboard = ({ activeTab = 'dashboard' }: SupervisorDashboardPro
 
   useEffect(() => {
     // In a real app, would fetch from Supabase
-    const filteredOrders = orders.filter(order => order.status === 'pending');
+    const filteredOrders = mockOrders.filter(order => order.status === 'pending');
     setPendingOrders(filteredOrders);
-    setLunchOptions(lunches);
+    setLunchOptions(mockLunchOptions);
 
     // Filter users that belong to supervisor's company
-    const companyEmployees = users.filter(user => 
+    const companyEmployees = mockUsers.filter(user => 
       user.role === 'employee' && user.company_id === currentUser?.company_id
     );
     setEmployeeUsers(companyEmployees);
@@ -102,9 +102,9 @@ const SupervisorDashboard = ({ activeTab = 'dashboard' }: SupervisorDashboardPro
     }
   }, [currentUser]);
 
-  const approvedOrdersCount = orders.filter(order => order.status === 'approved').length;
-  const rejectedOrdersCount = orders.filter(order => order.status === 'rejected').length;
-  const deliveredOrdersCount = orders.filter(order => order.status === 'delivered').length;
+  const approvedOrdersCount = mockOrders.filter(order => order.status === 'approved').length;
+  const rejectedOrdersCount = mockOrders.filter(order => order.status === 'rejected').length;
+  const deliveredOrdersCount = mockOrders.filter(order => order.status === 'delivered').length;
 
   const data = [
     { name: 'Aprobados', value: approvedOrdersCount },
@@ -502,7 +502,7 @@ const SupervisorDashboard = ({ activeTab = 'dashboard' }: SupervisorDashboardPro
                 <CardContent>
                   <ResponsiveContainer width="100%" height={400}>
                     <BarChart
-                      data={orders}
+                      data={mockOrders}
                       margin={{
                         top: 5,
                         right: 30,

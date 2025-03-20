@@ -29,7 +29,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { lunches, orders } from '@/lib/mockData';
+import { mockLunchOptions, mockOrders } from '@/lib/mockData';
 
 interface ProviderDashboardProps {
   activeTab?: string;
@@ -67,11 +67,17 @@ const ProviderDashboard = ({ activeTab = 'dashboard' }: ProviderDashboardProps) 
   });
 
   useEffect(() => {
-    // In a real app, fetch from Supabase
-    setMenuItems(lunches);
-    setPendingOrders(orders.filter(order => order.status === 'pending'));
+    setMenuItems(mockLunchOptions);
     
-    // Mock companies and users data
+    const pendingOrdersWithCorrectStatus = mockOrders
+      .filter(order => order.status === 'pending')
+      .map(order => ({
+        ...order,
+        status: order.status as 'pending' | 'approved' | 'rejected' | 'delivered'
+      }));
+    
+    setPendingOrders(pendingOrdersWithCorrectStatus);
+    
     setCompanies([
       {
         id: '1',
@@ -96,7 +102,6 @@ const ProviderDashboard = ({ activeTab = 'dashboard' }: ProviderDashboardProps) 
   };
 
   const handleApproveOrder = (orderId: string) => {
-    // In a real app, update the order status in Supabase
     const updatedOrders = pendingOrders.map(order =>
       order.id === orderId ? { ...order, status: 'approved' } : order
     );
@@ -109,7 +114,6 @@ const ProviderDashboard = ({ activeTab = 'dashboard' }: ProviderDashboardProps) 
   };
 
   const handleRejectOrder = (orderId: string) => {
-    // In a real app, update the order status in Supabase
     const updatedOrders = pendingOrders.map(order =>
       order.id === orderId ? { ...order, status: 'rejected' } : order
     );
@@ -151,7 +155,6 @@ const ProviderDashboard = ({ activeTab = 'dashboard' }: ProviderDashboardProps) 
       return;
     }
 
-    // In a real app, save to Supabase
     const newMenuItemItem: LunchOption = {
       id: `new-${Date.now()}`,
       name: newMenuItem.name || '',
@@ -202,7 +205,6 @@ const ProviderDashboard = ({ activeTab = 'dashboard' }: ProviderDashboardProps) 
       return;
     }
 
-    // In a real app, save to Supabase
     const newCompanyItem: Company = {
       id: `new-${Date.now()}`,
       name: newCompany.name || '',
@@ -273,7 +275,6 @@ const ProviderDashboard = ({ activeTab = 'dashboard' }: ProviderDashboardProps) 
       return;
     }
 
-    // In a real app, would save to Supabase and create auth user
     const newUserItem: User = {
       id: `new-${Date.now()}`,
       first_name: newUser.first_name || '',
@@ -321,7 +322,6 @@ const ProviderDashboard = ({ activeTab = 'dashboard' }: ProviderDashboardProps) 
               <TabsTrigger value="billing" className="text-base px-5 py-2">Facturación</TabsTrigger>
             </TabsList>
             
-            {/* Dashboard Content */}
             <TabsContent value="dashboard">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <Card>
@@ -356,7 +356,6 @@ const ProviderDashboard = ({ activeTab = 'dashboard' }: ProviderDashboardProps) 
               </div>
             </TabsContent>
             
-            {/* Menu Content */}
             <TabsContent value="menu">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
@@ -451,7 +450,6 @@ const ProviderDashboard = ({ activeTab = 'dashboard' }: ProviderDashboardProps) 
               </Card>
             </TabsContent>
             
-            {/* Orders Content */}
             <TabsContent value="orders">
               <Card>
                 <CardHeader>
@@ -498,7 +496,6 @@ const ProviderDashboard = ({ activeTab = 'dashboard' }: ProviderDashboardProps) 
               </Card>
             </TabsContent>
             
-            {/* Companies Content */}
             <TabsContent value="companies">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
@@ -605,7 +602,6 @@ const ProviderDashboard = ({ activeTab = 'dashboard' }: ProviderDashboardProps) 
               </Card>
             </TabsContent>
             
-            {/* Users Content */}
             <TabsContent value="users">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
@@ -746,7 +742,6 @@ const ProviderDashboard = ({ activeTab = 'dashboard' }: ProviderDashboardProps) 
               </Card>
             </TabsContent>
             
-            {/* Billing Content */}
             <TabsContent value="billing">
               <Card>
                 <CardHeader>

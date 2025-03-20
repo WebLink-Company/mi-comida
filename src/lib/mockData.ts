@@ -199,6 +199,11 @@ export const mockOrders: Order[] = [
   }
 ];
 
+// Add aliases for backward compatibility
+export const users = mockUsers;
+export const lunches = mockLunchOptions;
+export const orders = mockOrders;
+
 export const mockDashboardStats: DashboardStats = {
   dailyOrders: 24,
   weeklyOrders: 128,

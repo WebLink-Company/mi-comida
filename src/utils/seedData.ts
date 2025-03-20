@@ -101,6 +101,9 @@ const createUser = async (
     // Create profile in profiles table (this should happen automatically via trigger,
     // but we'll do it manually to ensure provider_id and company_id are set correctly)
     const userId = authData.user.id;
+    
+    // We need to explicitly cast the role to the database type here
+    // to ensure TypeScript compatibility
     const { error: profileError } = await supabase
       .from('profiles')
       .upsert({
@@ -108,7 +111,7 @@ const createUser = async (
         first_name: firstName,
         last_name: lastName,
         email,
-        role,
+        role: role as any, // Type casting to resolve the compatibility issue
         provider_id: providerId || null,
         company_id: companyId || null
       });

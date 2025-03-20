@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
@@ -29,7 +30,19 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { PlusCircle, Trash2, Tag, ChevronDown, ChevronUp } from 'lucide-react';
 import { mockLunchOptions, mockOrders } from '@/lib/mockData';
+
+interface Category {
+  id: string;
+  name: string;
+  description?: string;
+  provider_id: string;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
 
 interface ProviderDashboardProps {
   activeTab?: string;
@@ -38,25 +51,52 @@ interface ProviderDashboardProps {
 const ProviderDashboard = ({ activeTab = 'dashboard' }: ProviderDashboardProps) => {
   const { user: currentUser } = useAuth();
   const { toast } = useToast();
+  
+  // Dashboard state
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [dailyRevenue, setDailyRevenue] = useState(0);
+  const [pendingOrderCount, setPendingOrderCount] = useState(0);
+  const [activeCustomerCount, setActiveCustomerCount] = useState(0);
+  
+  // Menu state
   const [menuItems, setMenuItems] = useState<LunchOption[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isAddingMenuItem, setIsAddingMenuItem] = useState(false);
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [menuType, setMenuType] = useState<'predefined' | 'component'>('predefined');
+  const [isExtrasItem, setIsExtrasItem] = useState(false);
+  
   const [newMenuItem, setNewMenuItem] = useState<Partial<LunchOption>>({
     name: '',
     description: '',
     price: 0,
     image: '/placeholder.svg',
     tags: [],
+    available: true,
+    menu_type: 'predefined',
   });
+  
+  const [newCategory, setNewCategory] = useState<Partial<Category>>({
+    name: '',
+    description: '',
+    sort_order: 0
+  });
+  
+  // Orders state
   const [pendingOrders, setPendingOrders] = useState<Order[]>([]);
+  
+  // Companies state
   const [companies, setCompanies] = useState<Company[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
   const [isAddingCompany, setIsAddingCompany] = useState(false);
   const [newCompany, setNewCompany] = useState<Partial<Company>>({
     name: '',
     subsidy_percentage: 0,
     fixed_subsidy_amount: 0,
   });
+  
+  // Users state
+  const [users, setUsers] = useState<User[]>([]);
   const [isAddingUser, setIsAddingUser] = useState(false);
   const [newUser, setNewUser] = useState<Partial<User>>({
     first_name: '',
@@ -65,42 +105,260 @@ const ProviderDashboard = ({ activeTab = 'dashboard' }: ProviderDashboardProps) 
     role: 'employee',
     company_id: '',
   });
+  
+  // Tag input state 
+  const [tagInput, setTagInput] = useState('');
 
+  // Load data on component mount
   useEffect(() => {
-    setMenuItems(mockLunchOptions);
-    
-    const pendingOrdersWithCorrectStatus = mockOrders
-      .filter(order => order.status === 'pending')
-      .map(order => ({
-        ...order,
-        status: 'pending' as 'pending' | 'approved' | 'rejected' | 'delivered'
-      }));
-    
-    setPendingOrders(pendingOrdersWithCorrectStatus);
-    
-    setCompanies([
-      {
-        id: '1',
-        name: 'Acme Corp',
-        subsidy_percentage: 50,
-        provider_id: currentUser?.id || '',
-        created_at: new Date().toISOString(),
-      },
-      {
-        id: '2',
-        name: 'Globex Inc',
-        subsidy_percentage: 30,
-        fixed_subsidy_amount: 5000,
-        provider_id: currentUser?.id || '',
-        created_at: new Date().toISOString(),
-      }
-    ]);
+    loadData();
   }, [currentUser]);
+  
+  const loadData = async () => {
+    if (!currentUser?.id) return;
+    
+    try {
+      // Load menu categories
+      const { data: categoriesData, error: categoriesError } = await supabase
+        .from('menu_categories')
+        .select('*')
+        .eq('provider_id', currentUser.id)
+        .order('sort_order');
+        
+      if (categoriesError) throw categoriesError;
+      setCategories(categoriesData || []);
+      
+      // Load menu items
+      const { data: menuData, error: menuError } = await supabase
+        .from('lunch_options')
+        .select('*')
+        .eq('provider_id', currentUser.id);
+        
+      if (menuError) throw menuError;
+      setMenuItems(menuData || []);
+      
+      // Calculate dashboard metrics
+      setDailyRevenue(menuData ? menuData.reduce((acc, item) => acc + Number(item.price), 0) : 0);
+      
+      // Load pending orders (mock for now)
+      const pendingOrdersWithCorrectStatus = mockOrders
+        .filter(order => order.status === 'pending')
+        .map(order => ({
+          ...order,
+          status: 'pending' as 'pending' | 'approved' | 'rejected' | 'delivered'
+        }));
+      
+      setPendingOrders(pendingOrdersWithCorrectStatus);
+      setPendingOrderCount(pendingOrdersWithCorrectStatus.length);
+      setActiveCustomerCount(12); // Mock data
+      
+      // Load companies
+      const { data: companiesData, error: companiesError } = await supabase
+        .from('companies')
+        .select('*')
+        .eq('provider_id', currentUser.id);
+        
+      if (companiesError) throw companiesError;
+      setCompanies(companiesData || []);
+      
+      // Load users for this provider's companies
+      if (companiesData && companiesData.length > 0) {
+        const companyIds = companiesData.map(company => company.id);
+        
+        const { data: usersData, error: usersError } = await supabase
+          .from('profiles')
+          .select('*')
+          .in('company_id', companyIds);
+          
+        if (usersError) throw usersError;
+        setUsers(usersData || []);
+      }
+      
+    } catch (error) {
+      console.error('Error loading data:', error);
+      toast({
+        title: 'Error',
+        description: 'No se pudieron cargar los datos.',
+        variant: 'destructive',
+      });
+    }
+  };
 
   const handleDateChange = (date: Date) => {
     setSelectedDate(date);
   };
 
+  // Menu Functions
+  const handleAddMenuItem = () => {
+    setIsAddingMenuItem(true);
+    setNewMenuItem({
+      name: '',
+      description: '',
+      price: 0,
+      image: '/placeholder.svg',
+      tags: [],
+      available: true,
+      menu_type: 'predefined',
+      is_extra: false,
+      category_id: selectedCategory || null,
+    });
+  };
+
+  const handleMenuItemChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setNewMenuItem({
+      ...newMenuItem,
+      [name]: name === 'price' ? parseFloat(value) : value,
+    });
+  };
+
+  const handleMenuTypeChange = (value: string) => {
+    setMenuType(value as 'predefined' | 'component');
+    setNewMenuItem({
+      ...newMenuItem,
+      menu_type: value,
+    });
+  };
+
+  const handleExtrasToggle = (checked: boolean) => {
+    setIsExtrasItem(checked);
+    setNewMenuItem({
+      ...newMenuItem,
+      is_extra: checked,
+    });
+  };
+
+  const handleCategorySelect = (value: string) => {
+    setSelectedCategory(value);
+    setNewMenuItem({
+      ...newMenuItem,
+      category_id: value,
+    });
+  };
+
+  const handleAddTag = () => {
+    if (tagInput && !newMenuItem.tags?.includes(tagInput)) {
+      setNewMenuItem({
+        ...newMenuItem,
+        tags: [...(newMenuItem.tags || []), tagInput],
+      });
+      setTagInput('');
+    }
+  };
+
+  const handleRemoveTag = (tag: string) => {
+    setNewMenuItem({
+      ...newMenuItem,
+      tags: newMenuItem.tags?.filter(t => t !== tag) || [],
+    });
+  };
+
+  const handleAddCategory = () => {
+    setIsAddingCategory(true);
+    setNewCategory({
+      name: '',
+      description: '',
+      sort_order: categories.length,
+    });
+  };
+
+  const handleCategoryChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setNewCategory({
+      ...newCategory,
+      [name]: name === 'sort_order' ? parseInt(value) : value,
+    });
+  };
+
+  const handleSaveCategory = async () => {
+    if (!newCategory.name) {
+      toast({
+        title: 'Error',
+        description: 'El nombre de la categoría es requerido',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('menu_categories')
+        .insert({
+          name: newCategory.name,
+          description: newCategory.description,
+          sort_order: newCategory.sort_order,
+          provider_id: currentUser?.id,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      setCategories([...categories, data]);
+      setIsAddingCategory(false);
+      
+      toast({
+        title: 'Categoría agregada',
+        description: `${newCategory.name} ha sido agregada correctamente.`,
+      });
+    } catch (error) {
+      console.error('Error saving category:', error);
+      toast({
+        title: 'Error',
+        description: 'No se pudo guardar la categoría.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleSaveMenuItem = async () => {
+    if (!newMenuItem.name || !newMenuItem.description || !newMenuItem.price) {
+      toast({
+        title: 'Error',
+        description: 'El nombre, descripción y precio son requeridos',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('lunch_options')
+        .insert({
+          name: newMenuItem.name,
+          description: newMenuItem.description,
+          price: newMenuItem.price,
+          image: newMenuItem.image,
+          available: newMenuItem.available,
+          tags: newMenuItem.tags,
+          is_extra: newMenuItem.is_extra,
+          menu_type: newMenuItem.menu_type,
+          category_id: newMenuItem.category_id,
+          provider_id: currentUser?.id,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      setMenuItems([...menuItems, data]);
+      setIsAddingMenuItem(false);
+      
+      toast({
+        title: 'Menú agregado',
+        description: `${newMenuItem.name} ha sido agregado correctamente.`,
+      });
+    } catch (error) {
+      console.error('Error saving menu item:', error);
+      toast({
+        title: 'Error',
+        description: 'No se pudo guardar el menú.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  // Orders Functions
   const handleApproveOrder = (orderId: string) => {
     const updatedOrders = pendingOrders.map(order =>
       order.id === orderId ? { ...order, status: 'approved' as const } : order
@@ -126,56 +384,7 @@ const ProviderDashboard = ({ activeTab = 'dashboard' }: ProviderDashboardProps) 
     });
   };
 
-  const handleAddMenuItem = () => {
-    setIsAddingMenuItem(true);
-    setNewMenuItem({
-      name: '',
-      description: '',
-      price: 0,
-      image: '/placeholder.svg',
-      tags: [],
-    });
-  };
-
-  const handleMenuItemChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setNewMenuItem({
-      ...newMenuItem,
-      [name]: value,
-    });
-  };
-
-  const handleSaveMenuItem = () => {
-    if (!newMenuItem.name || !newMenuItem.description || !newMenuItem.price) {
-      toast({
-        title: 'Error',
-        description: 'Todos los campos son requeridos',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    const newMenuItemItem: LunchOption = {
-      id: `new-${Date.now()}`,
-      name: newMenuItem.name || '',
-      description: newMenuItem.description || '',
-      price: newMenuItem.price || 0,
-      image: newMenuItem.image || '/placeholder.svg',
-      available: true,
-      tags: [],
-      provider_id: currentUser?.id || '',
-      created_at: new Date().toISOString(),
-    };
-
-    setMenuItems([...menuItems, newMenuItemItem]);
-    setIsAddingMenuItem(false);
-    
-    toast({
-      title: 'Menú agregado',
-      description: `${newMenuItem.name} ha sido agregado correctamente.`,
-    });
-  };
-
+  // Companies Functions
   const handleAddCompany = () => {
     setIsAddingCompany(true);
     setNewCompany({
@@ -195,7 +404,7 @@ const ProviderDashboard = ({ activeTab = 'dashboard' }: ProviderDashboardProps) 
     });
   };
 
-  const handleSaveCompany = () => {
+  const handleSaveCompany = async () => {
     if (!newCompany.name) {
       toast({
         title: 'Error',
@@ -205,24 +414,38 @@ const ProviderDashboard = ({ activeTab = 'dashboard' }: ProviderDashboardProps) 
       return;
     }
 
-    const newCompanyItem: Company = {
-      id: `new-${Date.now()}`,
-      name: newCompany.name || '',
-      subsidy_percentage: newCompany.subsidy_percentage || 0,
-      fixed_subsidy_amount: newCompany.fixed_subsidy_amount,
-      provider_id: currentUser?.id || '',
-      created_at: new Date().toISOString(),
-    };
+    try {
+      const { data, error } = await supabase
+        .from('companies')
+        .insert({
+          name: newCompany.name,
+          subsidy_percentage: newCompany.subsidy_percentage || 0,
+          fixed_subsidy_amount: newCompany.fixed_subsidy_amount || 0,
+          provider_id: currentUser?.id,
+        })
+        .select()
+        .single();
 
-    setCompanies([...companies, newCompanyItem]);
-    setIsAddingCompany(false);
-    
-    toast({
-      title: 'Empresa agregada',
-      description: `${newCompany.name} ha sido agregada correctamente.`,
-    });
+      if (error) throw error;
+      
+      setCompanies([...companies, data]);
+      setIsAddingCompany(false);
+      
+      toast({
+        title: 'Empresa agregada',
+        description: `${newCompany.name} ha sido agregada correctamente.`,
+      });
+    } catch (error) {
+      console.error('Error saving company:', error);
+      toast({
+        title: 'Error',
+        description: 'No se pudo guardar la empresa.',
+        variant: 'destructive',
+      });
+    }
   };
 
+  // Users Functions
   const handleAddUser = () => {
     setIsAddingUser(true);
     setNewUser({
@@ -256,7 +479,7 @@ const ProviderDashboard = ({ activeTab = 'dashboard' }: ProviderDashboardProps) 
     });
   };
 
-  const handleSaveUser = () => {
+  const handleSaveUser = async () => {
     if (!newUser.first_name || !newUser.last_name || !newUser.email) {
       toast({
         title: 'Error',
@@ -275,26 +498,41 @@ const ProviderDashboard = ({ activeTab = 'dashboard' }: ProviderDashboardProps) 
       return;
     }
 
-    const newUserItem: User = {
-      id: `new-${Date.now()}`,
-      first_name: newUser.first_name || '',
-      last_name: newUser.last_name || '',
-      email: newUser.email || '',
-      role: newUser.role || 'employee',
-      company_id: newUser.company_id,
-      created_at: new Date().toISOString(),
-    };
+    // In a real implementation, you would:
+    // 1. Create an auth user with Supabase Auth
+    // 2. Then create or update the profile record
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .insert({
+          first_name: newUser.first_name,
+          last_name: newUser.last_name,
+          email: newUser.email,
+          role: newUser.role,
+          company_id: newUser.company_id,
+          provider_id: currentUser?.id,
+        })
+        .select()
+        .single();
 
-    setUsers([...users, newUserItem]);
-    setIsAddingUser(false);
-    
-    toast({
-      title: 'Usuario agregado',
-      description: `${newUser.first_name} ${newUser.last_name} ha sido agregado correctamente.`,
-    });
+      if (error) throw error;
+      
+      setUsers([...users, data]);
+      setIsAddingUser(false);
+      
+      toast({
+        title: 'Usuario agregado',
+        description: `${newUser.first_name} ${newUser.last_name} ha sido agregado correctamente.`,
+      });
+    } catch (error) {
+      console.error('Error saving user:', error);
+      toast({
+        title: 'Error',
+        description: 'No se pudo guardar el usuario.',
+        variant: 'destructive',
+      });
+    }
   };
-
-  const dailyRevenue = menuItems.reduce((acc, item) => acc + item.price, 0);
 
   return (
     <div className="min-h-screen bg-background">
@@ -340,7 +578,7 @@ const ProviderDashboard = ({ activeTab = 'dashboard' }: ProviderDashboardProps) 
                     <CardDescription>Número de pedidos por aprobar</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{pendingOrders.length}</div>
+                    <div className="text-2xl font-bold">{pendingOrderCount}</div>
                   </CardContent>
                 </Card>
                 
@@ -350,104 +588,304 @@ const ProviderDashboard = ({ activeTab = 'dashboard' }: ProviderDashboardProps) 
                     <CardDescription>Número de clientes que han ordenado hoy</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">12</div>
+                    <div className="text-2xl font-bold">{activeCustomerCount}</div>
                   </CardContent>
                 </Card>
               </div>
             </TabsContent>
             
             <TabsContent value="menu">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle>Menú del Día</CardTitle>
-                    <CardDescription>
-                      Gestiona los platos disponibles para hoy
-                    </CardDescription>
-                  </div>
-                  <Button onClick={handleAddMenuItem}>Agregar Menú</Button>
-                </CardHeader>
-                <CardContent>
-                  {isAddingMenuItem ? (
-                    <motion.div 
-                      initial={{ opacity: 0, y: -10 }} 
-                      animate={{ opacity: 1, y: 0 }}
-                      className="p-4 border rounded-lg mb-6"
-                    >
-                      <h3 className="font-medium mb-4">Nuevo Menú</h3>
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-6">
+                {/* Categories Section */}
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <div>
+                      <CardTitle>Categorías del Menú</CardTitle>
+                      <CardDescription>
+                        Gestiona las categorías para organizar tu menú
+                      </CardDescription>
+                    </div>
+                    <Button onClick={handleAddCategory}>
+                      <PlusCircle className="h-4 w-4 mr-2" />
+                      Agregar Categoría
+                    </Button>
+                  </CardHeader>
+                  <CardContent>
+                    {isAddingCategory ? (
+                      <motion.div 
+                        initial={{ opacity: 0, y: -10 }} 
+                        animate={{ opacity: 1, y: 0 }}
+                        className="p-4 border rounded-lg mb-6"
+                      >
+                        <h3 className="font-medium mb-4">Nueva Categoría</h3>
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-1 gap-4">
+                            <div>
+                              <Label htmlFor="name">Nombre de la Categoría</Label>
+                              <Input 
+                                id="name" 
+                                name="name"
+                                value={newCategory.name || ''} 
+                                onChange={handleCategoryChange} 
+                              />
+                            </div>
+                          </div>
+                          
                           <div>
-                            <Label htmlFor="name">Nombre</Label>
-                            <Input 
-                              id="name" 
-                              name="name"
-                              value={newMenuItem.name || ''} 
-                              onChange={handleMenuItemChange} 
+                            <Label htmlFor="description">Descripción</Label>
+                            <Textarea 
+                              id="description" 
+                              name="description"
+                              value={newCategory.description || ''} 
+                              onChange={handleCategoryChange} 
                             />
                           </div>
+                          
                           <div>
-                            <Label htmlFor="price">Precio</Label>
+                            <Label htmlFor="sort_order">Orden</Label>
                             <Input 
-                              id="price" 
-                              name="price"
+                              id="sort_order" 
+                              name="sort_order"
                               type="number" 
-                              value={newMenuItem.price || 0} 
-                              onChange={handleMenuItemChange} 
+                              value={newCategory.sort_order || 0} 
+                              onChange={handleCategoryChange} 
                             />
                           </div>
+                          
+                          <div className="flex justify-end space-x-2">
+                            <Button variant="outline" onClick={() => setIsAddingCategory(false)}>Cancelar</Button>
+                            <Button onClick={handleSaveCategory}>Guardar Categoría</Button>
+                          </div>
                         </div>
-                        
-                        <div>
-                          <Label htmlFor="description">Descripción</Label>
-                          <Textarea 
-                            id="description" 
-                            name="description"
-                            value={newMenuItem.description || ''} 
-                            onChange={handleMenuItemChange} 
-                          />
-                        </div>
-                        
-                        <div className="flex justify-end space-x-2">
-                          <Button variant="outline" onClick={() => setIsAddingMenuItem(false)}>Cancelar</Button>
-                          <Button onClick={handleSaveMenuItem}>Guardar Menú</Button>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ) : null}
-                  
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Nombre</TableHead>
-                        <TableHead>Precio</TableHead>
-                        <TableHead>Estado</TableHead>
-                        <TableHead>Acciones</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {menuItems.length > 0 ? (
-                        menuItems.map((item) => (
-                          <TableRow key={item.id}>
-                            <TableCell className="font-medium">{item.name}</TableCell>
-                            <TableCell>${item.price.toLocaleString()}</TableCell>
-                            <TableCell>{item.available ? 'Disponible' : 'No Disponible'}</TableCell>
-                            <TableCell>
-                              <Button variant="ghost" size="sm">Editar</Button>
+                      </motion.div>
+                    ) : null}
+                    
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Nombre</TableHead>
+                          <TableHead>Descripción</TableHead>
+                          <TableHead>Orden</TableHead>
+                          <TableHead>Acciones</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {categories.length > 0 ? (
+                          categories.map((category) => (
+                            <TableRow key={category.id}>
+                              <TableCell className="font-medium">{category.name}</TableCell>
+                              <TableCell>{category.description || '-'}</TableCell>
+                              <TableCell>{category.sort_order}</TableCell>
+                              <TableCell>
+                                <div className="flex space-x-2">
+                                  <Button variant="outline" size="sm">
+                                    <ChevronUp className="h-4 w-4 mr-1" />
+                                    Subir
+                                  </Button>
+                                  <Button variant="outline" size="sm">
+                                    <ChevronDown className="h-4 w-4 mr-1" />
+                                    Bajar
+                                  </Button>
+                                  <Button variant="ghost" size="sm">Editar</Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">
+                              No hay categorías registradas. ¡Agrega tu primera categoría ahora!
                             </TableCell>
                           </TableRow>
-                        ))
-                      ) : (
+                        )}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+                
+                {/* Menu Items Section */}
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <div>
+                      <CardTitle>Menú del Día</CardTitle>
+                      <CardDescription>
+                        Gestiona los platos disponibles para hoy
+                      </CardDescription>
+                    </div>
+                    <Button onClick={handleAddMenuItem}>
+                      <PlusCircle className="h-4 w-4 mr-2" />
+                      Agregar Menú
+                    </Button>
+                  </CardHeader>
+                  <CardContent>
+                    {isAddingMenuItem ? (
+                      <motion.div 
+                        initial={{ opacity: 0, y: -10 }} 
+                        animate={{ opacity: 1, y: 0 }}
+                        className="p-4 border rounded-lg mb-6"
+                      >
+                        <h3 className="font-medium mb-4">Nuevo Menú</h3>
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <Label htmlFor="name">Nombre</Label>
+                              <Input 
+                                id="name" 
+                                name="name"
+                                value={newMenuItem.name || ''} 
+                                onChange={handleMenuItemChange} 
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="price">Precio</Label>
+                              <Input 
+                                id="price" 
+                                name="price"
+                                type="number" 
+                                value={newMenuItem.price || 0} 
+                                onChange={handleMenuItemChange} 
+                              />
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <Label htmlFor="description">Descripción</Label>
+                            <Textarea 
+                              id="description" 
+                              name="description"
+                              value={newMenuItem.description || ''} 
+                              onChange={handleMenuItemChange} 
+                            />
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <Label htmlFor="category">Categoría</Label>
+                              <Select 
+                                onValueChange={handleCategorySelect}
+                                defaultValue={selectedCategory}
+                              >
+                                <SelectTrigger id="category">
+                                  <SelectValue placeholder="Seleccionar categoría" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {categories.map(category => (
+                                    <SelectItem key={category.id} value={category.id}>
+                                      {category.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            
+                            <div>
+                              <Label htmlFor="menu-type">Tipo de Menú</Label>
+                              <Select 
+                                onValueChange={handleMenuTypeChange}
+                                defaultValue={menuType}
+                              >
+                                <SelectTrigger id="menu-type">
+                                  <SelectValue placeholder="Seleccionar tipo" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="predefined">Predefinido</SelectItem>
+                                  <SelectItem value="component">Componente (À la carte)</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2">
+                            <Checkbox 
+                              id="is-extra" 
+                              checked={isExtrasItem}
+                              onCheckedChange={handleExtrasToggle}
+                            />
+                            <Label htmlFor="is-extra">Es un extra / adicional</Label>
+                          </div>
+                          
+                          <div>
+                            <Label htmlFor="tag-input">Etiquetas</Label>
+                            <div className="flex space-x-2">
+                              <Input
+                                id="tag-input"
+                                value={tagInput}
+                                onChange={(e) => setTagInput(e.target.value)}
+                                placeholder="Ej: Vegano, Sin Gluten, etc."
+                              />
+                              <Button type="button" onClick={handleAddTag} variant="outline">
+                                <Tag className="h-4 w-4 mr-2" />
+                                Agregar
+                              </Button>
+                            </div>
+                            
+                            {newMenuItem.tags && newMenuItem.tags.length > 0 && (
+                              <div className="flex flex-wrap gap-2 mt-2">
+                                {newMenuItem.tags.map(tag => (
+                                  <div key={tag} className="bg-secondary text-secondary-foreground px-2 py-1 rounded-md text-sm flex items-center">
+                                    {tag}
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRemoveTag(tag)}
+                                      className="ml-1 text-secondary-foreground/70 hover:text-secondary-foreground"
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="flex justify-end space-x-2">
+                            <Button variant="outline" onClick={() => setIsAddingMenuItem(false)}>Cancelar</Button>
+                            <Button onClick={handleSaveMenuItem}>Guardar Menú</Button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ) : null}
+                    
+                    <Table>
+                      <TableHeader>
                         <TableRow>
-                          <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">
-                            No hay menús registrados. ¡Agrega tu primer menú ahora!
-                          </TableCell>
+                          <TableHead>Nombre</TableHead>
+                          <TableHead>Categoría</TableHead>
+                          <TableHead>Tipo</TableHead>
+                          <TableHead>Precio</TableHead>
+                          <TableHead>Estado</TableHead>
+                          <TableHead>Acciones</TableHead>
                         </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
+                      </TableHeader>
+                      <TableBody>
+                        {menuItems.length > 0 ? (
+                          menuItems.map((item) => (
+                            <TableRow key={item.id}>
+                              <TableCell className="font-medium">{item.name}</TableCell>
+                              <TableCell>
+                                {categories.find(c => c.id === item.category_id)?.name || '-'}
+                              </TableCell>
+                              <TableCell>
+                                {item.is_extra ? 'Extra' : (item.menu_type === 'predefined' ? 'Predefinido' : 'Componente')}
+                              </TableCell>
+                              <TableCell>${Number(item.price).toLocaleString()}</TableCell>
+                              <TableCell>{item.available ? 'Disponible' : 'No Disponible'}</TableCell>
+                              <TableCell>
+                                <Button variant="ghost" size="sm">Editar</Button>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
+                              No hay menús registrados. ¡Agrega tu primer menú ahora!
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              </div>
             </TabsContent>
             
             <TabsContent value="orders">
@@ -583,7 +1021,9 @@ const ProviderDashboard = ({ activeTab = 'dashboard' }: ProviderDashboardProps) 
                                 ? `$${company.fixed_subsidy_amount.toLocaleString()}` 
                                 : '-'}
                             </TableCell>
-                            <TableCell>0</TableCell>
+                            <TableCell>
+                              {users.filter(u => u.company_id === company.id).length}
+                            </TableCell>
                             <TableCell>
                               <Button variant="ghost" size="sm">Editar</Button>
                             </TableCell>

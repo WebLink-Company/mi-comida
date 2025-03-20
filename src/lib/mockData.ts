@@ -5,57 +5,78 @@ export const mockCompanies: Company[] = [
   {
     id: '1',
     name: 'Acme Inc.',
+    subsidy_percentage: 50,
     subsidyPercentage: 50,
-    logo: 'https://via.placeholder.com/150'
+    logo: 'https://via.placeholder.com/150',
+    provider_id: '3'
   },
   {
     id: '2',
     name: 'TechCorp',
+    subsidy_percentage: 75,
     subsidyPercentage: 75,
-    logo: 'https://via.placeholder.com/150'
+    logo: 'https://via.placeholder.com/150',
+    provider_id: '3'
   },
   {
     id: '3',
     name: 'Global Solutions',
+    subsidy_percentage: 40,
     subsidyPercentage: 40,
-    logo: 'https://via.placeholder.com/150'
+    logo: 'https://via.placeholder.com/150',
+    provider_id: '3'
   }
 ];
 
 export const mockUsers: User[] = [
   {
     id: '1',
+    first_name: 'Juan',
+    last_name: 'Pérez',
     name: 'Juan Pérez',
     email: 'juan.perez@acme.com',
     role: 'employee',
+    company_id: '1',
     companyId: '1'
   },
   {
     id: '2',
+    first_name: 'Ana',
+    last_name: 'Gómez',
     name: 'Ana Gómez',
     email: 'ana.gomez@acme.com',
     role: 'supervisor',
+    company_id: '1',
     companyId: '1'
   },
   {
     id: '3',
+    first_name: 'Carlos',
+    last_name: 'López',
     name: 'Carlos López',
     email: 'carlos@foodco.com',
     role: 'provider',
+    company_id: '3',
     companyId: '3'
   },
   {
     id: '4',
+    first_name: 'María',
+    last_name: 'Rodríguez',
     name: 'María Rodríguez',
     email: 'maria@techcorp.com',
     role: 'employee',
+    company_id: '2',
     companyId: '2'
   },
   {
     id: '5',
+    first_name: 'Pedro',
+    last_name: 'Sánchez',
     name: 'Pedro Sánchez',
     email: 'pedro@techcorp.com',
     role: 'supervisor',
+    company_id: '2',
     companyId: '2'
   }
 ];
@@ -68,7 +89,8 @@ export const mockLunchOptions: LunchOption[] = [
     price: 12.99,
     image: 'https://images.unsplash.com/photo-1550304943-4f24f54ddde9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
     available: true,
-    tags: ['saludable', 'pollo', 'ensalada']
+    tags: ['saludable', 'pollo', 'ensalada'],
+    provider_id: '3'
   },
   {
     id: '2',
@@ -77,7 +99,8 @@ export const mockLunchOptions: LunchOption[] = [
     price: 14.50,
     image: 'https://images.unsplash.com/photo-1612874742237-6526221588e3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
     available: true,
-    tags: ['pasta', 'italiano']
+    tags: ['pasta', 'italiano'],
+    provider_id: '3'
   },
   {
     id: '3',
@@ -86,7 +109,8 @@ export const mockLunchOptions: LunchOption[] = [
     price: 13.75,
     image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
     available: true,
-    tags: ['vegetariano', 'saludable', 'vegano']
+    tags: ['vegetariano', 'saludable', 'vegano'],
+    provider_id: '3'
   },
   {
     id: '4',
@@ -95,7 +119,8 @@ export const mockLunchOptions: LunchOption[] = [
     price: 15.25,
     image: 'https://images.unsplash.com/photo-1604579905046-467c8089e774?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
     available: false,
-    tags: ['pollo', 'picante', 'arroz']
+    tags: ['pollo', 'picante', 'arroz'],
+    provider_id: '3'
   },
   {
     id: '5',
@@ -104,7 +129,8 @@ export const mockLunchOptions: LunchOption[] = [
     price: 11.99,
     image: 'https://images.unsplash.com/photo-1525434280327-e525e1dfe269?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
     available: true,
-    tags: ['sandwich', 'pollo', 'rápido']
+    tags: ['sandwich', 'pollo', 'rápido'],
+    provider_id: '3'
   },
   {
     id: '6',
@@ -113,44 +139,63 @@ export const mockLunchOptions: LunchOption[] = [
     price: 18.50,
     image: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
     available: true,
-    tags: ['pescado', 'premium', 'saludable']
+    tags: ['pescado', 'premium', 'saludable'],
+    provider_id: '3'
   }
 ];
 
 export const mockOrders: Order[] = [
   {
     id: '1',
+    user_id: '1',
     userId: '1',
+    lunch_option_id: '1',
     lunchOptionId: '1',
     date: '2023-11-20',
     status: 'approved',
+    created_at: '2023-11-19T15:30:00Z',
     createdAt: '2023-11-19T15:30:00Z',
-    approvedBy: '2'
+    approved_by: '2',
+    approvedBy: '2',
+    company_id: '1'
   },
   {
     id: '2',
+    user_id: '4',
     userId: '4',
+    lunch_option_id: '3',
     lunchOptionId: '3',
     date: '2023-11-20',
     status: 'approved',
+    created_at: '2023-11-19T14:45:00Z',
     createdAt: '2023-11-19T14:45:00Z',
-    approvedBy: '5'
+    approved_by: '5',
+    approvedBy: '5',
+    company_id: '2'
   },
   {
     id: '3',
+    user_id: '1',
     userId: '1',
+    lunch_option_id: '2',
     lunchOptionId: '2',
     date: '2023-11-21',
     status: 'pending',
-    createdAt: '2023-11-20T08:15:00Z'
+    created_at: '2023-11-20T08:15:00Z',
+    createdAt: '2023-11-20T08:15:00Z',
+    company_id: '1'
   },
   {
     id: '4',
+    user_id: '4',
     userId: '4',
+    lunch_option_id: '5',
     lunchOptionId: '5',
     date: '2023-11-21',
     status: 'pending',
-    createdAt: '2023-11-20T09:30:00Z'
+    created_at: '2023-11-20T09:30:00Z',
+    createdAt: '2023-11-20T09:30:00Z',
+    company_id: '2'
   }
 ];
 
@@ -169,7 +214,7 @@ export const getCurrentUser = (): User => {
 };
 
 export const getUsersByCompany = (companyId: string): User[] => {
-  return mockUsers.filter(user => user.companyId === companyId);
+  return mockUsers.filter(user => user.company_id === companyId || user.companyId === companyId);
 };
 
 export const getCompanyById = (companyId: string): Company | undefined => {
@@ -177,15 +222,17 @@ export const getCompanyById = (companyId: string): Company | undefined => {
 };
 
 export const getOrdersByUser = (userId: string): Order[] => {
-  return mockOrders.filter(order => order.userId === userId);
+  return mockOrders.filter(order => order.user_id === userId || order.userId === userId);
 };
 
 export const getOrdersByCompany = (companyId: string): Order[] => {
   const companyUserIds = mockUsers
-    .filter(user => user.companyId === companyId)
+    .filter(user => user.company_id === companyId || user.companyId === companyId)
     .map(user => user.id);
   
-  return mockOrders.filter(order => companyUserIds.includes(order.userId));
+  return mockOrders.filter(order => 
+    companyUserIds.includes(order.user_id || order.userId || '')
+  );
 };
 
 export const getLunchOptionById = (id: string): LunchOption | undefined => {

@@ -72,6 +72,12 @@ const OrderSummary = ({
     }
   };
 
+  // Helper function to get user's display name
+  const getUserDisplayName = (user: User) => {
+    if (user.name) return user.name;
+    return `${user.first_name} ${user.last_name}`;
+  };
+
   return (
     <div 
       className={cn(
@@ -108,7 +114,7 @@ const OrderSummary = ({
           
           {user && (
             <p className="text-sm font-medium">
-              Solicitado por: {user.name}
+              Solicitado por: {getUserDisplayName(user)}
             </p>
           )}
           

@@ -73,7 +73,7 @@ const ProviderDashboard = ({ activeTab = 'dashboard' }: ProviderDashboardProps) 
       .filter(order => order.status === 'pending')
       .map(order => ({
         ...order,
-        status: order.status as 'pending' | 'approved' | 'rejected' | 'delivered'
+        status: 'pending' as 'pending' | 'approved' | 'rejected' | 'delivered'
       }));
     
     setPendingOrders(pendingOrdersWithCorrectStatus);
@@ -103,7 +103,7 @@ const ProviderDashboard = ({ activeTab = 'dashboard' }: ProviderDashboardProps) 
 
   const handleApproveOrder = (orderId: string) => {
     const updatedOrders = pendingOrders.map(order =>
-      order.id === orderId ? { ...order, status: 'approved' } : order
+      order.id === orderId ? { ...order, status: 'approved' as const } : order
     );
     setPendingOrders(updatedOrders);
     
@@ -115,7 +115,7 @@ const ProviderDashboard = ({ activeTab = 'dashboard' }: ProviderDashboardProps) 
 
   const handleRejectOrder = (orderId: string) => {
     const updatedOrders = pendingOrders.map(order =>
-      order.id === orderId ? { ...order, status: 'rejected' } : order
+      order.id === orderId ? { ...order, status: 'rejected' as const } : order
     );
     setPendingOrders(updatedOrders);
     

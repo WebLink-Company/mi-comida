@@ -1,4 +1,3 @@
-
 import { Company, LunchOption, Order, User, DashboardStats } from './types';
 
 export const mockCompanies: Company[] = [
@@ -199,7 +198,7 @@ export const mockOrders: Order[] = [
   }
 ];
 
-// Add aliases for backward compatibility
+// Add explicit aliases for backward compatibility
 export const users = mockUsers;
 export const lunches = mockLunchOptions;
 export const orders = mockOrders;

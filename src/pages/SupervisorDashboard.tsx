@@ -76,18 +76,15 @@ const SupervisorDashboard = ({ activeTab = 'dashboard' }: SupervisorDashboardPro
   }>({});
 
   useEffect(() => {
-    // In a real app, would fetch from Supabase
     const filteredOrders = mockOrders.filter(order => order.status === 'pending');
     setPendingOrders(filteredOrders);
     setLunchOptions(mockLunchOptions);
 
-    // Filter users that belong to supervisor's company
     const companyEmployees = mockUsers.filter(user => 
       user.role === 'employee' && user.company_id === currentUser?.company_id
     );
     setEmployeeUsers(companyEmployees);
 
-    // Mock company data
     setCompany({
       id: '1',
       name: 'Acme Corp',
@@ -113,7 +110,6 @@ const SupervisorDashboard = ({ activeTab = 'dashboard' }: SupervisorDashboardPro
   ];
 
   const handleUpdateCompanySubsidy = () => {
-    // In a real app, save to Supabase
     if (company) {
       const updatedCompany = {
         ...company,
@@ -133,7 +129,6 @@ const SupervisorDashboard = ({ activeTab = 'dashboard' }: SupervisorDashboardPro
   const handleUpdateEmployeeSubsidy = () => {
     if (!selectedEmployee) return;
     
-    // In a real app, save to Supabase
     const updatedSubsidies = {
       ...employeeSubsidies,
       [selectedEmployee]: {
@@ -176,7 +171,6 @@ const SupervisorDashboard = ({ activeTab = 'dashboard' }: SupervisorDashboardPro
               <TabsTrigger value="reports" className="text-base px-5 py-2">Reportes</TabsTrigger>
             </TabsList>
             
-            {/* Dashboard Content */}
             <TabsContent value="dashboard">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Card>
@@ -222,7 +216,6 @@ const SupervisorDashboard = ({ activeTab = 'dashboard' }: SupervisorDashboardPro
               </div>
             </TabsContent>
             
-            {/* Approve Orders Content */}
             <TabsContent value="approve">
               <Card>
                 <CardHeader>
@@ -244,8 +237,8 @@ const SupervisorDashboard = ({ activeTab = 'dashboard' }: SupervisorDashboardPro
                     <TableBody>
                       {pendingOrders.length > 0 ? (
                         pendingOrders.map((order) => {
-                          const user = users.find(user => user.id === order.user_id);
-                          const lunch = lunches.find(lunch => lunch.id === order.lunch_option_id);
+                          const user = mockUsers.find(user => user.id === order.user_id);
+                          const lunch = mockLunchOptions.find(lunch => lunch.id === order.lunch_option_id);
                           
                           return (
                             <TableRow key={order.id}>
@@ -272,7 +265,6 @@ const SupervisorDashboard = ({ activeTab = 'dashboard' }: SupervisorDashboardPro
               </Card>
             </TabsContent>
             
-            {/* Subsidies Content */}
             <TabsContent value="subsidies">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Card>
@@ -490,7 +482,6 @@ const SupervisorDashboard = ({ activeTab = 'dashboard' }: SupervisorDashboardPro
               </Card>
             </TabsContent>
             
-            {/* Reports Content */}
             <TabsContent value="reports">
               <Card>
                 <CardHeader>

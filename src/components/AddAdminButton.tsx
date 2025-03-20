@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 const AddAdminButton = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [isCreated, setIsCreated] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
   const { toast } = useToast();
 
   const createAdminUser = async () => {
@@ -50,7 +51,7 @@ const AddAdminButton = () => {
       if (data.user) {
         toast({
           title: 'Admin user created',
-          description: 'QA Admin user has been created successfully.',
+          description: 'QA Admin user has been created successfully with password: Prueba33',
         });
         setIsCreated(true);
       }
@@ -66,6 +67,72 @@ const AddAdminButton = () => {
     }
   };
 
+  const resetAdminPassword = async () => {
+    setIsResetting(true);
+    try {
+      // First try to sign in with admin credentials
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: 'qaadmin@lunchwise.app',
+        password: 'Prueba33',
+      });
+
+      // If sign in fails, try to reset the password
+      if (signInError) {
+        console.log('Sign in failed, attempting password reset');
+        
+        // First check if the user exists
+        const { data: userData } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('email', 'qaadmin@lunchwise.app')
+          .limit(1);
+        
+        if (!userData || userData.length === 0) {
+          throw new Error('Admin user does not exist');
+        }
+        
+        // Use password reset functionality
+        const { error: resetError } = await supabase.auth.resetPasswordForEmail(
+          'qaadmin@lunchwise.app',
+          {
+            redirectTo: `${window.location.origin}/reset-password`,
+          }
+        );
+        
+        if (resetError) throw resetError;
+        
+        toast({
+          title: 'Password reset email sent',
+          description: 'Check qaadmin@lunchwise.app inbox for password reset instructions',
+        });
+      } else {
+        // If sign in succeeds, we can update the password directly
+        const { error: updateError } = await supabase.auth.updateUser({
+          password: 'Prueba33'
+        });
+        
+        if (updateError) throw updateError;
+        
+        toast({
+          title: 'Password reset successful',
+          description: 'The password has been reset to: Prueba33',
+        });
+        
+        // Sign out after password reset
+        await supabase.auth.signOut();
+      }
+    } catch (error) {
+      console.error('Error resetting admin password:', error);
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to reset admin password',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
   return (
     <div className="rounded-lg border border-border p-4 mb-4">
       <h2 className="text-xl font-semibold mb-2">Create QA Admin User</h2>
@@ -73,23 +140,41 @@ const AddAdminButton = () => {
         Create a specific admin user with email: qaadmin@lunchwise.app and password: Prueba33
       </p>
       
-      <Button 
-        onClick={createAdminUser} 
-        disabled={isCreating || isCreated}
-        variant="default"
-        className="w-full"
-      >
-        {isCreating ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Creating admin user...
-          </>
-        ) : isCreated ? (
-          'Admin User Created'
-        ) : (
-          'Create QA Admin User'
-        )}
-      </Button>
+      <div className="space-y-2">
+        <Button 
+          onClick={createAdminUser} 
+          disabled={isCreating || isResetting}
+          variant="default"
+          className="w-full"
+        >
+          {isCreating ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Creating admin user...
+            </>
+          ) : isCreated ? (
+            'Admin User Created'
+          ) : (
+            'Create QA Admin User'
+          )}
+        </Button>
+        
+        <Button 
+          onClick={resetAdminPassword} 
+          disabled={isCreating || isResetting}
+          variant="outline"
+          className="w-full"
+        >
+          {isResetting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Resetting password...
+            </>
+          ) : (
+            'Reset Admin Password'
+          )}
+        </Button>
+      </div>
     </div>
   );
 };

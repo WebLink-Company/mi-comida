@@ -87,61 +87,50 @@ const AddAdminButton = () => {
   const resetAdminPassword = async () => {
     setIsResetting(true);
     try {
-      // Check if the admin user exists in auth
-      const { data: authData, error: authError } = await supabase.auth.admin.getUserByEmail(
-        'qaadmin@lunchwise.app'
-      );
-      
-      if (authError || !authData.user) {
-        // If admin API fails or user doesn't exist, check profiles
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('email', 'qaadmin@lunchwise.app')
-          .limit(1);
+      // We can't use getUserByEmail since it doesn't exist in the API
+      // Instead, let's look up the user in the profiles table
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('id, email')
+        .eq('email', 'qaadmin@lunchwise.app')
+        .limit(1);
+        
+      if (profileData && profileData.length > 0) {
+        // User exists, try to update password
+        const userId = profileData[0].id;
+        
+        // Try to update the user with admin API using the user ID
+        const { error: updateError } = await supabase.auth.admin.updateUserById(
+          userId,
+          { password: 'Prueba33', email_confirm: true }
+        );
+        
+        if (updateError) {
+          // If admin API fails, try password reset flow
+          const { error: resetError } = await supabase.auth.resetPasswordForEmail(
+            'qaadmin@lunchwise.app',
+            {
+              redirectTo: `${window.location.origin}/reset-password`,
+            }
+          );
           
-        if (!profileData || profileData.length === 0) {
-          // If user doesn't exist in profiles either, create it
-          await createAdminUser();
+          if (resetError) throw resetError;
+          
+          toast({
+            title: 'Password reset email sent',
+            description: 'Check qaadmin@lunchwise.app inbox for password reset instructions',
+          });
           return;
         }
         
-        // User exists in profiles but not in auth, use password reset
-        const { error: resetError } = await supabase.auth.resetPasswordForEmail(
-          'qaadmin@lunchwise.app',
-          {
-            redirectTo: `${window.location.origin}/reset-password`,
-          }
-        );
-        
-        if (resetError) throw resetError;
-        
         toast({
-          title: 'Password reset email sent',
-          description: 'Check qaadmin@lunchwise.app inbox for password reset instructions',
+          title: 'Password reset successful',
+          description: 'The password has been reset to: Prueba33',
         });
-        return;
+      } else {
+        // User doesn't exist in profiles, try to create it
+        await createAdminUser();
       }
-      
-      // User exists in auth, use admin API to set password
-      const { error: updateError } = await supabase.auth.admin.updateUserById(
-        authData.user.id,
-        { password: 'Prueba33', email_confirm: true }
-      );
-      
-      if (updateError) {
-        // If admin API fails, try direct update
-        const { error: directUpdateError } = await supabase.auth.updateUser({
-          password: 'Prueba33'
-        });
-        
-        if (directUpdateError) throw directUpdateError;
-      }
-      
-      toast({
-        title: 'Password reset successful',
-        description: 'The password has been reset to: Prueba33',
-      });
       
     } catch (error) {
       console.error('Error resetting admin password:', error);

@@ -17,6 +17,7 @@ interface LunchCardProps {
   isSelected?: boolean;
   onSelect?: (id?: string) => void;
   subsidyPercentage?: number;
+  fixedSubsidyAmount?: number;
   className?: string;
   showControls?: boolean;
   tags?: string[];
@@ -32,6 +33,7 @@ const LunchCard = ({
   isSelected = false, 
   onSelect, 
   subsidyPercentage = 0,
+  fixedSubsidyAmount = 0,
   className,
   showControls = true,
   tags = []
@@ -47,9 +49,21 @@ const LunchCard = ({
   const displayTags = tags.length > 0 ? tags : lunchOption?.tags || [];
   const available = lunchOption ? lunchOption.available : true;
   
-  // Calculate prices if not explicitly provided
+  // Calculate prices with support for both percentage and fixed subsidies
   const originalPrice = displayPrice;
-  const discountedPrice = subsidizedPrice ?? (displayPrice * (1 - subsidyPercentage / 100));
+  let discountedPrice = subsidizedPrice;
+  
+  if (!discountedPrice) {
+    if (fixedSubsidyAmount > 0) {
+      // Apply fixed subsidy amount, but don't go below zero
+      discountedPrice = Math.max(0, displayPrice - fixedSubsidyAmount);
+    } else if (subsidyPercentage > 0) {
+      // Apply percentage subsidy
+      discountedPrice = displayPrice * (1 - subsidyPercentage / 100);
+    } else {
+      discountedPrice = displayPrice;
+    }
+  }
 
   const handleSelect = () => {
     if (available && onSelect) {
@@ -121,7 +135,7 @@ const LunchCard = ({
           <div>
             <div className="flex items-center space-x-2">
               <span className="text-lg font-bold">${discountedPrice.toFixed(2)}</span>
-              {subsidyPercentage > 0 && (
+              {(subsidyPercentage > 0 || fixedSubsidyAmount > 0) && (
                 <span className="text-sm text-muted-foreground line-through">
                   ${originalPrice.toFixed(2)}
                 </span>
@@ -131,6 +145,12 @@ const LunchCard = ({
             {subsidyPercentage > 0 && (
               <p className="text-xs text-green-600 font-medium">
                 {subsidyPercentage}% subsidiado por tu empresa
+              </p>
+            )}
+            
+            {fixedSubsidyAmount > 0 && (
+              <p className="text-xs text-green-600 font-medium">
+                ${fixedSubsidyAmount.toFixed(2)} subsidiado por tu empresa
               </p>
             )}
           </div>

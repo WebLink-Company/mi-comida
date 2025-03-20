@@ -12,6 +12,7 @@ export type Database = {
       companies: {
         Row: {
           created_at: string | null
+          fixed_subsidy_amount: number | null
           id: string
           logo: string | null
           name: string
@@ -21,6 +22,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          fixed_subsidy_amount?: number | null
           id?: string
           logo?: string | null
           name: string
@@ -30,6 +32,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          fixed_subsidy_amount?: number | null
           id?: string
           logo?: string | null
           name?: string

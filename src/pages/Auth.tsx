@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
 import { Lock, User, Mail } from 'lucide-react';
+import SeedDataButton from '@/components/SeedDataButton';
 
 const Auth = () => {
   const { toast } = useToast();
@@ -20,6 +21,7 @@ const Auth = () => {
   const [lastName, setLastName] = useState('');
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('login');
+  const [showDevTools, setShowDevTools] = useState(false);
 
   useEffect(() => {
     // Check if already authenticated
@@ -70,6 +72,9 @@ const Auth = () => {
             break;
           case 'employee':
             navigate('/employee');
+            break;
+          case 'company':
+            navigate('/company');
             break;
           default:
             navigate('/');
@@ -160,6 +165,18 @@ const Auth = () => {
       setLoading(false);
     }
   };
+
+  // Activate dev tools with a special key combination (Shift + Alt + D)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.shiftKey && e.altKey && e.key === 'D') {
+        setShowDevTools(prev => !prev);
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-background to-muted/30">
@@ -318,6 +335,18 @@ const Auth = () => {
           </Tabs>
         </Card>
       </motion.div>
+      
+      {/* Developer tools - hidden by default, activated with Shift+Alt+D */}
+      {showDevTools && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="w-full max-w-md mt-6"
+        >
+          <SeedDataButton />
+        </motion.div>
+      )}
     </div>
   );
 };

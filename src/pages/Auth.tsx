@@ -10,6 +10,8 @@ import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
 import { Lock, User, Mail } from 'lucide-react';
 import SeedDataButton from '@/components/SeedDataButton';
+import AddAdminButton from '@/components/AddAdminButton';
+import DebugPoliciesButton from '@/components/DebugPoliciesButton';
 import { UserRole } from '@/lib/types';
 
 const Auth = () => {
@@ -367,9 +369,11 @@ const Auth = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="w-full max-w-md mt-6"
+          className="w-full max-w-md mt-6 space-y-6"
         >
+          <AddAdminButton />
           <SeedDataButton />
+          <DebugPoliciesButton />
         </motion.div>
       )}
     </div>

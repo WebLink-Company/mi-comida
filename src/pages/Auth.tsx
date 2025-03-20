@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,7 +23,6 @@ const Auth = () => {
   const [showDevTools, setShowDevTools] = useState(false);
 
   useEffect(() => {
-    // Check if already authenticated
     const checkSession = async () => {
       const { data } = await supabase.auth.getSession();
       if (data.session) {
@@ -34,7 +32,6 @@ const Auth = () => {
     
     checkSession();
     
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (session) {
@@ -166,7 +163,6 @@ const Auth = () => {
     }
   };
 
-  // Activate dev tools with a special key combination (Shift + Alt + D)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.shiftKey && e.altKey && e.key === 'D') {
@@ -336,7 +332,6 @@ const Auth = () => {
         </Card>
       </motion.div>
       
-      {/* Developer tools - hidden by default, activated with Shift+Alt+D */}
       {showDevTools && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}

@@ -107,7 +107,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       try {
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
           refreshUser();
-        } else if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+        } else if (event === 'SIGNED_OUT') {
+          // Removed 'USER_DELETED' comparison that was causing TypeScript error
           setUser(null);
           setAuthChecked(true);
           setIsLoading(false);

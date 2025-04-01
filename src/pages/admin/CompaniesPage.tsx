@@ -48,42 +48,24 @@ const CompaniesPage = () => {
       setLoading(true);
       let query = supabase
         .from('companies')
-        .select(`
-          *,
-          provider:providers(id, business_name, logo, logo_url)
-        `)
-        .order('name');
+        .select('*, provider:providers(id, business_name, logo)');
       
       if (user && user.role === 'provider' && user.provider_id) {
         query = query.eq('provider_id', user.provider_id);
       }
       
-      const { data, error } = await query;
+      const { data, error } = await query.order('name');
       
       if (error) throw error;
       
       const companiesWithProvider = data?.map(company => ({
         ...company,
         provider_name: company.provider ? company.provider.business_name : 'No Provider',
-        subsidy_percentage: company.subsidy_percentage || company.subsidyPercentage || 0,
-        fixed_subsidy_amount: company.fixed_subsidy_amount || company.fixedSubsidyAmount || 0,
+        subsidy_percentage: company.subsidy_percentage || 0,
+        fixed_subsidy_amount: company.fixed_subsidy_amount || 0,
       })) || [];
       
       setCompanies(companiesWithProvider);
-      
-      const { data: providersData, error: providersError } = await supabase
-        .from('providers')
-        .select('id, business_name');
-      
-      if (providersError) throw providersError;
-      
-      const typedProviders: Provider[] = (providersData || []).map(p => ({
-        id: p.id,
-        business_name: p.business_name,
-        contact_email: ''
-      }));
-      
-      setProviders(typedProviders);
       
     } catch (error) {
       console.error('Error fetching companies:', error);
@@ -101,7 +83,7 @@ const CompaniesPage = () => {
     try {
       const { data, error } = await supabase
         .from('providers')
-        .select('id, business_name')
+        .select('id, business_name, contact_email')
         .order('business_name', { ascending: true });
       
       if (error) throw error;

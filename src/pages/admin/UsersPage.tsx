@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -29,58 +30,58 @@ const UsersPage = () => {
     email: '',
     first_name: '',
     last_name: '',
-    role: 'employee',
+    role: 'employee' as const, // Type assertion to ensure this is a valid UserRole
     company_id: '',
     provider_id: ''
   });
 
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      let query = supabase
+        .from('profiles')
+        .select('*')
+        .order('first_name');
+      
+      // If user is a company, only show users associated with their company ID
+      if (user && user.role === 'company' && user.company_id) {
+        query = query.eq('company_id', user.company_id);
+      }
+      
+      const { data, error } = await query;
+      if (error) throw error;
+      setUsers(data || []);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load user data',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchCompanies = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('companies')
+        .select('id, name, subsidy_percentage, provider_id')
+        .order('name');
+      if (error) throw error;
+      setCompanies(data || []);
+    } catch (error) {
+      console.error('Error fetching companies:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load company data',
+        variant: 'destructive',
+      });
+    }
+  };
+
   useEffect(() => {
-    const fetchUsers = async () => {
-      setLoading(true);
-      try {
-        let query = supabase
-          .from('profiles')
-          .select('*')
-          .order('first_name');
-        
-        // If user is a company, only show users associated with their company ID
-        if (user && user.role === 'company' && user.company_id) {
-          query = query.eq('company_id', user.company_id);
-        }
-        
-        const { data, error } = await query;
-        if (error) throw error;
-        setUsers(data || []);
-      } catch (error) {
-        console.error('Error fetching users:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to load user data',
-          variant: 'destructive',
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const fetchCompanies = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('companies')
-          .select('id, name')
-          .order('name');
-        if (error) throw error;
-        setCompanies(data || []);
-      } catch (error) {
-        console.error('Error fetching companies:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to load company data',
-          variant: 'destructive',
-        });
-      }
-    };
-
     fetchUsers();
     fetchCompanies();
   }, [user, toast]);
@@ -365,7 +366,10 @@ const UsersPage = () => {
               </div>
               <div className="grid gap-2">
                 <Label>Role</Label>
-                <Select onValueChange={(value) => setSelectedUser({ ...selectedUser, role: value as any })}>
+                <Select 
+                  value={selectedUser.role} 
+                  onValueChange={(value) => setSelectedUser({ ...selectedUser, role: value as any })}
+                >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder={selectedUser.role} />
                   </SelectTrigger>
@@ -381,7 +385,10 @@ const UsersPage = () => {
               {selectedUser.role === 'employee' && (
                 <div className="grid gap-2">
                   <Label>Company</Label>
-                  <Select onValueChange={(value) => setSelectedUser({ ...selectedUser, company_id: value })}>
+                  <Select 
+                    value={selectedUser.company_id || ''} 
+                    onValueChange={(value) => setSelectedUser({ ...selectedUser, company_id: value })}
+                  >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder={
                         companies.find(company => company.id === selectedUser.company_id)?.name || 'Select a company'
@@ -469,7 +476,12 @@ const UsersPage = () => {
             </div>
             <div className="grid gap-2">
               <Label>Role</Label>
-              <Select onValueChange={(value) => setNewUser({ ...newUser, role: value as any })}>
+              <Select 
+                value={newUser.role} 
+                onValueChange={(value: "admin" | "provider" | "supervisor" | "employee" | "company") => 
+                  setNewUser({ ...newUser, role: value })
+                }
+              >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select a role" />
                 </SelectTrigger>
@@ -485,7 +497,10 @@ const UsersPage = () => {
             {newUser.role === 'employee' && (
               <div className="grid gap-2">
                 <Label>Company</Label>
-                <Select onValueChange={(value) => setNewUser({ ...newUser, company_id: value })}>
+                <Select 
+                  value={newUser.company_id} 
+                  onValueChange={(value) => setNewUser({ ...newUser, company_id: value })}
+                >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select a company" />
                   </SelectTrigger>

@@ -59,7 +59,6 @@ const CompaniesPage = () => {
         return;
       }
       
-      const companyIds = companiesData.map(company => company.id);
       const providerIds = companiesData.map(company => company.provider_id).filter(Boolean);
       
       let providersMap: Record<string, any> = {};
@@ -166,7 +165,17 @@ const CompaniesPage = () => {
         .eq('id', currentCompany.provider_id)
         .single();
       
-      if (providerCheckError || !providerExists) {
+      if (providerCheckError) {
+        console.error('Error checking provider:', providerCheckError);
+        toast({
+          title: 'Invalid provider',
+          description: 'The selected provider could not be verified.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      if (!providerExists) {
         toast({
           title: 'Invalid provider',
           description: 'The selected provider does not exist.',

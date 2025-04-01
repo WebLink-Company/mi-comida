@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 
 interface CompanyWithProvider extends Company {
   provider_name?: string;
-  // Updated to reflect actual Supabase response structure
+  // Update interface to match actual response structure: providers can be null or a single object
   providers?: {
     business_name: string;
   } | null;

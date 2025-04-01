@@ -30,7 +30,7 @@ const CompaniesPage = () => {
             logo,
             provider_id,
             created_at,
-            providers:provider_id (business_name)
+            providers (business_name)
           `)
           .order('name', { ascending: true });
         

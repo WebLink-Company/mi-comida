@@ -13,6 +13,23 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
   const { user, isLoading } = useAuth();
   const location = useLocation();
 
+  // Add max loading time
+  useEffect(() => {
+    let timeoutId: number | null = null;
+    
+    // Set a timeout to prevent infinite loading
+    if (isLoading) {
+      timeoutId = window.setTimeout(() => {
+        console.warn("Loading timeout reached, redirecting to auth");
+        window.location.href = "/auth";
+      }, 5000); // 5 seconds max loading time
+    }
+    
+    return () => {
+      if (timeoutId) window.clearTimeout(timeoutId);
+    };
+  }, [isLoading]);
+
   // Show loading state but with a max timeout to prevent infinite loading
   if (isLoading) {
     return (

@@ -16,7 +16,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [authChecked, setAuthChecked] = useState(false); // Add this flag to prevent loops
+  const [authChecked, setAuthChecked] = useState(false); 
   const { toast } = useToast();
 
   const refreshUser = async () => {
@@ -54,45 +54,73 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     } catch (error) {
       console.error('Error refreshing user:', error);
-      // Fallback to mock data for development
+      // Don't use mockData in production to prevent potential issues
       if (process.env.NODE_ENV === 'development') {
-        import('@/lib/mockData').then(({ getCurrentUser }) => {
+        try {
+          const { getCurrentUser } = await import('@/lib/mockData');
           const mockUser = getCurrentUser();
           setUser(mockUser);
-        });
+        } catch (mockError) {
+          console.error('Failed to load mock data:', mockError);
+          setUser(null);
+        }
       } else {
         setUser(null);
       }
     } finally {
       setIsLoading(false);
-      setAuthChecked(true); // Mark auth check as completed
+      setAuthChecked(true); 
     }
   };
 
   useEffect(() => {
-    const fetchUser = async () => {
-      await refreshUser();
+    // Create a flag to prevent multiple initializations
+    let isMounted = true;
+    
+    const initAuth = async () => {
+      if (!authChecked) {
+        try {
+          await refreshUser();
+        } catch (error) {
+          console.error('Auth initialization error:', error);
+          if (isMounted) {
+            setIsLoading(false);
+            setAuthChecked(true);
+          }
+        }
+      }
     };
 
-    if (!authChecked) { // Only run this if we haven't checked auth yet
-      fetchUser();
-    }
+    initAuth();
 
-    // Set up auth listener only once
+    // Set up auth listener only once with better error handling
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          await refreshUser();
-        } else if (event === 'SIGNED_OUT') {
-          setUser(null);
+      (event, session) => {
+        if (!isMounted) return;
+        
+        try {
+          if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+            refreshUser();
+          } else if (event === 'SIGNED_OUT') {
+            setUser(null);
+            setAuthChecked(true);
+            setIsLoading(false);
+          }
+        } catch (error) {
+          console.error('Auth state change error:', error);
+          if (isMounted) {
+            setIsLoading(false);
+            setAuthChecked(true);
+          }
         }
       }
     );
 
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
     };
-  }, [authChecked]); // Only depend on authChecked, not on refreshUser
+  }, [authChecked]); 
 
   const signOut = async () => {
     try {

@@ -70,9 +70,9 @@ const AdminSidebar = ({ collapsed, setCollapsed }: AdminSidebarProps) => {
   }
   
   return (
-    <div
+    <aside
       className={cn(
-        "relative h-screen bg-background border-r border-border transition-all duration-300 ease-in-out z-30",
+        "fixed left-0 top-16 z-30 h-[calc(100vh-4rem)] bg-background border-r border-border transition-all duration-300 ease-in-out",
         collapsed ? "w-[70px]" : "w-[240px]"
       )}
     >
@@ -150,7 +150,7 @@ const AdminSidebar = ({ collapsed, setCollapsed }: AdminSidebarProps) => {
           </div>
         </div>
       </div>
-    </div>
+    </aside>
   );
 };
 

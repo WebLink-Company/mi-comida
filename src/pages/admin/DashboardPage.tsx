@@ -1,134 +1,132 @@
 
-import { useEffect, useState } from 'react';
-import { Users, Building, ChefHat, ClipboardList } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-
+import { Users, Building, ChefHat, ShoppingBag, Clock } from 'lucide-react';
 import StatCard from '@/components/admin/StatCard';
-import ActivityLog from '@/components/admin/ActivityLog';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 
 const DashboardPage = () => {
-  const { toast } = useToast();
   const [stats, setStats] = useState({
-    users: { count: '0', loading: true },
-    companies: { count: '0', loading: true },
-    providers: { count: '0', loading: true },
-    orders: { count: '0', loading: true },
+    users: 0,
+    companies: 0,
+    providers: 0,
+    orders: 0,
   });
+  const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchStats = async () => {
+      setLoading(true);
       try {
-        // Fetch user count
-        const { count: usersCount, error: usersError } = await supabase
-          .from('profiles')
-          .select('*', { count: 'exact', head: true });
-        
-        if (usersError) throw usersError;
-        
-        // Fetch companies count
-        const { count: companiesCount, error: companiesError } = await supabase
-          .from('companies')
-          .select('*', { count: 'exact', head: true });
-        
-        if (companiesError) throw companiesError;
-        
-        // Fetch providers count
-        const { count: providersCount, error: providersError } = await supabase
-          .from('providers')
-          .select('*', { count: 'exact', head: true });
-        
-        if (providersError) throw providersError;
-        
-        // Fetch orders count
-        const { count: ordersCount, error: ordersError } = await supabase
-          .from('orders')
-          .select('*', { count: 'exact', head: true });
-        
-        if (ordersError) throw ordersError;
-        
+        const [usersRes, companiesRes, providersRes, ordersRes, activityRes] = await Promise.all([
+          supabase.from('profiles').select('count'),
+          supabase.from('companies').select('count'),
+          supabase.from('providers').select('count'),
+          supabase.from('orders').select('count'),
+          supabase.from('audit_logs')
+            .select('*')
+            .order('timestamp', { ascending: false })
+            .limit(5)
+        ]);
+
         setStats({
-          users: { count: String(usersCount || 0), loading: false },
-          companies: { count: String(companiesCount || 0), loading: false },
-          providers: { count: String(providersCount || 0), loading: false },
-          orders: { count: String(ordersCount || 0), loading: false },
+          users: usersRes.count || 0,
+          companies: companiesRes.count || 0,
+          providers: providersRes.count || 0,
+          orders: ordersRes.count || 0,
         });
+
+        setRecentActivity(activityRes.data || []);
       } catch (error) {
         console.error('Error fetching dashboard stats:', error);
-        toast({
-          title: 'Error loading dashboard data',
-          description: 'Please try again later',
-          variant: 'destructive',
-        });
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchStats();
-  }, [toast]);
+  }, []);
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold mb-1">Admin Dashboard</h1>
-        <p className="text-muted-foreground">Welcome to the LunchWise admin panel</p>
+        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        <p className="text-muted-foreground mt-2">
+          Overview of your platform's performance and activity.
+        </p>
       </div>
-      
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatCard
-          title="Total Users"
-          value={stats.users.loading ? "Loading..." : stats.users.count}
-          icon={<Users className="h-6 w-6" />}
-          description="All registered platform users"
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <StatCard 
+          title="Total Users" 
+          value={stats.users} 
+          icon={<Users className="h-4 w-4" />} 
+          description="Active users across all roles"
           trend={{ value: 12, isPositive: true }}
         />
-        <StatCard
-          title="Companies"
-          value={stats.companies.loading ? "Loading..." : stats.companies.count}
-          icon={<Building className="h-6 w-6" />}
-          description="Registered client companies"
-          trend={{ value: 8, isPositive: true }}
-        />
-        <StatCard
-          title="Providers"
-          value={stats.providers.loading ? "Loading..." : stats.providers.count}
-          icon={<ChefHat className="h-6 w-6" />}
-          description="Food service providers"
+        <StatCard 
+          title="Companies" 
+          value={stats.companies} 
+          icon={<Building className="h-4 w-4" />} 
+          description="Client companies registered"
           trend={{ value: 5, isPositive: true }}
         />
-        <StatCard
-          title="Orders"
-          value={stats.orders.loading ? "Loading..." : stats.orders.count}
-          icon={<ClipboardList className="h-6 w-6" />}
-          description="Total lunch orders processed"
-          trend={{ value: 24, isPositive: true }}
+        <StatCard 
+          title="Food Providers" 
+          value={stats.providers} 
+          icon={<ChefHat className="h-4 w-4" />} 
+          description="Active food providers"
+          trend={{ value: 3, isPositive: true }}
+        />
+        <StatCard 
+          title="Total Orders" 
+          value={stats.orders} 
+          icon={<ShoppingBag className="h-4 w-4" />} 
+          description="Orders processed to date"
+          trend={{ value: 8, isPositive: true }}
         />
       </div>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <ActivityLog />
-        </div>
-        <div>
-          {/* Additional content like quick actions or system status can go here */}
-          <div className="bg-primary/5 rounded-lg border border-border p-6 h-full">
-            <h3 className="font-medium mb-4">Quick Actions</h3>
-            <div className="space-y-3">
-              <div className="bg-background rounded-md p-3 border border-border hover:bg-accent/50 transition cursor-pointer">
-                <p className="text-sm font-medium">Add New Provider</p>
-              </div>
-              <div className="bg-background rounded-md p-3 border border-border hover:bg-accent/50 transition cursor-pointer">
-                <p className="text-sm font-medium">Create User Account</p>
-              </div>
-              <div className="bg-background rounded-md p-3 border border-border hover:bg-accent/50 transition cursor-pointer">
-                <p className="text-sm font-medium">Generate Monthly Report</p>
-              </div>
-              <div className="bg-background rounded-md p-3 border border-border hover:bg-accent/50 transition cursor-pointer">
-                <p className="text-sm font-medium">Update System Settings</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Clock className="mr-2 h-5 w-5" />
+            Recent Activity
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Action</TableHead>
+                <TableHead>Table</TableHead>
+                <TableHead>Timestamp</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center">Loading...</TableCell>
+                </TableRow>
+              ) : recentActivity.length > 0 ? (
+                recentActivity.map((activity, index) => (
+                  <TableRow key={index}>
+                    <TableCell className="font-medium">{activity.action}</TableCell>
+                    <TableCell>{activity.table_name}</TableCell>
+                    <TableCell>{new Date(activity.timestamp).toLocaleString()}</TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center">No recent activity</TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 };

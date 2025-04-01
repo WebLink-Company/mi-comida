@@ -9,6 +9,9 @@ import { Input } from '@/components/ui/input';
 
 interface CompanyWithProvider extends Company {
   provider_name?: string;
+  providers?: {
+    business_name: string;
+  };
 }
 
 const CompaniesPage = () => {

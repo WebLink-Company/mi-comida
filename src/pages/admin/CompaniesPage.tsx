@@ -9,7 +9,7 @@ import { Search, Building, Plus, Edit, Trash2, Filter } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 
 interface ProviderSummary {
@@ -47,32 +47,58 @@ const CompaniesPage = () => {
   const fetchCompanies = async () => {
     try {
       setLoading(true);
-      let query = supabase
-        .from('companies')
-        .select('*, provider:providers(id, business_name, logo)');
       
-      if (user && user.role === 'provider' && user.provider_id) {
-        query = query.eq('provider_id', user.provider_id);
+      // First, get all companies
+      const { data: companiesData, error: companiesError } = await supabase
+        .from('companies')
+        .select('*')
+        .order('name');
+      
+      if (companiesError) throw companiesError;
+      
+      if (!companiesData) {
+        setCompanies([]);
+        return;
       }
       
-      const { data, error } = await query.order('name');
+      // Then, fetch provider details separately
+      const companyIds = companiesData.map(company => company.id);
+      const providerIds = companiesData.map(company => company.provider_id).filter(Boolean);
       
-      if (error) throw error;
+      // Get provider details if we have any provider IDs
+      let providersMap: Record<string, any> = {};
       
-      const companiesWithProvider = data?.map(company => {
-        const providerData = company.provider as unknown as Array<{ id: string; business_name: string; logo: string }>;
+      if (providerIds.length > 0) {
+        const { data: providersData, error: providersError } = await supabase
+          .from('providers')
+          .select('id, business_name, logo')
+          .in('id', providerIds);
+        
+        if (providersError) throw providersError;
+        
+        if (providersData) {
+          providersMap = providersData.reduce((acc: Record<string, any>, provider) => {
+            acc[provider.id] = provider;
+            return acc;
+          }, {});
+        }
+      }
+      
+      // Map companies with their provider details
+      const companiesWithProvider = companiesData.map(company => {
+        const provider = company.provider_id ? providersMap[company.provider_id] : null;
+        
         return {
           ...company,
-          provider_name: providerData && providerData.length > 0 ? providerData[0].business_name : 'No Provider',
+          provider_name: provider ? provider.business_name : 'No Provider',
           subsidy_percentage: company.subsidy_percentage || 0,
           fixed_subsidy_amount: company.fixed_subsidy_amount || 0,
           // Add fields needed for compatibility
           subsidyPercentage: company.subsidy_percentage || 0,
           fixedSubsidyAmount: company.fixed_subsidy_amount || 0,
-          // Convert array from join into a single object to match CompanyWithProvider type
-          provider: providerData && providerData.length > 0 ? providerData[0] : null
+          provider: provider
         } as CompanyWithProvider;
-      }) || [];
+      });
       
       setCompanies(companiesWithProvider);
       
@@ -413,6 +439,9 @@ const CompaniesPage = () => {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{currentCompany.id ? 'Edit Company' : 'Create New Company'}</DialogTitle>
+            <DialogDescription>
+              Fill in the company details below
+            </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">

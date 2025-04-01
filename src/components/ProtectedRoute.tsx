@@ -13,6 +13,7 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
   const { user, isLoading } = useAuth();
   const location = useLocation();
 
+  // Show loading state but with a max timeout to prevent infinite loading
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4">

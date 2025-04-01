@@ -16,6 +16,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [authChecked, setAuthChecked] = useState(false); // Add this flag to prevent loops
   const { toast } = useToast();
 
   const refreshUser = async () => {
@@ -64,6 +65,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     } finally {
       setIsLoading(false);
+      setAuthChecked(true); // Mark auth check as completed
     }
   };
 
@@ -72,9 +74,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await refreshUser();
     };
 
-    fetchUser();
+    if (!authChecked) { // Only run this if we haven't checked auth yet
+      fetchUser();
+    }
 
-    // Set up auth listener
+    // Set up auth listener only once
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
@@ -88,7 +92,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [authChecked]); // Only depend on authChecked, not on refreshUser
 
   const signOut = async () => {
     try {

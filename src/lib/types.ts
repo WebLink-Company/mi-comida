@@ -78,17 +78,28 @@ export interface Session {
 export interface Provider {
   id: string;
   business_name: string;
-  address?: string;
   contact_email: string;
   contact_phone?: string;
+  address?: string;
   logo?: string;
   is_active?: boolean;
   description?: string;
   created_at?: string;
   updated_at?: string;
+  // New fields for provider enhancement
+  rnc?: string;
+  legal_name?: string;
+  address_line_1?: string;
+  address_line_2?: string;
+  city?: string;
+  state?: string;
+  zip_code?: string;
+  country?: string;
+  logo_url?: string;
+  email_signature?: string;
 }
 
 export interface CompanyWithProvider extends Company {
   provider_name?: string;
-  providers?: Provider | null;
+  provider?: Provider | null;
 }

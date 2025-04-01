@@ -115,9 +115,9 @@ const UsersPage = () => {
     user.email.toLowerCase().includes(search.toLowerCase())
   );
 
-  const createUser = async (formData: Partial<User>) => {
+  const createUser = async (formData: Partial<User> & { password?: string }) => {
     try {
-      if (!formData.email || !formData.first_name || !formData.last_name || !formData.role) {
+      if (!formData.email || !formData.first_name || !formData.last_name || !formData.role || !formData.password) {
         toast({
           title: 'Error',
           description: 'Please fill all required fields',
@@ -145,8 +145,6 @@ const UsersPage = () => {
         return;
       }
       
-      const tempPassword = Math.random().toString(36).slice(-10);
-      
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session?.access_token) {
@@ -166,7 +164,7 @@ const UsersPage = () => {
           role: formData.role,
           provider_id: formData.provider_id,
           company_id: formData.company_id,
-          tempPassword
+          password: formData.password
         }),
       });
       
@@ -179,7 +177,7 @@ const UsersPage = () => {
       setIsCreateOpen(false);
       toast({
         title: 'Success',
-        description: 'User created successfully with a temporary password. The user will need to reset their password on first login.',
+        description: 'User created successfully.',
       });
       fetchUsers();
     } catch (error) {

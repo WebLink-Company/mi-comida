@@ -23,7 +23,7 @@ import { useAuth } from '@/context/AuthContext';
 
 interface UserFormProps {
   initialData?: User;
-  onSubmit: (data: Partial<User>) => void;
+  onSubmit: (data: Partial<User> & { password?: string }) => void;
   onCancel: () => void;
   isAdmin: boolean;
 }
@@ -36,7 +36,7 @@ const UserForm = ({ initialData, onSubmit, onCancel, isAdmin }: UserFormProps) =
   const { toast } = useToast();
   const { user } = useAuth();
   
-  // Define validation schema based on role
+  // Define validation schema based on role and whether we're creating or editing
   const formSchema = z.object({
     first_name: z.string().min(1, 'First name is required'),
     last_name: z.string().min(1, 'Last name is required'),
@@ -44,6 +44,8 @@ const UserForm = ({ initialData, onSubmit, onCancel, isAdmin }: UserFormProps) =
     role: z.enum(['admin', 'provider', 'supervisor', 'employee', 'company'] as const),
     provider_id: z.string().optional(),
     company_id: z.string().optional(),
+    password: initialData ? z.string().optional() : z.string().min(8, 'Password must be at least 8 characters'),
+    confirm_password: initialData ? z.string().optional() : z.string().min(8, 'Please confirm your password'),
   }).refine(data => {
     // Provider role requires provider_id
     if (data.role === 'provider' && !data.provider_id) {
@@ -58,6 +60,15 @@ const UserForm = ({ initialData, onSubmit, onCancel, isAdmin }: UserFormProps) =
   }, {
     message: "Please fill all required fields for the selected role",
     path: ["role"]
+  }).refine(data => {
+    // Only check password matching when creating a new user
+    if (!initialData && data.password !== data.confirm_password) {
+      return false;
+    }
+    return true;
+  }, {
+    message: "Passwords do not match",
+    path: ["confirm_password"]
   });
   
   type FormData = z.infer<typeof formSchema>;
@@ -72,6 +83,8 @@ const UserForm = ({ initialData, onSubmit, onCancel, isAdmin }: UserFormProps) =
       role: initialData?.role || 'employee',
       provider_id: initialData?.provider_id || undefined,
       company_id: initialData?.company_id || undefined,
+      password: '',
+      confirm_password: '',
     },
   });
 
@@ -185,7 +198,10 @@ const UserForm = ({ initialData, onSubmit, onCancel, isAdmin }: UserFormProps) =
         data.company_id = undefined;
       }
       
-      onSubmit(data);
+      // Remove confirm_password before submitting
+      const { confirm_password, ...submitData } = data;
+      
+      onSubmit(submitData);
     } catch (error) {
       console.error('Error in form submission:', error);
     } finally {
@@ -244,6 +260,46 @@ const UserForm = ({ initialData, onSubmit, onCancel, isAdmin }: UserFormProps) =
             </FormItem>
           )}
         />
+        
+        {!initialData && (
+          <>
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Password</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="password" 
+                      placeholder="Enter password" 
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="confirm_password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Confirm Password</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="password" 
+                      placeholder="Confirm password" 
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </>
+        )}
         
         <FormField
           control={form.control}

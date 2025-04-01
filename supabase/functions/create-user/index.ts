@@ -25,11 +25,11 @@ serve(async (req) => {
       role,
       provider_id,
       company_id,
-      tempPassword
+      password
     } = body;
 
     // Validate required fields
-    if (!email || !first_name || !last_name || !role) {
+    if (!email || !first_name || !last_name || !role || !password) {
       return new Response(
         JSON.stringify({ error: "Missing required fields" }),
         { 
@@ -135,7 +135,7 @@ serve(async (req) => {
     // Create user in auth.users
     const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
       email,
-      password: tempPassword || Math.random().toString(36).slice(-10),
+      password,
       email_confirm: true,
       user_metadata: {
         first_name,

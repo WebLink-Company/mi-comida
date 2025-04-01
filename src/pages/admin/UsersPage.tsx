@@ -190,41 +190,70 @@ const UsersPage = () => {
     }
   };
 
-  const updateUser = async (formData: Partial<User>) => {
+  const updateUser = async (formData: Partial<User> & { password?: string }) => {
     if (!selectedUser) return;
 
     try {
-      if (formData.role === 'provider' && !formData.provider_id) {
-        toast({
-          title: 'Error',
-          description: 'Provider ID is required for provider role',
-          variant: 'destructive',
+      if (formData.password) {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session?.access_token) {
+          throw new Error('No authenticated session');
+        }
+        
+        const passwordResponse = await fetch(`${SUPABASE_URL}/functions/v1/update-user-password`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            userId: selectedUser.id,
+            password: formData.password,
+          }),
         });
-        return;
+        
+        if (!passwordResponse.ok) {
+          const errorData = await passwordResponse.json();
+          throw new Error(errorData.error || 'Failed to update user password');
+        }
+        
+        delete formData.password;
       }
       
-      if (['supervisor', 'employee'].includes(formData.role as string) && 
-          (!formData.provider_id || !formData.company_id)) {
-        toast({
-          title: 'Error',
-          description: 'Provider and Company are required for this role',
-          variant: 'destructive',
-        });
-        return;
-      }
-      
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          first_name: formData.first_name,
-          last_name: formData.last_name,
-          role: formData.role as UserRole,
-          company_id: formData.company_id || null,
-          provider_id: formData.provider_id || null
-        })
-        .eq('id', selectedUser.id);
+      if (Object.keys(formData).length > 0) {
+        if (formData.role === 'provider' && !formData.provider_id) {
+          toast({
+            title: 'Error',
+            description: 'Provider ID is required for provider role',
+            variant: 'destructive',
+          });
+          return;
+        }
+        
+        if (['supervisor', 'employee'].includes(formData.role as string) && 
+            (!formData.provider_id || !formData.company_id)) {
+          toast({
+            title: 'Error',
+            description: 'Provider and Company are required for this role',
+            variant: 'destructive',
+          });
+          return;
+        }
+        
+        const { error } = await supabase
+          .from('profiles')
+          .update({
+            first_name: formData.first_name,
+            last_name: formData.last_name,
+            role: formData.role as UserRole,
+            company_id: formData.company_id || null,
+            provider_id: formData.provider_id || null
+          })
+          .eq('id', selectedUser.id);
 
-      if (error) throw error;
+        if (error) throw error;
+      }
 
       setIsEditOpen(false);
       toast({

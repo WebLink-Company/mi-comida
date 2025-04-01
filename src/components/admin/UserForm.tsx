@@ -20,6 +20,8 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
+import { Eye, EyeOff } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 interface UserFormProps {
   initialData?: User;
@@ -33,6 +35,8 @@ const UserForm = ({ initialData, onSubmit, onCancel, isAdmin }: UserFormProps) =
   const [providers, setProviders] = useState<Provider[]>([]);
   const [filteredCompanies, setFilteredCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isPasswordOpen, setIsPasswordOpen] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
   
@@ -61,8 +65,8 @@ const UserForm = ({ initialData, onSubmit, onCancel, isAdmin }: UserFormProps) =
     message: "Please fill all required fields for the selected role",
     path: ["role"]
   }).refine(data => {
-    // Only check password matching when creating a new user
-    if (!initialData && data.password !== data.confirm_password) {
+    // When creating a new user OR when changing password for existing user
+    if ((!initialData || (initialData && data.password)) && data.password !== data.confirm_password) {
       return false;
     }
     return true;
@@ -183,6 +187,10 @@ const UserForm = ({ initialData, onSubmit, onCancel, isAdmin }: UserFormProps) =
     }
   }, [watchRole, form]);
 
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
   const handleSubmit = async (data: FormData) => {
     setLoading(true);
     
@@ -200,6 +208,11 @@ const UserForm = ({ initialData, onSubmit, onCancel, isAdmin }: UserFormProps) =
       
       // Remove confirm_password before submitting
       const { confirm_password, ...submitData } = data;
+      
+      // Only include password in submission if it's been entered (when editing)
+      if (initialData && (!submitData.password || submitData.password.trim() === '')) {
+        delete submitData.password;
+      }
       
       onSubmit(submitData);
     } catch (error) {
@@ -270,11 +283,23 @@ const UserForm = ({ initialData, onSubmit, onCancel, isAdmin }: UserFormProps) =
                 <FormItem>
                   <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <Input 
-                      type="password" 
-                      placeholder="Enter password" 
-                      {...field} 
-                    />
+                    <div className="relative">
+                      <Input 
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Enter password" 
+                        {...field} 
+                      />
+                      <Button 
+                        type="button"
+                        variant="ghost" 
+                        size="sm"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 h-auto"
+                        onClick={togglePasswordVisibility}
+                      >
+                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        <span className="sr-only">{showPassword ? "Hide" : "Show"} password</span>
+                      </Button>
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -288,17 +313,104 @@ const UserForm = ({ initialData, onSubmit, onCancel, isAdmin }: UserFormProps) =
                 <FormItem>
                   <FormLabel>Confirm Password</FormLabel>
                   <FormControl>
-                    <Input 
-                      type="password" 
-                      placeholder="Confirm password" 
-                      {...field} 
-                    />
+                    <div className="relative">
+                      <Input 
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Confirm password" 
+                        {...field} 
+                      />
+                      <Button 
+                        type="button"
+                        variant="ghost" 
+                        size="sm"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 h-auto"
+                        onClick={togglePasswordVisibility}
+                      >
+                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        <span className="sr-only">{showPassword ? "Hide" : "Show"} password</span>
+                      </Button>
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
           </>
+        )}
+
+        {initialData && isAdmin && (
+          <Collapsible 
+            open={isPasswordOpen} 
+            onOpenChange={setIsPasswordOpen}
+            className="border rounded-md p-2 bg-muted/20"
+          >
+            <CollapsibleTrigger asChild>
+              <Button variant="outline" type="button" className="w-full justify-between">
+                {isPasswordOpen ? 'Cancel Password Change' : 'Change Password'}
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-4 mt-4">
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>New Password</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input 
+                          type={showPassword ? "text" : "password"}
+                          placeholder="Enter new password" 
+                          {...field} 
+                        />
+                        <Button 
+                          type="button"
+                          variant="ghost" 
+                          size="sm"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 h-auto"
+                          onClick={togglePasswordVisibility}
+                        >
+                          {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                          <span className="sr-only">{showPassword ? "Hide" : "Show"} password</span>
+                        </Button>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="confirm_password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Confirm New Password</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input 
+                          type={showPassword ? "text" : "password"}
+                          placeholder="Confirm new password" 
+                          {...field} 
+                        />
+                        <Button 
+                          type="button"
+                          variant="ghost" 
+                          size="sm"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 h-auto"
+                          onClick={togglePasswordVisibility}
+                        >
+                          {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                          <span className="sr-only">{showPassword ? "Hide" : "Show"} password</span>
+                        </Button>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CollapsibleContent>
+          </Collapsible>
         )}
         
         <FormField

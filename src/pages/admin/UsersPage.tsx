@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -9,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
-import { User, Company } from '@/lib/types';
+import { User, Company, UserRole } from '@/lib/types';
 import { Search, User as UserIcon, Mail, Building2, Edit, Eye, Plus, Trash } from 'lucide-react';
 
 const UsersPage = () => {

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Company, Provider, CompanyWithProvider } from '@/lib/types';
@@ -48,7 +47,6 @@ const CompaniesPage = () => {
     try {
       setLoading(true);
       
-      // First, get all companies
       const { data: companiesData, error: companiesError } = await supabase
         .from('companies')
         .select('*')
@@ -61,11 +59,9 @@ const CompaniesPage = () => {
         return;
       }
       
-      // Then, fetch provider details separately
       const companyIds = companiesData.map(company => company.id);
       const providerIds = companiesData.map(company => company.provider_id).filter(Boolean);
       
-      // Get provider details if we have any provider IDs
       let providersMap: Record<string, any> = {};
       
       if (providerIds.length > 0) {
@@ -84,7 +80,6 @@ const CompaniesPage = () => {
         }
       }
       
-      // Map companies with their provider details
       const companiesWithProvider = companiesData.map(company => {
         const provider = company.provider_id ? providersMap[company.provider_id] : null;
         
@@ -93,7 +88,6 @@ const CompaniesPage = () => {
           provider_name: provider ? provider.business_name : 'No Provider',
           subsidy_percentage: company.subsidy_percentage || 0,
           fixed_subsidy_amount: company.fixed_subsidy_amount || 0,
-          // Add fields needed for compatibility
           subsidyPercentage: company.subsidy_percentage || 0,
           fixedSubsidyAmount: company.fixed_subsidy_amount || 0,
           provider: provider
@@ -166,6 +160,21 @@ const CompaniesPage = () => {
         return;
       }
 
+      const { data: providerExists, error: providerCheckError } = await supabase
+        .from('providers')
+        .select('id')
+        .eq('id', currentCompany.provider_id)
+        .single();
+      
+      if (providerCheckError || !providerExists) {
+        toast({
+          title: 'Invalid provider',
+          description: 'The selected provider does not exist.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
       const isNew = !currentCompany.id;
       
       let operation;
@@ -192,9 +201,12 @@ const CompaniesPage = () => {
           .select();
       }
       
-      const { error } = await operation;
+      const { data, error } = await operation;
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error saving company:', error);
+        throw error;
+      }
       
       toast({
         title: isNew ? 'Company created' : 'Company updated',
@@ -350,7 +362,7 @@ const CompaniesPage = () => {
                 <div className="relative">
                   <Filter className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                   <select
-                    className="w-full h-10 rounded-md border border-input pl-9 pr-8 py-2 bg-background text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     value={selectedProvider}
                     onChange={(e) => setSelectedProvider(e.target.value)}
                   >

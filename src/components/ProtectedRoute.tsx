@@ -1,5 +1,6 @@
 
 import { Navigate, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { UserRole } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';

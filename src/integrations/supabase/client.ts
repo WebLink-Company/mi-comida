@@ -27,11 +27,28 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
   },
 });
 
+// Clean up any stale auth data in local storage that might cause issues
+try {
+  if (typeof localStorage !== 'undefined') {
+    // Only keep the main storage key as it's handled by the auth mechanism
+    const currentSession = localStorage.getItem('lunchwise-auth-token');
+    if (!currentSession) {
+      localStorage.removeItem('supabase.auth.token');
+    }
+  }
+} catch (error) {
+  console.error('Error cleaning up auth storage:', error);
+}
+
 // Add an error handler to catch and prevent recursive logging
-supabase.auth.onAuthStateChange((event, session) => {
+supabase.auth.onAuthStateChange((event) => {
   if (event === 'SIGNED_OUT') {
     // Clear any local storage items that might be causing issues
-    localStorage.removeItem('supabase.auth.token');
-    // We keep the main storage key as it's handled by the auth mechanism
+    try {
+      localStorage.removeItem('supabase.auth.token');
+      // We keep the main storage key as it's handled by the auth mechanism
+    } catch (error) {
+      console.error('Error cleaning up auth storage on signout:', error);
+    }
   }
 });

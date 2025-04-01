@@ -77,44 +77,49 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Create a flag to prevent multiple initializations
     let isMounted = true;
     
-    const initAuth = async () => {
-      if (!authChecked) {
-        try {
-          await refreshUser();
-        } catch (error) {
-          console.error('Auth initialization error:', error);
-          if (isMounted) {
-            setIsLoading(false);
-            setAuthChecked(true);
-          }
-        }
-      }
-    };
-
-    initAuth();
-
-    // Set up auth listener only once with better error handling
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+    // Only fetch the initial session once to prevent loops
+    if (!authChecked) {
+      supabase.auth.getSession().then(({ data }) => {
         if (!isMounted) return;
         
-        try {
-          if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-            refreshUser();
-          } else if (event === 'SIGNED_OUT') {
-            setUser(null);
-            setAuthChecked(true);
-            setIsLoading(false);
-          }
-        } catch (error) {
-          console.error('Auth state change error:', error);
-          if (isMounted) {
-            setIsLoading(false);
-            setAuthChecked(true);
-          }
+        if (data.session) {
+          refreshUser();
+        } else {
+          setUser(null);
+          setIsLoading(false);
+          setAuthChecked(true);
+        }
+      }).catch(error => {
+        console.error("Initial auth check failed:", error);
+        if (isMounted) {
+          setIsLoading(false);
+          setAuthChecked(true);
+          setUser(null);
+        }
+      });
+    }
+    
+    // Set up auth listener only once with better error handling
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!isMounted) return;
+      
+      console.log("Auth state change:", event);
+      try {
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          refreshUser();
+        } else if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+          setUser(null);
+          setAuthChecked(true);
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error('Auth state change error:', error);
+        if (isMounted) {
+          setIsLoading(false);
+          setAuthChecked(true);
         }
       }
-    );
+    });
 
     return () => {
       isMounted = false;

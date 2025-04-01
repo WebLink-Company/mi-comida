@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -11,6 +10,7 @@ import { useAuth } from '@/context/AuthContext';
 import { User, Company, UserRole, Provider } from '@/lib/types';
 import { Search, User as UserIcon, Mail, Building2, Edit, Eye, Plus, Trash } from 'lucide-react';
 import UserForm from '@/components/admin/UserForm';
+import { SUPABASE_URL } from '@/lib/constants';
 
 const UsersPage = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -26,14 +26,12 @@ const UsersPage = () => {
   const { toast } = useToast();
   const { user } = useAuth();
 
-  // Check if current user can create/edit users
   const canManageUsers = user && (user.role === 'admin' || user.role === 'provider');
 
   const fetchProviders = async () => {
     try {
       let query = supabase.from('providers').select('*');
       
-      // If user is a provider, only show their own provider
       if (user && user.role === 'provider' && user.provider_id) {
         query = query.eq('id', user.provider_id);
       }
@@ -59,7 +57,6 @@ const UsersPage = () => {
         .select('*')
         .order('first_name');
       
-      // Filter users based on current user's role
       if (user && user.role === 'provider' && user.provider_id) {
         query = query.eq('provider_id', user.provider_id);
       } else if (user && user.role === 'company' && user.company_id) {
@@ -88,7 +85,6 @@ const UsersPage = () => {
         .select('id, name, subsidy_percentage, provider_id')
         .order('name');
       
-      // If user is a provider, only show companies for that provider
       if (user && user.role === 'provider' && user.provider_id) {
         query = query.eq('provider_id', user.provider_id);
       }
@@ -119,10 +115,8 @@ const UsersPage = () => {
     user.email.toLowerCase().includes(search.toLowerCase())
   );
 
-  // Updated createUser function to handle auth.users creation first
   const createUser = async (formData: Partial<User>) => {
     try {
-      // Validate required fields
       if (!formData.email || !formData.first_name || !formData.last_name || !formData.role) {
         toast({
           title: 'Error',
@@ -132,7 +126,6 @@ const UsersPage = () => {
         return;
       }
       
-      // Additional validation based on role
       if (formData.role === 'provider' && !formData.provider_id) {
         toast({
           title: 'Error',
@@ -151,42 +144,37 @@ const UsersPage = () => {
         });
         return;
       }
-
-      // Generate a temporary password
+      
       const tempPassword = Math.random().toString(36).slice(-10);
       
-      // First create user in auth.users using the admin API
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email: formData.email,
-        password: tempPassword,
-        email_confirm: true, // Skip email verification
-        user_metadata: {
-          first_name: formData.first_name,
-          last_name: formData.last_name,
-          role: formData.role
-        }
-      });
+      const { data: { session } } = await supabase.auth.getSession();
       
-      if (authError) throw authError;
-      
-      if (!authData.user) {
-        throw new Error('Failed to create user in auth system');
+      if (!session?.access_token) {
+        throw new Error('No authenticated session');
       }
       
-      // Then insert the profile using the auth user's id
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          id: authData.user.id, // Use the id from auth.users
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/create-user`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
           email: formData.email,
           first_name: formData.first_name,
           last_name: formData.last_name,
-          role: formData.role as UserRole,
-          company_id: formData.company_id || null,
-          provider_id: formData.provider_id || null
-        });
+          role: formData.role,
+          provider_id: formData.provider_id,
+          company_id: formData.company_id,
+          tempPassword
+        }),
+      });
       
-      if (profileError) throw profileError;
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to create user');
+      }
       
       setIsCreateOpen(false);
       toast({
@@ -208,7 +196,6 @@ const UsersPage = () => {
     if (!selectedUser) return;
 
     try {
-      // Validation based on role
       if (formData.role === 'provider' && !formData.provider_id) {
         toast({
           title: 'Error',
@@ -228,7 +215,6 @@ const UsersPage = () => {
         return;
       }
       
-      // For updates, we only update the profiles table
       const { error } = await supabase
         .from('profiles')
         .update({
@@ -262,12 +248,28 @@ const UsersPage = () => {
     if (!selectedUser) return;
 
     try {
-      // When deleting a user, we should delete from auth.users which will cascade to profiles
-      const { error: authError } = await supabase.auth.admin.deleteUser(
-        selectedUser.id
-      );
-
-      if (authError) throw authError;
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.access_token) {
+        throw new Error('No authenticated session');
+      }
+      
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/delete-user`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          userId: selectedUser.id,
+        }),
+      });
+      
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to delete user');
+      }
 
       setIsDeleteOpen(false);
       toast({
@@ -285,14 +287,12 @@ const UsersPage = () => {
     }
   };
 
-  // Get provider name by ID
   const getProviderName = (providerId?: string) => {
     if (!providerId) return 'N/A';
     const provider = providers.find(p => p.id === providerId);
     return provider ? provider.business_name : 'N/A';
   };
 
-  // Get company name by ID
   const getCompanyName = (companyId?: string) => {
     if (!companyId) return 'N/A';
     const company = companies.find(c => c.id === companyId);

@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Company } from '@/lib/types';
+import { Company, Provider, CompanyWithProvider } from '@/lib/types';
 import { useAuth } from '@/context/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
@@ -11,18 +10,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-
-interface Provider {
-  id: string;
-  business_name: string;
-}
-
-interface CompanyWithProvider extends Company {
-  provider_name?: string;
-  providers?: {
-    business_name: string;
-  } | null;
-}
 
 interface ProviderSummary {
   id: string;
@@ -85,11 +72,11 @@ const CompaniesPage = () => {
       // Format the data to include provider name
       const formattedCompanies = data?.map(company => ({
         ...company,
-        // Safely access business_name even if providers is null
-        provider_name: company.providers?.business_name || 'N/A'
-      }));
+        // Safely access business_name from the providers object
+        provider_name: company.providers ? company.providers.business_name : 'N/A'
+      })) || [];
       
-      setCompanies(formattedCompanies || []);
+      setCompanies(formattedCompanies);
     } catch (error) {
       console.error('Error fetching companies:', error);
       toast({
@@ -260,7 +247,6 @@ const CompaniesPage = () => {
     setIsDeleteDialogOpen(true);
   };
 
-  // Filter companies based on search and selected provider
   const filteredCompanies = companies.filter((company) => {
     const matchesSearch = search === '' || company.name.toLowerCase().includes(search.toLowerCase());
     const matchesProvider = selectedProvider === '' || company.provider_id === selectedProvider;
@@ -425,7 +411,6 @@ const CompaniesPage = () => {
         </CardContent>
       </Card>
 
-      {/* Create/Edit Company Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -506,7 +491,6 @@ const CompaniesPage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, UserRole } from '@/lib/types';
@@ -38,7 +37,6 @@ const UsersPage = () => {
   const [selectedUser, setSelectedUser] = useState<UserWithDetails | null>(null);
   const [totalUsers, setTotalUsers] = useState(0);
   
-  // Fetch users and calculate stats
   useEffect(() => {
     const fetchUsers = async () => {
       setLoading(true);
@@ -59,7 +57,6 @@ const UsersPage = () => {
         
         if (error) throw error;
         
-        // Format the data to include company name
         const formattedUsers = data?.map(user => ({
           ...user,
           company_name: user.companies?.name || 'N/A'
@@ -68,7 +65,6 @@ const UsersPage = () => {
         setUsers(formattedUsers);
         setTotalUsers(formattedUsers.length);
         
-        // Calculate company stats
         const stats = formattedUsers.reduce((acc: CompanyStats[], user) => {
           if (user.company_id && user.company_name) {
             const existingStat = acc.find(stat => stat.id === user.company_id);
@@ -101,13 +97,27 @@ const UsersPage = () => {
     fetchUsers();
   }, [toast]);
 
-  // Handler for creating a new user
   const handleCreateUser = async (userData: Partial<User>) => {
     try {
-      // In a real app, this would likely be an API call to create a user with auth
+      if (!userData.email || !userData.first_name || !userData.last_name || !userData.role) {
+        toast({
+          title: "Error",
+          description: "Missing required user information",
+          variant: "destructive"
+        });
+        return;
+      }
+      
       const { data, error } = await supabase
         .from('profiles')
-        .insert(userData) // Remove array wrapping to fix the type error
+        .insert({
+          email: userData.email,
+          first_name: userData.first_name,
+          last_name: userData.last_name,
+          role: userData.role,
+          company_id: userData.company_id,
+          provider_id: userData.provider_id
+        })
         .select();
 
       if (error) throw error;
@@ -117,7 +127,6 @@ const UsersPage = () => {
         description: "User created successfully"
       });
 
-      // Add the new user to the list with company name
       const newUser = { 
         ...data[0], 
         company_name: userData.company_id ? 
@@ -128,7 +137,6 @@ const UsersPage = () => {
       setUsers(prevUsers => [newUser, ...prevUsers]);
       setTotalUsers(prev => prev + 1);
       
-      // Update company stats
       if (userData.company_id) {
         setCompanyStats(prev => {
           const existingStat = prev.find(stat => stat.id === userData.company_id);
@@ -139,7 +147,6 @@ const UsersPage = () => {
                 : stat
             );
           } else {
-            // This should not happen if company stats were loaded properly
             return prev;
           }
         });
@@ -156,7 +163,6 @@ const UsersPage = () => {
     }
   };
 
-  // Handler for updating a user
   const handleUpdateUser = async (userData: Partial<User>) => {
     if (!selectedUser) return;
 
@@ -173,7 +179,6 @@ const UsersPage = () => {
         description: "User updated successfully"
       });
 
-      // Update the user in the list
       setUsers(prevUsers => 
         prevUsers.map(user => 
           user.id === selectedUser.id 
@@ -188,12 +193,10 @@ const UsersPage = () => {
         )
       );
       
-      // Update company stats if company_id changed
       if (userData.company_id !== selectedUser.company_id) {
         setCompanyStats(prev => {
           let updated = [...prev];
           
-          // Decrement count for old company
           if (selectedUser.company_id) {
             updated = updated.map(stat => 
               stat.id === selectedUser.company_id 
@@ -202,7 +205,6 @@ const UsersPage = () => {
             );
           }
           
-          // Increment count for new company
           if (userData.company_id) {
             const existingStat = updated.find(stat => stat.id === userData.company_id);
             if (existingStat) {
@@ -230,7 +232,6 @@ const UsersPage = () => {
     }
   };
 
-  // Handler for deleting a user
   const handleDeleteUser = async () => {
     if (!selectedUser) return;
 
@@ -247,11 +248,9 @@ const UsersPage = () => {
         description: "User deleted successfully"
       });
 
-      // Remove the user from the list
       setUsers(prevUsers => prevUsers.filter(user => user.id !== selectedUser.id));
       setTotalUsers(prev => prev - 1);
       
-      // Update company stats
       if (selectedUser.company_id) {
         setCompanyStats(prev => 
           prev.map(stat => 
@@ -274,7 +273,6 @@ const UsersPage = () => {
     }
   };
 
-  // Filter users based on search and role filter
   const filteredUsers = useMemo(() => {
     return users.filter((user) => {
       const matchesSearch = 
@@ -298,7 +296,6 @@ const UsersPage = () => {
     { value: 'provider', label: 'Provider' }
   ];
 
-  // Helper function to get badge color based on user role
   const getRoleBadgeVariant = (role: UserRole) => {
     switch (role) {
       case 'admin':
@@ -316,13 +313,11 @@ const UsersPage = () => {
     }
   };
 
-  // Open edit dialog with user data
   const openEditDialog = (user: UserWithDetails) => {
     setSelectedUser(user);
     setIsEditDialogOpen(true);
   };
 
-  // Open delete confirmation dialog
   const openDeleteDialog = (user: UserWithDetails) => {
     setSelectedUser(user);
     setIsDeleteAlertOpen(true);
@@ -337,10 +332,8 @@ const UsersPage = () => {
         </p>
       </div>
 
-      {/* Stats Cards - Only visible to admins */}
       {user?.role === 'admin' && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Total Users Card */}
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium">
@@ -355,7 +348,6 @@ const UsersPage = () => {
             </CardContent>
           </Card>
           
-          {/* Company Stats Cards */}
           {companyStats.map(stat => (
             <Card key={stat.id}>
               <CardHeader className="pb-2">
@@ -486,7 +478,6 @@ const UsersPage = () => {
         </CardContent>
       </Card>
 
-      {/* Create User Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
@@ -503,7 +494,6 @@ const UsersPage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Edit User Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
@@ -523,7 +513,6 @@ const UsersPage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Delete User Confirmation */}
       <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

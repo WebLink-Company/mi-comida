@@ -74,3 +74,21 @@ export interface Session {
   user: User | null;
   expires_at?: number;
 }
+
+export interface Provider {
+  id: string;
+  business_name: string;
+  address?: string;
+  contact_email: string;
+  contact_phone?: string;
+  logo?: string;
+  is_active?: boolean;
+  description?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface CompanyWithProvider extends Company {
+  provider_name?: string;
+  providers?: Provider | null;
+}

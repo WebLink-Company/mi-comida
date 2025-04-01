@@ -5,17 +5,17 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
-import { User, Company, UserRole } from '@/lib/types';
+import { User, Company, UserRole, Provider } from '@/lib/types';
 import { Search, User as UserIcon, Mail, Building2, Edit, Eye, Plus, Trash } from 'lucide-react';
+import UserForm from '@/components/admin/UserForm';
 
 const UsersPage = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
+  const [providers, setProviders] = useState<Provider[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -26,14 +26,30 @@ const UsersPage = () => {
   const { toast } = useToast();
   const { user } = useAuth();
 
-  const [newUser, setNewUser] = useState({
-    email: '',
-    first_name: '',
-    last_name: '',
-    role: 'employee' as UserRole,
-    company_id: '',
-    provider_id: ''
-  });
+  // Check if current user can create/edit users
+  const canManageUsers = user && (user.role === 'admin' || user.role === 'provider');
+
+  const fetchProviders = async () => {
+    try {
+      let query = supabase.from('providers').select('*');
+      
+      // If user is a provider, only show their own provider
+      if (user && user.role === 'provider' && user.provider_id) {
+        query = query.eq('id', user.provider_id);
+      }
+      
+      const { data, error } = await query;
+      if (error) throw error;
+      setProviders(data || []);
+    } catch (error) {
+      console.error('Error fetching providers:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load provider data',
+        variant: 'destructive',
+      });
+    }
+  };
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -43,7 +59,10 @@ const UsersPage = () => {
         .select('*')
         .order('first_name');
       
-      if (user && user.role === 'company' && user.company_id) {
+      // Filter users based on current user's role
+      if (user && user.role === 'provider' && user.provider_id) {
+        query = query.eq('provider_id', user.provider_id);
+      } else if (user && user.role === 'company' && user.company_id) {
         query = query.eq('company_id', user.company_id);
       }
       
@@ -64,10 +83,17 @@ const UsersPage = () => {
 
   const fetchCompanies = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('companies')
         .select('id, name, subsidy_percentage, provider_id')
         .order('name');
+      
+      // If user is a provider, only show companies for that provider
+      if (user && user.role === 'provider' && user.provider_id) {
+        query = query.eq('provider_id', user.provider_id);
+      }
+      
+      const { data, error } = await query;
       if (error) throw error;
       setCompanies(data || []);
     } catch (error) {
@@ -83,6 +109,7 @@ const UsersPage = () => {
   useEffect(() => {
     fetchUsers();
     fetchCompanies();
+    fetchProviders();
   }, [user, toast]);
 
   const filteredUsers = users.filter((user) =>
@@ -92,9 +119,10 @@ const UsersPage = () => {
     user.email.toLowerCase().includes(search.toLowerCase())
   );
 
-  const createUser = async () => {
+  const createUser = async (formData: Partial<User>) => {
     try {
-      if (!newUser.email || !newUser.first_name || !newUser.last_name || !newUser.role) {
+      // Validate required fields
+      if (!formData.email || !formData.first_name || !formData.last_name || !formData.role) {
         toast({
           title: 'Error',
           description: 'Please fill all required fields',
@@ -103,18 +131,39 @@ const UsersPage = () => {
         return;
       }
       
+      // Additional validation based on role
+      if (formData.role === 'provider' && !formData.provider_id) {
+        toast({
+          title: 'Error',
+          description: 'Provider ID is required for provider role',
+          variant: 'destructive',
+        });
+        return;
+      }
+      
+      if (['supervisor', 'employee'].includes(formData.role as string) && 
+          (!formData.provider_id || !formData.company_id)) {
+        toast({
+          title: 'Error',
+          description: 'Provider and Company are required for this role',
+          variant: 'destructive',
+        });
+        return;
+      }
+      
+      // Create user with appropriate fields
       const userId = crypto.randomUUID();
       
       const { error } = await supabase
         .from('profiles')
         .insert({
           id: userId,
-          email: newUser.email,
-          first_name: newUser.first_name,
-          last_name: newUser.last_name,
-          role: newUser.role,
-          company_id: newUser.company_id || null,
-          provider_id: newUser.provider_id || null
+          email: formData.email,
+          first_name: formData.first_name,
+          last_name: formData.last_name,
+          role: formData.role as UserRole,
+          company_id: formData.company_id || null,
+          provider_id: formData.provider_id || null
         });
       
       if (error) throw error;
@@ -125,16 +174,6 @@ const UsersPage = () => {
         description: 'User created successfully',
       });
       fetchUsers();
-      
-      setNewUser({
-        email: '',
-        first_name: '',
-        last_name: '',
-        role: 'employee' as UserRole,
-        company_id: '',
-        provider_id: ''
-      });
-      
     } catch (error) {
       console.error('Error creating user:', error);
       toast({
@@ -145,19 +184,39 @@ const UsersPage = () => {
     }
   };
 
-  const updateUser = async () => {
+  const updateUser = async (formData: Partial<User>) => {
     if (!selectedUser) return;
 
     try {
+      // Validation based on role
+      if (formData.role === 'provider' && !formData.provider_id) {
+        toast({
+          title: 'Error',
+          description: 'Provider ID is required for provider role',
+          variant: 'destructive',
+        });
+        return;
+      }
+      
+      if (['supervisor', 'employee'].includes(formData.role as string) && 
+          (!formData.provider_id || !formData.company_id)) {
+        toast({
+          title: 'Error',
+          description: 'Provider and Company are required for this role',
+          variant: 'destructive',
+        });
+        return;
+      }
+      
       const { error } = await supabase
         .from('profiles')
         .update({
-          first_name: selectedUser.first_name,
-          last_name: selectedUser.last_name,
-          role: selectedUser.role,
-          company_id: selectedUser.company_id || null,
-          provider_id: selectedUser.provider_id || null,
-          email: selectedUser.email
+          first_name: formData.first_name,
+          last_name: formData.last_name,
+          role: formData.role as UserRole,
+          company_id: formData.company_id || null,
+          provider_id: formData.provider_id || null,
+          email: formData.email
         })
         .eq('id', selectedUser.id);
 
@@ -206,6 +265,20 @@ const UsersPage = () => {
     }
   };
 
+  // Get provider name by ID
+  const getProviderName = (providerId?: string) => {
+    if (!providerId) return 'N/A';
+    const provider = providers.find(p => p.id === providerId);
+    return provider ? provider.business_name : 'N/A';
+  };
+
+  // Get company name by ID
+  const getCompanyName = (companyId?: string) => {
+    if (!companyId) return 'N/A';
+    const company = companies.find(c => c.id === companyId);
+    return company ? company.name : 'N/A';
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -225,10 +298,12 @@ const UsersPage = () => {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <Button onClick={() => setIsCreateOpen(true)} className="flex items-center gap-2">
-          <Plus size={16} />
-          <span>New User</span>
-        </Button>
+        {canManageUsers && (
+          <Button onClick={() => setIsCreateOpen(true)} className="flex items-center gap-2">
+            <Plus size={16} />
+            <span>New User</span>
+          </Button>
+        )}
       </div>
 
       <div className="border rounded-md">
@@ -238,6 +313,9 @@ const UsersPage = () => {
               <TableHead className="w-[200px]">Name</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Role</TableHead>
+              {(user?.role === 'admin' || user?.role === 'provider') && (
+                <TableHead>Provider</TableHead>
+              )}
               <TableHead>Company</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -245,44 +323,49 @@ const UsersPage = () => {
           <TableBody>
             {loading && (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-4">Loading...</TableCell>
+                <TableCell colSpan={user?.role === 'admin' ? 6 : 5} className="text-center py-4">Loading...</TableCell>
               </TableRow>
             )}
             {!loading && filteredUsers.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-4">No users found.</TableCell>
+                <TableCell colSpan={user?.role === 'admin' ? 6 : 5} className="text-center py-4">No users found.</TableCell>
               </TableRow>
             )}
-            {filteredUsers.map((user) => (
-              <TableRow key={user.id}>
-                <TableCell className="font-medium">{user.first_name} {user.last_name}</TableCell>
-                <TableCell>{user.email}</TableCell>
-                <TableCell>{user.role}</TableCell>
-                <TableCell>
-                  {companies.find(company => company.id === user.company_id)?.name || 'N/A'}
-                </TableCell>
-                <TableCell className="text-right">
+            {filteredUsers.map((userItem) => (
+              <TableRow key={userItem.id}>
+                <TableCell className="font-medium">{userItem.first_name} {userItem.last_name}</TableCell>
+                <TableCell>{userItem.email}</TableCell>
+                <TableCell>{userItem.role}</TableCell>
+                {(user?.role === 'admin' || user?.role === 'provider') && (
+                  <TableCell>{getProviderName(userItem.provider_id)}</TableCell>
+                )}
+                <TableCell>{getCompanyName(userItem.company_id)}</TableCell>
+                <TableCell className="text-right space-x-2">
                   <Button variant="outline" size="sm" onClick={() => {
-                    setSelectedUser(user);
+                    setSelectedUser(userItem);
                     setIsViewOpen(true);
                   }}>
                     <Eye className="mr-1 h-3 w-3" />
                     View
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => {
-                    setSelectedUser(user);
-                    setIsEditOpen(true);
-                  }}>
-                    <Edit className="mr-1 h-3 w-3" />
-                    Edit
-                  </Button>
-                  <Button variant="destructive" size="sm" onClick={() => {
-                    setSelectedUser(user);
-                    setIsDeleteOpen(true);
-                  }}>
-                    <Trash className="mr-1 h-3 w-3" />
-                    Delete
-                  </Button>
+                  {canManageUsers && (
+                    <>
+                      <Button variant="outline" size="sm" onClick={() => {
+                        setSelectedUser(userItem);
+                        setIsEditOpen(true);
+                      }}>
+                        <Edit className="mr-1 h-3 w-3" />
+                        Edit
+                      </Button>
+                      <Button variant="destructive" size="sm" onClick={() => {
+                        setSelectedUser(userItem);
+                        setIsDeleteOpen(true);
+                      }}>
+                        <Trash className="mr-1 h-3 w-3" />
+                        Delete
+                      </Button>
+                    </>
+                  )}
                 </TableCell>
               </TableRow>
             ))}
@@ -309,12 +392,18 @@ const UsersPage = () => {
                 <p className="text-sm font-medium">Role</p>
                 <p>{selectedUser.role}</p>
               </div>
-              <div>
-                <p className="text-sm font-medium">Company</p>
-                <p>
-                  {companies.find(company => company.id === selectedUser.company_id)?.name || 'N/A'}
-                </p>
-              </div>
+              {selectedUser.provider_id && (
+                <div>
+                  <p className="text-sm font-medium">Provider</p>
+                  <p>{getProviderName(selectedUser.provider_id)}</p>
+                </div>
+              )}
+              {selectedUser.company_id && (
+                <div>
+                  <p className="text-sm font-medium">Company</p>
+                  <p>{getCompanyName(selectedUser.company_id)}</p>
+                </div>
+              )}
             </div>
           )}
           <DialogFooter>
@@ -332,75 +421,13 @@ const UsersPage = () => {
             </DialogDescription>
           </DialogHeader>
           {selectedUser && (
-            <div className="space-y-4">
-              <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  value={selectedUser.email}
-                  onChange={(e) => setSelectedUser({ ...selectedUser, email: e.target.value })}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="firstName">First Name</Label>
-                <Input
-                  id="firstName"
-                  value={selectedUser.first_name}
-                  onChange={(e) => setSelectedUser({ ...selectedUser, first_name: e.target.value })}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="lastName">Last Name</Label>
-                <Input
-                  id="lastName"
-                  value={selectedUser.last_name}
-                  onChange={(e) => setSelectedUser({ ...selectedUser, last_name: e.target.value })}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label>Role</Label>
-                <Select 
-                  value={selectedUser.role} 
-                  onValueChange={(value) => setSelectedUser({ ...selectedUser, role: value as any })}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder={selectedUser.role} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="provider">Provider</SelectItem>
-                    <SelectItem value="supervisor">Supervisor</SelectItem>
-                    <SelectItem value="employee">Employee</SelectItem>
-                    <SelectItem value="company">Company</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {selectedUser.role === 'employee' && (
-                <div className="grid gap-2">
-                  <Label>Company</Label>
-                  <Select 
-                    value={selectedUser.company_id || ''} 
-                    onValueChange={(value) => setSelectedUser({ ...selectedUser, company_id: value })}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder={
-                        companies.find(company => company.id === selectedUser.company_id)?.name || 'Select a company'
-                      } />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {companies.map(company => (
-                        <SelectItem key={company.id} value={company.id}>{company.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-            </div>
+            <UserForm 
+              initialData={selectedUser}
+              onSubmit={updateUser}
+              onCancel={() => setIsEditOpen(false)}
+              isAdmin={user?.role === 'admin'}
+            />
           )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditOpen(false)}>Cancel</Button>
-            <Button onClick={updateUser}>Update User</Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -436,78 +463,11 @@ const UsersPage = () => {
               Add a new user to the system.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                placeholder="example@example.com"
-                type="email"
-                value={newUser.email}
-                onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="firstName">First Name</Label>
-              <Input
-                id="firstName"
-                placeholder="John"
-                value={newUser.first_name}
-                onChange={(e) => setNewUser({ ...newUser, first_name: e.target.value })}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="lastName">Last Name</Label>
-              <Input
-                id="lastName"
-                placeholder="Doe"
-                value={newUser.last_name}
-                onChange={(e) => setNewUser({ ...newUser, last_name: e.target.value })}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label>Role</Label>
-              <Select 
-                value={newUser.role} 
-                onValueChange={(value: UserRole) => 
-                  setNewUser({ ...newUser, role: value })
-                }
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select a role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="provider">Provider</SelectItem>
-                  <SelectItem value="supervisor">Supervisor</SelectItem>
-                  <SelectItem value="employee">Employee</SelectItem>
-                  <SelectItem value="company">Company</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            {newUser.role === 'employee' && (
-              <div className="grid gap-2">
-                <Label>Company</Label>
-                <Select 
-                  value={newUser.company_id} 
-                  onValueChange={(value) => setNewUser({ ...newUser, company_id: value })}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a company" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {companies.map(company => (
-                      <SelectItem key={company.id} value={company.id}>{company.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
-            <Button onClick={createUser}>Create User</Button>
-          </DialogFooter>
+          <UserForm 
+            onSubmit={createUser}
+            onCancel={() => setIsCreateOpen(false)}
+            isAdmin={user?.role === 'admin'}
+          />
         </DialogContent>
       </Dialog>
     </div>

@@ -5,7 +5,21 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { DialogFooter } from '@/components/ui/dialog';
-import { Company } from '@/lib/types';
+import { Company, Provider } from '@/lib/types';
+import { 
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+  FormDescription
+} from '@/components/ui/form';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
 
 interface UserFormProps {
   initialData?: User;
@@ -15,210 +29,332 @@ interface UserFormProps {
 }
 
 const UserForm = ({ initialData, onSubmit, onCancel, isAdmin }: UserFormProps) => {
-  const [formData, setFormData] = useState<Partial<User>>({
-    first_name: initialData?.first_name || '',
-    last_name: initialData?.last_name || '',
-    email: initialData?.email || '',
-    role: initialData?.role || 'employee',
-    company_id: initialData?.company_id || undefined
-  });
   const [companies, setCompanies] = useState<Company[]>([]);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [providers, setProviders] = useState<Provider[]>([]);
+  const [filteredCompanies, setFilteredCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+  const { user } = useAuth();
   
+  // Define validation schema based on role
+  const formSchema = z.object({
+    first_name: z.string().min(1, 'First name is required'),
+    last_name: z.string().min(1, 'Last name is required'),
+    email: z.string().email('Invalid email format'),
+    role: z.enum(['admin', 'provider', 'supervisor', 'employee', 'company'] as const),
+    provider_id: z.string().optional(),
+    company_id: z.string().optional(),
+  }).refine(data => {
+    // Provider role requires provider_id
+    if (data.role === 'provider' && !data.provider_id) {
+      return false;
+    }
+    // Supervisor and employee roles require both provider_id and company_id
+    if (['supervisor', 'employee'].includes(data.role) && 
+        (!data.provider_id || !data.company_id)) {
+      return false;
+    }
+    return true;
+  }, {
+    message: "Please fill all required fields for the selected role",
+    path: ["role"]
+  });
+  
+  type FormData = z.infer<typeof formSchema>;
+  
+  // Initialize form with default values
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      first_name: initialData?.first_name || '',
+      last_name: initialData?.last_name || '',
+      email: initialData?.email || '',
+      role: initialData?.role || 'employee',
+      provider_id: initialData?.provider_id || undefined,
+      company_id: initialData?.company_id || undefined,
+    },
+  });
+
+  const watchRole = form.watch('role');
+  const watchProviderId = form.watch('provider_id');
+  
+  // Fetch providers data
   useEffect(() => {
-    // Only fetch companies if the user is an admin
-    if (isAdmin) {
-      const fetchCompanies = async () => {
-        try {
-          const { data, error } = await supabase
-            .from('companies')
-            .select('id, name, subsidy_percentage, provider_id')
-            .order('name', { ascending: true });
-            
-          if (error) throw error;
-          
-          // Make sure we're setting data that includes all required properties of Company
-          setCompanies(data || []);
-        } catch (error) {
-          console.error('Error fetching companies:', error);
+    const fetchProviders = async () => {
+      try {
+        let query = supabase.from('providers').select('*').order('business_name');
+        
+        // If current user is a provider, they can only create/edit users for their own provider account
+        if (user && user.role === 'provider' && user.provider_id) {
+          query = query.eq('id', user.provider_id);
         }
-      };
+        
+        const { data, error } = await query;
+        if (error) throw error;
+        setProviders(data || []);
+        
+        // If there's only one provider and user is a provider, auto-select it
+        if (data && data.length === 1 && user?.role === 'provider') {
+          form.setValue('provider_id', data[0].id);
+        }
+      } catch (error) {
+        console.error('Error fetching providers:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load providers data',
+          variant: 'destructive',
+        });
+      }
+    };
+    
+    fetchProviders();
+  }, [user, toast, form]);
+
+  // Fetch companies data
+  useEffect(() => {
+    const fetchCompanies = async () => {
+      try {
+        let query = supabase.from('companies').select('*').order('name');
+        
+        // Filter companies by provider if user is a provider
+        if (user?.role === 'provider' && user.provider_id) {
+          query = query.eq('provider_id', user.provider_id);
+        }
+        
+        const { data, error } = await query;
+        if (error) throw error;
+        setCompanies(data || []);
+      } catch (error) {
+        console.error('Error fetching companies:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load company data',
+          variant: 'destructive',
+        });
+      }
+    };
+    
+    fetchCompanies();
+  }, [user, toast]);
+
+  // Filter companies when provider changes
+  useEffect(() => {
+    if (watchProviderId) {
+      const filtered = companies.filter(company => company.provider_id === watchProviderId);
+      setFilteredCompanies(filtered);
       
-      fetchCompanies();
+      // If current company doesn't belong to selected provider, clear it
+      const currentCompanyId = form.getValues('company_id');
+      if (currentCompanyId) {
+        const companyBelongsToProvider = filtered.some(company => company.id === currentCompanyId);
+        if (!companyBelongsToProvider) {
+          form.setValue('company_id', undefined);
+        }
+      }
+    } else {
+      setFilteredCompanies(companies);
     }
-  }, [isAdmin]);
+  }, [watchProviderId, companies, form]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    
-    // Clear error for this field when user makes a change
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
+  // Handle role change
+  useEffect(() => {
+    // Clear provider_id and company_id when role changes to admin
+    if (watchRole === 'admin') {
+      form.setValue('provider_id', undefined);
+      form.setValue('company_id', undefined);
     }
-  };
+    
+    // Clear company_id when role changes to provider
+    if (watchRole === 'provider') {
+      form.setValue('company_id', undefined);
+    }
+  }, [watchRole, form]);
 
-  const validate = () => {
-    const newErrors: Record<string, string> = {};
-    
-    if (!formData.first_name?.trim()) {
-      newErrors.first_name = 'First name is required';
-    }
-    
-    if (!formData.last_name?.trim()) {
-      newErrors.last_name = 'Last name is required';
-    }
-    
-    if (!formData.email?.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
-    }
-    
-    if (!formData.role) {
-      newErrors.role = 'Role is required';
-    }
-    
-    if (isAdmin && ['employee', 'supervisor'].includes(formData.role || '') && !formData.company_id) {
-      newErrors.company_id = 'Company is required for employee and supervisor roles';
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (data: FormData) => {
     setLoading(true);
     
-    if (validate()) {
-      onSubmit(formData);
+    try {
+      // For admin role, ensure provider_id and company_id are null
+      if (data.role === 'admin') {
+        data.provider_id = undefined;
+        data.company_id = undefined;
+      }
+      
+      // For provider role, ensure company_id is null
+      if (data.role === 'provider') {
+        data.company_id = undefined;
+      }
+      
+      onSubmit(data);
+    } catch (error) {
+      console.error('Error in form submission:', error);
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
-  const roleOptions = [
-    { value: 'employee', label: 'Employee' },
-    { value: 'supervisor', label: 'Supervisor' },
-    { value: 'company', label: 'Company' },
-    { value: 'provider', label: 'Provider' }
-  ];
-  
-  // Only admins can create other admins
-  if (isAdmin) {
-    roleOptions.unshift({ value: 'admin', label: 'Admin' });
-  }
-
   return (
-    <form onSubmit={handleSubmit}>
-      <div className="grid gap-4 py-4">
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="first_name" className="block text-sm font-medium mb-1">First Name</label>
-            <Input
-              id="first_name"
-              name="first_name"
-              placeholder="First name"
-              value={formData.first_name}
-              onChange={handleChange}
-              className={errors.first_name ? 'border-destructive' : ''}
-            />
-            {errors.first_name && (
-              <p className="text-destructive text-xs mt-1">{errors.first_name}</p>
+          <FormField
+            control={form.control}
+            name="first_name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>First Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="First name" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
             )}
-          </div>
-          <div>
-            <label htmlFor="last_name" className="block text-sm font-medium mb-1">Last Name</label>
-            <Input
-              id="last_name"
-              name="last_name"
-              placeholder="Last name"
-              value={formData.last_name}
-              onChange={handleChange}
-              className={errors.last_name ? 'border-destructive' : ''}
-            />
-            {errors.last_name && (
-              <p className="text-destructive text-xs mt-1">{errors.last_name}</p>
-            )}
-          </div>
-        </div>
-        
-        <div>
-          <label htmlFor="email" className="block text-sm font-medium mb-1">Email</label>
-          <Input
-            id="email"
-            name="email"
-            type="email"
-            placeholder="Email address"
-            value={formData.email}
-            onChange={handleChange}
-            className={errors.email ? 'border-destructive' : ''}
-            // Disable email editing for existing users (would be handled by auth system)
-            disabled={!!initialData?.id}
           />
-          {errors.email && (
-            <p className="text-destructive text-xs mt-1">{errors.email}</p>
-          )}
-        </div>
-        
-        <div>
-          <label htmlFor="role" className="block text-sm font-medium mb-1">Role</label>
-          <select
-            id="role"
-            name="role"
-            value={formData.role}
-            onChange={handleChange}
-            className={`w-full px-3 py-2 rounded-md border ${errors.role ? 'border-destructive' : 'border-input'} bg-background`}
-          >
-            {roleOptions.map(option => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          {errors.role && (
-            <p className="text-destructive text-xs mt-1">{errors.role}</p>
-          )}
-        </div>
-        
-        {isAdmin && (
-          <div>
-            <label htmlFor="company_id" className="block text-sm font-medium mb-1">Company</label>
-            <select
-              id="company_id"
-              name="company_id"
-              value={formData.company_id || ''}
-              onChange={handleChange}
-              className={`w-full px-3 py-2 rounded-md border ${errors.company_id ? 'border-destructive' : 'border-input'} bg-background`}
-            >
-              <option value="">Select a company</option>
-              {companies.map(company => (
-                <option key={company.id} value={company.id}>
-                  {company.name}
-                </option>
-              ))}
-            </select>
-            {errors.company_id && (
-              <p className="text-destructive text-xs mt-1">{errors.company_id}</p>
+          
+          <FormField
+            control={form.control}
+            name="last_name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Last Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="Last name" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
             )}
-            <p className="text-muted-foreground text-xs mt-1">
-              Required for employee and supervisor roles
-            </p>
-          </div>
+          />
+        </div>
+        
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email</FormLabel>
+              <FormControl>
+                <Input 
+                  type="email" 
+                  placeholder="Email address" 
+                  {...field} 
+                  disabled={!!initialData?.id}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="role"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Role</FormLabel>
+              <FormControl>
+                <select
+                  className="w-full px-3 py-2 rounded-md border border-input bg-background"
+                  {...field}
+                >
+                  {isAdmin && <option value="admin">Admin</option>}
+                  <option value="provider">Provider</option>
+                  <option value="supervisor">Supervisor</option>
+                  <option value="employee">Employee</option>
+                  <option value="company">Company</option>
+                </select>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        {/* Provider field - show for provider, supervisor, employee roles */}
+        {(watchRole === 'provider' || watchRole === 'supervisor' || watchRole === 'employee') && (
+          <FormField
+            control={form.control}
+            name="provider_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Provider</FormLabel>
+                <FormControl>
+                  <select
+                    className="w-full px-3 py-2 rounded-md border border-input bg-background"
+                    {...field}
+                    value={field.value || ""}
+                    onChange={e => {
+                      field.onChange(e.target.value || undefined);
+                    }}
+                  >
+                    <option value="">Select a provider</option>
+                    {providers.map(provider => (
+                      <option key={provider.id} value={provider.id}>
+                        {provider.business_name}
+                      </option>
+                    ))}
+                  </select>
+                </FormControl>
+                <FormMessage />
+                {watchRole === 'provider' && (
+                  <FormDescription>
+                    Required for provider role
+                  </FormDescription>
+                )}
+              </FormItem>
+            )}
+          />
         )}
-      </div>
-      
-      <DialogFooter>
-        <Button variant="outline" type="button" onClick={onCancel} className="mr-2">
-          Cancel
-        </Button>
-        <Button type="submit" disabled={loading}>
-          {initialData ? 'Update' : 'Create'} User
-        </Button>
-      </DialogFooter>
-    </form>
+        
+        {/* Company field - show for supervisor and employee roles */}
+        {(watchRole === 'supervisor' || watchRole === 'employee') && (
+          <FormField
+            control={form.control}
+            name="company_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Company</FormLabel>
+                <FormControl>
+                  <select
+                    className="w-full px-3 py-2 rounded-md border border-input bg-background"
+                    {...field}
+                    value={field.value || ""}
+                    onChange={e => {
+                      field.onChange(e.target.value || undefined);
+                    }}
+                    disabled={!watchProviderId}
+                  >
+                    <option value="">
+                      {!watchProviderId 
+                        ? "Select a provider first" 
+                        : filteredCompanies.length === 0 
+                          ? "No companies available for this provider" 
+                          : "Select a company"}
+                    </option>
+                    {filteredCompanies.map(company => (
+                      <option key={company.id} value={company.id}>
+                        {company.name}
+                      </option>
+                    ))}
+                  </select>
+                </FormControl>
+                <FormMessage />
+                <FormDescription>
+                  Required for supervisor and employee roles
+                </FormDescription>
+              </FormItem>
+            )}
+          />
+        )}
+        
+        <DialogFooter>
+          <Button variant="outline" type="button" onClick={onCancel} className="mr-2">
+            Cancel
+          </Button>
+          <Button type="submit" disabled={loading}>
+            {initialData ? 'Update' : 'Create'} User
+          </Button>
+        </DialogFooter>
+      </form>
+    </Form>
   );
 };
 

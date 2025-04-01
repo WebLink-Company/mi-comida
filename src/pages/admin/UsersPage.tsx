@@ -30,7 +30,7 @@ const UsersPage = () => {
     email: '',
     first_name: '',
     last_name: '',
-    role: 'employee' as const,
+    role: 'employee' as UserRole,
     company_id: '',
     provider_id: ''
   });
@@ -130,7 +130,7 @@ const UsersPage = () => {
         email: '',
         first_name: '',
         last_name: '',
-        role: 'employee',
+        role: 'employee' as UserRole,
         company_id: '',
         provider_id: ''
       });

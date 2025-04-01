@@ -425,7 +425,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           email_signature?: string | null
-          id: string
+          id?: string
           is_active?: boolean | null
           legal_name?: string | null
           logo?: string | null

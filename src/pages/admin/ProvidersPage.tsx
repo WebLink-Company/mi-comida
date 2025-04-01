@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -47,39 +46,39 @@ const ProvidersPage = () => {
   const canEditProviders = user && (user.role === 'admin' || user.role === 'provider');
   
   useEffect(() => {
-    const fetchProviders = async () => {
-      setLoading(true);
-      try {
-        // Get providers data with sorting
-        let query = supabase
-          .from('providers')
-          .select('*')
-          .order('business_name', { ascending: true });
-        
-        // If user is a provider, only show their own provider info
-        if (user && user.role === 'provider' && user.provider_id) {
-          query = query.eq('id', user.provider_id);
-        }
-        
-        const { data, error } = await query;
-        
-        if (error) throw error;
-        
-        setProviders(data || []);
-      } catch (error) {
-        console.error('Error fetching providers:', error);
-        toast({
-          title: 'Error',
-          description: 'Unable to fetch providers data',
-          variant: 'destructive',
-        });
-      } finally {
-        setLoading(false);
+    loadData();
+  }, [currentUser]);
+  
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      // Get providers data with sorting
+      let query = supabase
+        .from('providers')
+        .select('*')
+        .order('business_name', { ascending: true });
+      
+      // If user is a provider, only show their own provider info
+      if (user && user.role === 'provider' && user.provider_id) {
+        query = query.eq('id', user.provider_id);
       }
-    };
-
-    fetchProviders();
-  }, [user, toast]);
+      
+      const { data, error } = await query;
+      
+      if (error) throw error;
+      
+      setProviders(data || []);
+    } catch (error) {
+      console.error('Error fetching providers:', error);
+      toast({
+        title: 'Error',
+        description: 'Unable to fetch providers data',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Filter providers based on search
   const filteredProviders = providers.filter((provider) =>
@@ -101,12 +100,8 @@ const ProvidersPage = () => {
         return;
       }
       
-      // First, create a random UUID for the provider
-      const providerId = crypto.randomUUID();
-      
-      // Insert new provider
+      // Insert new provider - we no longer need to manually create a UUID
       const { error } = await supabase.from('providers').insert({
-        id: providerId,
         business_name: newProvider.business_name,
         contact_email: newProvider.contact_email,
         contact_phone: newProvider.contact_phone,
@@ -856,142 +851,3 @@ const ProvidersPage = () => {
                   value={newProvider.description || ''}
                   onChange={(e) => setNewProvider({...newProvider, description: e.target.value})}
                   placeholder="Brief description of the provider"
-                  rows={3}
-                />
-              </div>
-            </div>
-            
-            {/* Contact Info */}
-            <div className="space-y-4 pt-2">
-              <h4 className="text-sm font-medium">Contact Information</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Email Address*</label>
-                  <Input 
-                    value={newProvider.contact_email || ''}
-                    onChange={(e) => setNewProvider({...newProvider, contact_email: e.target.value})}
-                    placeholder="Email address"
-                    type="email"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Phone Number</label>
-                  <Input 
-                    value={newProvider.contact_phone || ''}
-                    onChange={(e) => setNewProvider({...newProvider, contact_phone: e.target.value})}
-                    placeholder="Phone number"
-                  />
-                </div>
-              </div>
-            </div>
-            
-            {/* Address */}
-            <div className="space-y-4 pt-2">
-              <h4 className="text-sm font-medium">Address</h4>
-              <div className="grid grid-cols-1 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Address Line 1</label>
-                  <Input 
-                    value={newProvider.address_line_1 || ''}
-                    onChange={(e) => setNewProvider({...newProvider, address_line_1: e.target.value})}
-                    placeholder="Street address"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Address Line 2</label>
-                  <Input 
-                    value={newProvider.address_line_2 || ''}
-                    onChange={(e) => setNewProvider({...newProvider, address_line_2: e.target.value})}
-                    placeholder="Apt, suite, building (optional)"
-                  />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">City</label>
-                  <Input 
-                    value={newProvider.city || ''}
-                    onChange={(e) => setNewProvider({...newProvider, city: e.target.value})}
-                    placeholder="City"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">State/Province</label>
-                  <Input 
-                    value={newProvider.state || ''}
-                    onChange={(e) => setNewProvider({...newProvider, state: e.target.value})}
-                    placeholder="State/Province"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">ZIP/Postal Code</label>
-                  <Input 
-                    value={newProvider.zip_code || ''}
-                    onChange={(e) => setNewProvider({...newProvider, zip_code: e.target.value})}
-                    placeholder="ZIP/Postal code"
-                  />
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Country</label>
-                <Input 
-                  value={newProvider.country || ''}
-                  onChange={(e) => setNewProvider({...newProvider, country: e.target.value})}
-                  placeholder="Country"
-                />
-              </div>
-            </div>
-            
-            {/* Branding */}
-            <div className="space-y-4 pt-2">
-              <h4 className="text-sm font-medium">Branding</h4>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Logo URL</label>
-                <Input 
-                  value={newProvider.logo_url || ''}
-                  onChange={(e) => setNewProvider({...newProvider, logo_url: e.target.value})}
-                  placeholder="URL to logo image"
-                />
-                {newProvider.logo_url && (
-                  <div className="mt-2 p-2 border rounded flex justify-center">
-                    <img 
-                      src={newProvider.logo_url} 
-                      alt="Preview" 
-                      className="h-20 object-contain" 
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
-                      onLoad={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'block';
-                      }}
-                    />
-                  </div>
-                )}
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Email Signature</label>
-                <Textarea 
-                  value={newProvider.email_signature || ''}
-                  onChange={(e) => setNewProvider({...newProvider, email_signature: e.target.value})}
-                  placeholder="Footer text for emails"
-                  rows={3}
-                />
-              </div>
-            </div>
-          </div>
-          
-          <DialogFooter className="pt-4">
-            <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
-            <Button onClick={handleCreateProvider}>Create Provider</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-};
-
-export default ProvidersPage;

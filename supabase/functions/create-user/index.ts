@@ -51,6 +51,87 @@ serve(async (req) => {
       }
     );
 
+    // First check if user already exists in auth.users
+    const { data: existingUser } = await supabaseAdmin.auth.admin.listUsers({
+      email: email
+    });
+    
+    if (existingUser && existingUser.users && existingUser.users.length > 0) {
+      const userId = existingUser.users[0].id;
+      
+      // Check if a profile exists for this user
+      const { data: existingProfile } = await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .eq("id", userId)
+        .single();
+      
+      if (existingProfile) {
+        return new Response(
+          JSON.stringify({ 
+            error: "User with this email already exists",
+            user: {
+              id: userId,
+              email,
+              first_name,
+              last_name,
+              role,
+              provider_id: provider_id || null,
+              company_id: company_id || null,
+            }
+          }),
+          { 
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
+          }
+        );
+      }
+      
+      // If user exists in auth but not in profiles, create the profile
+      const { error: profileError } = await supabaseAdmin
+        .from("profiles")
+        .insert({
+          id: userId,
+          email,
+          first_name,
+          last_name,
+          role,
+          provider_id: provider_id || null,
+          company_id: company_id || null,
+        });
+      
+      if (profileError) {
+        console.error("Error creating profile:", profileError);
+        return new Response(
+          JSON.stringify({ error: profileError.message }),
+          { 
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
+          }
+        );
+      }
+      
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: "User profile created successfully for existing auth user",
+          user: {
+            id: userId,
+            email,
+            first_name,
+            last_name,
+            role,
+            provider_id: provider_id || null,
+            company_id: company_id || null,
+          } 
+        }),
+        { 
+          status: 201, 
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        }
+      );
+    }
+
     // Create user in auth.users
     const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
       email,

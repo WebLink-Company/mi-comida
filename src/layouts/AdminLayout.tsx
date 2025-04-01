@@ -29,7 +29,7 @@ const AdminLayout = () => {
       <div className="flex flex-1 pt-16">
         <AdminSidebar collapsed={collapsed} setCollapsed={setCollapsed} />
         
-        <main className={`flex-1 transition-all duration-300 p-6 ${collapsed ? 'md:ml-[70px]' : 'md:ml-[240px]'}`}>
+        <main className={`flex-1 transition-all duration-300 p-4 md:p-6 ${collapsed ? 'md:ml-[70px]' : 'md:ml-[240px]'}`}>
           <Outlet />
         </main>
       </div>

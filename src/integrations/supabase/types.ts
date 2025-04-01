@@ -393,39 +393,69 @@ export type Database = {
       providers: {
         Row: {
           address: string | null
+          address_line_1: string | null
+          address_line_2: string | null
           business_name: string
+          city: string | null
           contact_email: string
           contact_phone: string | null
+          country: string | null
           created_at: string | null
           description: string | null
+          email_signature: string | null
           id: string
           is_active: boolean | null
+          legal_name: string | null
           logo: string | null
+          logo_url: string | null
+          rnc: string | null
+          state: string | null
           updated_at: string | null
+          zip_code: string | null
         }
         Insert: {
           address?: string | null
+          address_line_1?: string | null
+          address_line_2?: string | null
           business_name: string
+          city?: string | null
           contact_email: string
           contact_phone?: string | null
+          country?: string | null
           created_at?: string | null
           description?: string | null
+          email_signature?: string | null
           id: string
           is_active?: boolean | null
+          legal_name?: string | null
           logo?: string | null
+          logo_url?: string | null
+          rnc?: string | null
+          state?: string | null
           updated_at?: string | null
+          zip_code?: string | null
         }
         Update: {
           address?: string | null
+          address_line_1?: string | null
+          address_line_2?: string | null
           business_name?: string
+          city?: string | null
           contact_email?: string
           contact_phone?: string | null
+          country?: string | null
           created_at?: string | null
           description?: string | null
+          email_signature?: string | null
           id?: string
           is_active?: boolean | null
+          legal_name?: string | null
           logo?: string | null
+          logo_url?: string | null
+          rnc?: string | null
+          state?: string | null
           updated_at?: string | null
+          zip_code?: string | null
         }
         Relationships: []
       }

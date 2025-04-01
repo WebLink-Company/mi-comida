@@ -44,24 +44,17 @@ const CompaniesPage = () => {
   }, [companies, providers]);
 
   const fetchCompanies = async () => {
-    setLoading(true);
     try {
+      setLoading(true);
       let query = supabase
         .from('companies')
         .select(`
-          id, 
-          name, 
-          subsidy_percentage,
-          fixed_subsidy_amount,
-          logo,
-          provider_id,
-          created_at,
-          providers (business_name)
+          *,
+          provider:providers(id, business_name, logo, logo_url)
         `)
-        .order('name', { ascending: true });
+        .order('name');
       
-      // Apply tenant filter for non-admin users
-      if (user && user.role !== 'admin' && user.provider_id) {
+      if (user && user.role === 'provider' && user.provider_id) {
         query = query.eq('provider_id', user.provider_id);
       }
       
@@ -69,19 +62,34 @@ const CompaniesPage = () => {
       
       if (error) throw error;
       
-      // Format the data to include provider name
-      const formattedCompanies = data?.map(company => ({
+      const companiesWithProvider = data?.map(company => ({
         ...company,
-        // Safely access business_name from the providers object
-        provider_name: company.providers ? company.providers.business_name : 'N/A'
+        provider_name: company.provider ? company.provider.business_name : 'No Provider',
+        subsidy_percentage: company.subsidy_percentage || company.subsidyPercentage || 0,
+        fixed_subsidy_amount: company.fixed_subsidy_amount || company.fixedSubsidyAmount || 0,
       })) || [];
       
-      setCompanies(formattedCompanies);
+      setCompanies(companiesWithProvider);
+      
+      const { data: providersData, error: providersError } = await supabase
+        .from('providers')
+        .select('id, business_name');
+      
+      if (providersError) throw providersError;
+      
+      const typedProviders: Provider[] = (providersData || []).map(p => ({
+        id: p.id,
+        business_name: p.business_name,
+        contact_email: ''
+      }));
+      
+      setProviders(typedProviders);
+      
     } catch (error) {
       console.error('Error fetching companies:', error);
       toast({
         title: 'Error',
-        description: 'Failed to load companies',
+        description: 'Failed to load company data',
         variant: 'destructive',
       });
     } finally {
@@ -132,7 +140,6 @@ const CompaniesPage = () => {
 
   const handleCreateOrUpdate = async () => {
     try {
-      // Validation
       if (!currentCompany.name || !currentCompany.provider_id) {
         toast({
           title: 'Missing fields',

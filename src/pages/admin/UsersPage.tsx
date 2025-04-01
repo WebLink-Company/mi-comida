@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -30,7 +29,7 @@ const UsersPage = () => {
     email: '',
     first_name: '',
     last_name: '',
-    role: 'employee' as const, // Type assertion to ensure this is a valid UserRole
+    role: 'employee' as const,
     company_id: '',
     provider_id: ''
   });
@@ -43,7 +42,6 @@ const UsersPage = () => {
         .select('*')
         .order('first_name');
       
-      // If user is a company, only show users associated with their company ID
       if (user && user.role === 'company' && user.company_id) {
         query = query.eq('company_id', user.company_id);
       }
@@ -104,10 +102,8 @@ const UsersPage = () => {
         return;
       }
       
-      // Generate a UUID for the user
       const userId = crypto.randomUUID();
       
-      // Insert into profiles table with all required fields
       const { error } = await supabase
         .from('profiles')
         .insert({
@@ -122,7 +118,6 @@ const UsersPage = () => {
       
       if (error) throw error;
       
-      // Close dialog and refresh user list
       setIsCreateOpen(false);
       toast({
         title: 'Success',
@@ -130,7 +125,6 @@ const UsersPage = () => {
       });
       fetchUsers();
       
-      // Reset form
       setNewUser({
         email: '',
         first_name: '',
@@ -295,7 +289,6 @@ const UsersPage = () => {
         </Table>
       </div>
 
-      {/* View User Modal */}
       <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -329,7 +322,6 @@ const UsersPage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Edit User Modal */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -411,7 +403,6 @@ const UsersPage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Delete User Confirmation */}
       <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
         <DialogContent>
           <DialogHeader>
@@ -436,7 +427,6 @@ const UsersPage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Create User Modal */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -478,7 +468,7 @@ const UsersPage = () => {
               <Label>Role</Label>
               <Select 
                 value={newUser.role} 
-                onValueChange={(value: "admin" | "provider" | "supervisor" | "employee" | "company") => 
+                onValueChange={(value: UserRole) => 
                   setNewUser({ ...newUser, role: value })
                 }
               >

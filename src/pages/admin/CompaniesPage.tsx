@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Company, Provider, CompanyWithProvider } from '@/lib/types';
@@ -58,12 +59,20 @@ const CompaniesPage = () => {
       
       if (error) throw error;
       
-      const companiesWithProvider = data?.map(company => ({
-        ...company,
-        provider_name: company.provider ? company.provider.business_name : 'No Provider',
-        subsidy_percentage: company.subsidy_percentage || 0,
-        fixed_subsidy_amount: company.fixed_subsidy_amount || 0,
-      })) || [];
+      const companiesWithProvider = data?.map(company => {
+        const providerData = company.provider as unknown as Array<{ id: string; business_name: string; logo: string }>;
+        return {
+          ...company,
+          provider_name: providerData && providerData.length > 0 ? providerData[0].business_name : 'No Provider',
+          subsidy_percentage: company.subsidy_percentage || 0,
+          fixed_subsidy_amount: company.fixed_subsidy_amount || 0,
+          // Add fields needed for compatibility
+          subsidyPercentage: company.subsidy_percentage || 0,
+          fixedSubsidyAmount: company.fixed_subsidy_amount || 0,
+          // Convert array from join into a single object to match CompanyWithProvider type
+          provider: providerData && providerData.length > 0 ? providerData[0] : null
+        } as CompanyWithProvider;
+      }) || [];
       
       setCompanies(companiesWithProvider);
       

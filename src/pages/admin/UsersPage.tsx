@@ -119,6 +119,7 @@ const UsersPage = () => {
     user.email.toLowerCase().includes(search.toLowerCase())
   );
 
+  // Updated createUser function to handle auth.users creation first
   const createUser = async (formData: Partial<User>) => {
     try {
       // Validate required fields
@@ -150,14 +151,33 @@ const UsersPage = () => {
         });
         return;
       }
+
+      // Generate a temporary password
+      const tempPassword = Math.random().toString(36).slice(-10);
       
-      // Create user with appropriate fields
-      const userId = crypto.randomUUID();
+      // First create user in auth.users using the admin API
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email: formData.email,
+        password: tempPassword,
+        email_confirm: true, // Skip email verification
+        user_metadata: {
+          first_name: formData.first_name,
+          last_name: formData.last_name,
+          role: formData.role
+        }
+      });
       
-      const { error } = await supabase
+      if (authError) throw authError;
+      
+      if (!authData.user) {
+        throw new Error('Failed to create user in auth system');
+      }
+      
+      // Then insert the profile using the auth user's id
+      const { error: profileError } = await supabase
         .from('profiles')
         .insert({
-          id: userId,
+          id: authData.user.id, // Use the id from auth.users
           email: formData.email,
           first_name: formData.first_name,
           last_name: formData.last_name,
@@ -166,12 +186,12 @@ const UsersPage = () => {
           provider_id: formData.provider_id || null
         });
       
-      if (error) throw error;
+      if (profileError) throw profileError;
       
       setIsCreateOpen(false);
       toast({
         title: 'Success',
-        description: 'User created successfully',
+        description: 'User created successfully with a temporary password. The user will need to reset their password on first login.',
       });
       fetchUsers();
     } catch (error) {
@@ -208,6 +228,7 @@ const UsersPage = () => {
         return;
       }
       
+      // For updates, we only update the profiles table
       const { error } = await supabase
         .from('profiles')
         .update({
@@ -215,8 +236,7 @@ const UsersPage = () => {
           last_name: formData.last_name,
           role: formData.role as UserRole,
           company_id: formData.company_id || null,
-          provider_id: formData.provider_id || null,
-          email: formData.email
+          provider_id: formData.provider_id || null
         })
         .eq('id', selectedUser.id);
 
@@ -242,12 +262,12 @@ const UsersPage = () => {
     if (!selectedUser) return;
 
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', selectedUser.id);
+      // When deleting a user, we should delete from auth.users which will cascade to profiles
+      const { error: authError } = await supabase.auth.admin.deleteUser(
+        selectedUser.id
+      );
 
-      if (error) throw error;
+      if (authError) throw authError;
 
       setIsDeleteOpen(false);
       toast({

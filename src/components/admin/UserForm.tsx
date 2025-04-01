@@ -33,10 +33,12 @@ const UserForm = ({ initialData, onSubmit, onCancel, isAdmin }: UserFormProps) =
         try {
           const { data, error } = await supabase
             .from('companies')
-            .select('id, name')
+            .select('id, name, subsidy_percentage, provider_id')
             .order('name', { ascending: true });
             
           if (error) throw error;
+          
+          // Make sure we're setting data that includes all required properties of Company
           setCompanies(data || []);
         } catch (error) {
           console.error('Error fetching companies:', error);

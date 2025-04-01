@@ -107,7 +107,7 @@ const UsersPage = () => {
       // In a real app, this would likely be an API call to create a user with auth
       const { data, error } = await supabase
         .from('profiles')
-        .insert([userData])
+        .insert([userData]) // Make sure userData is wrapped in an array
         .select();
 
       if (error) throw error;

@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 
 interface CompanyWithProvider extends Company {
   provider_name?: string;
+  // Updated to reflect actual Supabase response structure
   providers?: {
     business_name: string;
   } | null;
@@ -42,6 +43,7 @@ const CompaniesPage = () => {
         // Format the data to include provider name
         const formattedCompanies = data?.map(company => ({
           ...company,
+          // Safely access business_name even if providers is null
           provider_name: company.providers?.business_name || 'N/A'
         })) || [];
         

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -90,6 +89,7 @@ const CompaniesPage = () => {
       const companyData = {
         ...currentCompany,
         provider_id: user?.id,
+        name: currentCompany.name,
         subsidy_percentage: currentCompany.subsidy_percentage || 0,
         fixed_subsidy_amount: currentCompany.fixed_subsidy_amount || 0,
       };

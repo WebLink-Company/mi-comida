@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -12,9 +11,10 @@ import { useToast } from '@/hooks/use-toast';
 
 interface CompaniesModalProps {
   onClose: () => void;
+  providerId?: string;
 }
 
-export const CompaniesModal: React.FC<CompaniesModalProps> = ({ onClose }) => {
+export const CompaniesModal: React.FC<CompaniesModalProps> = ({ onClose, providerId }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [providers, setProviders] = useState<Provider[]>([]);
@@ -37,7 +37,11 @@ export const CompaniesModal: React.FC<CompaniesModalProps> = ({ onClose }) => {
     };
 
     fetchProviders();
-  }, []);
+    
+    if (providerId) {
+      setCurrentCompany(prev => ({ ...prev, provider_id: providerId }));
+    }
+  }, [providerId]);
 
   const handleUpdateCompany = (key: string, value: any) => {
     setCurrentCompany(prev => ({ ...prev, [key]: value }));

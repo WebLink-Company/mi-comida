@@ -1,520 +1,249 @@
-import { useState, useEffect } from 'react';
-import { format } from 'date-fns';
-import { supabase } from '@/integrations/supabase/client';
+
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { AlertDialog, AlertDialogContent } from '@/components/ui/alert-dialog';
+import { Dialog } from '@/components/ui/dialog';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import NavigationBar from '@/components/NavigationBar';
-import { User, Order, LunchOption, Company } from '@/lib/types';
-import { mockOrders, mockUsers, mockLunchOptions } from '@/lib/mockData';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-} from 'recharts';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Slider } from '@/components/ui/slider';
+import { ClockDisplay } from '@/components/admin/dashboard/ClockDisplay';
+import { SupervisorDashboardCard } from '@/components/supervisor/dashboard/SupervisorDashboardCard';
+import { SupervisorDialogContent } from '@/components/supervisor/dashboard/SupervisorDialogContents';
+import { 
+  ShoppingBag, 
+  CalendarDays, 
+  Users, 
+  DollarSign,  
+  ChefHat,
+  ClipboardList,
+  FileText,
+  Building
+} from 'lucide-react';
+import "@/styles/dashboard.css";
 
-interface SupervisorDashboardProps {
-  activeTab?: string;
-}
+const SupervisorDashboard = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [activeDialog, setActiveDialog] = useState<string | null>(null);
+  const [stats, setStats] = useState({
+    ordersCreatedToday: 0,
+    pendingOrders: 0,
+    companyName: '',
+    providerName: '',
+    providerLogo: '',
+    teamMembers: [] as Array<{ id: string; name: string; role: string }>,
+    billingHistory: [] as Array<{ id: string; date: string; amount: number; status: string }>,
+  });
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+  const fetchDashboardData = async () => {
+    try {
+      if (!user || !user.id) return;
 
-const RADIAN = Math.PI / 180;
-const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }: any) => {
-  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-  const x = cx + radius * Math.cos(-midAngle * RADIAN);
-  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+      // Get company details for the current user
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single();
+      
+      if (!profileData?.company_id) return;
 
-  return (
-    <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central">
-      {`${(percent * 100).toFixed(0)}%`}
-    </text>
-  );
-};
+      // Get company information
+      const { data: companyData } = await supabase
+        .from('companies')
+        .select('id, name, provider_id')
+        .eq('id', profileData.company_id)
+        .single();
 
-const SupervisorDashboard = ({ activeTab = 'dashboard' }: SupervisorDashboardProps) => {
-  const { user: currentUser } = useAuth();
-  const [pendingOrders, setPendingOrders] = useState<Order[]>([]);
-  const [employeeUsers, setEmployeeUsers] = useState<User[]>([]);
-  const [lunchOptions, setLunchOptions] = useState<LunchOption[]>([]);
-  const [company, setCompany] = useState<Company | null>(null);
-  const [subsidyPercentage, setSubsidyPercentage] = useState<number>(0);
-  const [fixedSubsidyAmount, setFixedSubsidyAmount] = useState<number>(0);
-  const [subsidyType, setSubsidyType] = useState<'percentage' | 'fixed'>('percentage');
-  const [selectedEmployee, setSelectedEmployee] = useState<string>('');
-  const [employeeSubsidies, setEmployeeSubsidies] = useState<{
-    [key: string]: { percentage?: number; fixed_amount?: number; subsidy_type: 'percentage' | 'fixed' }
-  }>({});
+      if (!companyData) return;
+
+      let providerName = 'Default Provider';
+      let providerLogo = '';
+
+      // Get provider information if available
+      if (companyData.provider_id) {
+        const { data: providerData } = await supabase
+          .from('providers')
+          .select('business_name, logo')
+          .eq('id', companyData.provider_id)
+          .single();
+
+        if (providerData) {
+          providerName = providerData.business_name;
+          providerLogo = providerData.logo || '';
+        }
+      }
+
+      // Get team members for this company
+      const { data: teamData } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, role')
+        .eq('company_id', profileData.company_id);
+
+      const formattedTeamMembers = (teamData || []).map(member => ({
+        id: member.id,
+        name: `${member.first_name} ${member.last_name}`,
+        role: member.role
+      }));
+
+      // Mock order data
+      const ordersToday = Math.floor(Math.random() * 15) + 1;
+      const pendingOrders = Math.floor(Math.random() * 8) + 1;
+
+      // Mock billing history
+      const mockBillingHistory = [
+        { id: '123e4567-e89b-12d3-a456-426614174000', date: '2023-06-15', amount: 1250, status: 'Paid' },
+        { id: '123e4567-e89b-12d3-a456-426614174001', date: '2023-05-15', amount: 1100, status: 'Paid' },
+        { id: '123e4567-e89b-12d3-a456-426614174002', date: '2023-04-15', amount: 1350, status: 'Paid' }
+      ];
+
+      setStats({
+        ordersCreatedToday: ordersToday,
+        pendingOrders: pendingOrders,
+        companyName: companyData.name,
+        providerName: providerName,
+        providerLogo: providerLogo,
+        teamMembers: formattedTeamMembers,
+        billingHistory: mockBillingHistory,
+      });
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    }
+  };
 
   useEffect(() => {
-    const filteredOrders = mockOrders.filter(order => order.status === 'pending');
-    setPendingOrders(filteredOrders);
-    setLunchOptions(mockLunchOptions);
+    fetchDashboardData();
+  }, [user]);
 
-    const companyEmployees = mockUsers.filter(user => 
-      user.role === 'employee' && user.company_id === currentUser?.company_id
-    );
-    setEmployeeUsers(companyEmployees);
+  const openDialog = (dialogId: string) => {
+    setActiveDialog(dialogId);
+  };
 
-    setCompany({
-      id: '1',
-      name: 'Acme Corp',
-      subsidy_percentage: 50,
-      provider_id: 'provider-1',
-      created_at: new Date().toISOString(),
-    });
+  const closeDialog = () => {
+    setTimeout(() => {
+      setActiveDialog(null);
+    }, 50);
+  };
 
-    if (company) {
-      setSubsidyPercentage(company.subsidy_percentage || 0);
-      setFixedSubsidyAmount(company.fixed_subsidy_amount || 0);
-    }
-  }, [currentUser]);
-
-  const approvedOrdersCount = mockOrders.filter(order => order.status === 'approved').length;
-  const rejectedOrdersCount = mockOrders.filter(order => order.status === 'rejected').length;
-  const deliveredOrdersCount = mockOrders.filter(order => order.status === 'delivered').length;
-
-  const data = [
-    { name: 'Aprobados', value: approvedOrdersCount },
-    { name: 'Rechazados', value: rejectedOrdersCount },
-    { name: 'Entregados', value: deliveredOrdersCount },
+  const quickActions = [
+    { label: 'Submit Order', icon: ShoppingBag, action: () => navigate('/supervisor/orders/new'), path: '/supervisor/orders/new' },
+    { label: 'Team Members', icon: Users, action: () => openDialog('supervisor-team'), path: '/supervisor/team' },
+    { label: 'View Billing', icon: FileText, action: () => openDialog('supervisor-billing'), path: '/supervisor/billing' },
+    { label: 'Company Info', icon: Building, action: () => navigate('/supervisor/company'), path: '/supervisor/company' },
   ];
 
-  const handleUpdateCompanySubsidy = () => {
-    if (company) {
-      const updatedCompany = {
-        ...company,
-        subsidy_percentage: subsidyType === 'percentage' ? subsidyPercentage : 0,
-        fixed_subsidy_amount: subsidyType === 'fixed' ? fixedSubsidyAmount : undefined
-      };
-      setCompany(updatedCompany);
-      
-      // Success toast message
-      // toast({
-      //   title: 'Subsidio actualizado',
-      //   description: 'El subsidio de la empresa ha sido actualizado correctamente.',
-      // });
-    }
-  };
+  const snapshotData = [
+    { label: 'Orders Today', value: stats.ordersCreatedToday, path: '/supervisor/orders' },
+    { label: 'Pending Orders', value: stats.pendingOrders, path: '/supervisor/orders' },
+    { label: 'Company', value: stats.companyName, path: '/supervisor/company' },
+  ];
 
-  const handleUpdateEmployeeSubsidy = () => {
-    if (!selectedEmployee) return;
-    
-    const updatedSubsidies = {
-      ...employeeSubsidies,
-      [selectedEmployee]: {
-        percentage: subsidyType === 'percentage' ? subsidyPercentage : undefined,
-        fixed_amount: subsidyType === 'fixed' ? fixedSubsidyAmount : undefined,
-        subsidy_type: subsidyType
-      }
-    };
-    
-    setEmployeeSubsidies(updatedSubsidies);
-    
-    // Success toast message
-    // toast({
-    //   title: 'Subsidio actualizado',
-    //   description: 'El subsidio del empleado ha sido actualizado correctamente.',
-    // });
-  };
+  const providerData = [
+    { 
+      label: 'Logo', 
+      value: (
+        <div className="flex justify-center my-2">
+          <Avatar className="w-16 h-16">
+            {stats.providerLogo ? (
+              <AvatarImage src={stats.providerLogo} alt={stats.providerName} />
+            ) : (
+              <AvatarFallback className="bg-white/10 text-white text-lg">
+                {stats.providerName.charAt(0)}
+              </AvatarFallback>
+            )}
+          </Avatar>
+        </div>
+      ), 
+      path: '/supervisor/provider' 
+    },
+    { label: 'Name', value: stats.providerName, path: '/supervisor/provider' },
+  ];
+
+  const teamData = stats.teamMembers.slice(0, 3).map(member => ({
+    label: member.name,
+    value: member.role,
+    path: '/supervisor/team'
+  }));
+
+  const billingData = stats.billingHistory.slice(0, 3).map(bill => ({
+    label: bill.date,
+    value: `$${bill.amount}`,
+    path: '/supervisor/billing'
+  }));
 
   return (
-    <div className="min-h-screen bg-background">
-      <NavigationBar userRole="supervisor" userName={`${currentUser?.first_name} ${currentUser?.last_name}`} />
+    <div className="min-h-screen">
+      <NavigationBar 
+        userRole="supervisor" 
+        userName={`${user?.first_name || ''} ${user?.last_name || ''}`} 
+      />
       
-      <main className="pt-24 pb-20 px-6">
+      <main className="pt-16 pb-20 px-4">
         <div className="max-w-7xl mx-auto">
-          <div className="mb-10">
-            <h1 className="text-3xl font-bold mb-2">Panel de Supervisor</h1>
-            <p className="text-muted-foreground">
-              Aprueba pedidos y administra subsidios para tus empleados.
-            </p>
-          </div>
+          <ClockDisplay 
+            user={user} 
+            quickActions={quickActions}
+            subtitle="Stay on top of your company's activity today"
+            role="supervisor"
+          />
           
-          <Tabs 
-            defaultValue={activeTab} 
-            onValueChange={(value) => {/* Handle tab change if needed */}}
-          >
-            <TabsList className="mb-8">
-              <TabsTrigger value="dashboard" className="text-base px-5 py-2">Dashboard</TabsTrigger>
-              <TabsTrigger value="approve" className="text-base px-5 py-2">Aprobar Pedidos</TabsTrigger>
-              <TabsTrigger value="subsidies" className="text-base px-5 py-2">Subsidios</TabsTrigger>
-              <TabsTrigger value="reports" className="text-base px-5 py-2">Reportes</TabsTrigger>
-            </TabsList>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 max-w-7xl mx-auto mt-auto p-4">
+            <SupervisorDashboardCard
+              title="Today's Snapshot"
+              icon={<CalendarDays size={16} className="text-white/80" />}
+              data={snapshotData}
+              animationDelay="0.1s"
+              path="/supervisor/orders"
+              onOpenDialog={() => openDialog('supervisor-snapshot')}
+              gradientClass="from-violet-500/30 to-purple-600/30"
+            />
             
-            <TabsContent value="dashboard">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Pedidos Pendientes</CardTitle>
-                    <CardDescription>
-                      Número de pedidos que requieren aprobación
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-4xl font-bold">{pendingOrders.length}</p>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Estado de Pedidos</CardTitle>
-                    <CardDescription>
-                      Distribución de los estados de los pedidos
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <ResponsiveContainer width="100%" height={250}>
-                      <PieChart>
-                        <Pie
-                          data={data}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          label={renderCustomizedLabel}
-                          outerRadius={80}
-                          fill="#8884d8"
-                          dataKey="value"
-                        >
-                          {data.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
+            <SupervisorDashboardCard
+              title="Provider Information"
+              icon={<ChefHat size={16} className="text-white/80" />}
+              data={providerData}
+              animationDelay="0.2s"
+              path="/supervisor/provider"
+              onOpenDialog={() => openDialog('supervisor-provider')}
+              gradientClass="from-blue-500/30 to-indigo-600/30"
+            />
             
-            <TabsContent value="approve">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Aprobar Pedidos</CardTitle>
-                  <CardDescription>
-                    Lista de pedidos pendientes para su aprobación
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Fecha</TableHead>
-                        <TableHead>Usuario</TableHead>
-                        <TableHead>Comida</TableHead>
-                        <TableHead>Acciones</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {pendingOrders.length > 0 ? (
-                        pendingOrders.map((order) => {
-                          const user = mockUsers.find(user => user.id === order.user_id);
-                          const lunch = mockLunchOptions.find(lunch => lunch.id === order.lunch_option_id);
-                          
-                          return (
-                            <TableRow key={order.id}>
-                              <TableCell>{format(new Date(order.date), 'PPP')}</TableCell>
-                              <TableCell>{user?.first_name} {user?.last_name}</TableCell>
-                              <TableCell>{lunch?.name}</TableCell>
-                              <TableCell>
-                                <Button variant="ghost" size="sm">Aprobar</Button>
-                                <Button variant="destructive" size="sm">Rechazar</Button>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })
-                      ) : (
-                        <TableRow>
-                          <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">
-                            No hay pedidos pendientes para aprobar.
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </TabsContent>
+            <SupervisorDashboardCard
+              title="Team Overview"
+              icon={<Users size={16} className="text-white/80" />}
+              data={teamData}
+              animationDelay="0.3s"
+              path="/supervisor/team"
+              onOpenDialog={() => openDialog('supervisor-team')}
+              gradientClass="from-cyan-500/30 to-teal-600/30"
+            />
             
-            <TabsContent value="subsidies">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Subsidio de Empresa</CardTitle>
-                    <CardDescription>
-                      Configura el subsidio para toda la empresa
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div>
-                      <Label htmlFor="subsidy-type">Tipo de Subsidio</Label>
-                      <Select 
-                        onValueChange={(value) => setSubsidyType(value as 'percentage' | 'fixed')}
-                        defaultValue={subsidyType}
-                      >
-                        <SelectTrigger id="subsidy-type">
-                          <SelectValue placeholder="Seleccionar tipo de subsidio" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="percentage">Porcentaje</SelectItem>
-                          <SelectItem value="fixed">Monto Fijo</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    {subsidyType === 'percentage' ? (
-                      <div className="space-y-3">
-                        <div className="flex justify-between">
-                          <Label htmlFor="subsidy-percentage">Porcentaje de Subsidio</Label>
-                          <span className="text-sm font-medium">{subsidyPercentage}%</span>
-                        </div>
-                        <Slider
-                          id="subsidy-percentage"
-                          min={0}
-                          max={100}
-                          step={1}
-                          value={[subsidyPercentage]}
-                          onValueChange={(value) => setSubsidyPercentage(value[0])}
-                        />
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        <Label htmlFor="fixed-subsidy">Monto Fijo de Subsidio</Label>
-                        <Input
-                          id="fixed-subsidy"
-                          type="number"
-                          min={0}
-                          value={fixedSubsidyAmount}
-                          onChange={(e) => setFixedSubsidyAmount(parseFloat(e.target.value))}
-                        />
-                      </div>
-                    )}
-                  </CardContent>
-                  <CardFooter>
-                    <Button onClick={handleUpdateCompanySubsidy}>Actualizar Subsidio de Empresa</Button>
-                  </CardFooter>
-                </Card>
-                
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Subsidio por Empleado</CardTitle>
-                    <CardDescription>
-                      Configura subsidios específicos por empleado
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div>
-                      <Label htmlFor="employee">Empleado</Label>
-                      <Select 
-                        onValueChange={setSelectedEmployee}
-                        defaultValue={selectedEmployee}
-                      >
-                        <SelectTrigger id="employee">
-                          <SelectValue placeholder="Seleccionar empleado" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {employeeUsers.map(employee => (
-                            <SelectItem key={employee.id} value={employee.id}>
-                              {employee.first_name} {employee.last_name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    {selectedEmployee && (
-                      <>
-                        <div>
-                          <Label htmlFor="employee-subsidy-type">Tipo de Subsidio</Label>
-                          <Select 
-                            onValueChange={(value) => setSubsidyType(value as 'percentage' | 'fixed')}
-                            defaultValue={employeeSubsidies[selectedEmployee]?.subsidy_type || subsidyType}
-                          >
-                            <SelectTrigger id="employee-subsidy-type">
-                              <SelectValue placeholder="Seleccionar tipo de subsidio" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="percentage">Porcentaje</SelectItem>
-                              <SelectItem value="fixed">Monto Fijo</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        
-                        {subsidyType === 'percentage' ? (
-                          <div className="space-y-3">
-                            <div className="flex justify-between">
-                              <Label htmlFor="employee-subsidy-percentage">Porcentaje de Subsidio</Label>
-                              <span className="text-sm font-medium">{subsidyPercentage}%</span>
-                            </div>
-                            <Slider
-                              id="employee-subsidy-percentage"
-                              min={0}
-                              max={100}
-                              step={1}
-                              value={[
-                                employeeSubsidies[selectedEmployee]?.percentage !== undefined
-                                  ? employeeSubsidies[selectedEmployee]?.percentage || 0
-                                  : subsidyPercentage
-                              ]}
-                              onValueChange={(value) => setSubsidyPercentage(value[0])}
-                            />
-                          </div>
-                        ) : (
-                          <div className="space-y-2">
-                            <Label htmlFor="employee-fixed-subsidy">Monto Fijo de Subsidio</Label>
-                            <Input
-                              id="employee-fixed-subsidy"
-                              type="number"
-                              min={0}
-                              value={
-                                employeeSubsidies[selectedEmployee]?.fixed_amount !== undefined
-                                  ? employeeSubsidies[selectedEmployee]?.fixed_amount || 0
-                                  : fixedSubsidyAmount
-                              }
-                              onChange={(e) => setFixedSubsidyAmount(parseFloat(e.target.value))}
-                            />
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </CardContent>
-                  <CardFooter>
-                    <Button 
-                      onClick={handleUpdateEmployeeSubsidy}
-                      disabled={!selectedEmployee}
-                    >
-                      Actualizar Subsidio de Empleado
-                    </Button>
-                  </CardFooter>
-                </Card>
-              </div>
-              
-              <Card className="mt-6">
-                <CardHeader>
-                  <CardTitle>Subsidios Asignados</CardTitle>
-                  <CardDescription>
-                    Lista de subsidios específicos por empleado
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Empleado</TableHead>
-                        <TableHead>Tipo de Subsidio</TableHead>
-                        <TableHead>Valor</TableHead>
-                        <TableHead>Acciones</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {Object.keys(employeeSubsidies).length > 0 ? (
-                        Object.entries(employeeSubsidies).map(([userId, subsidy]) => {
-                          const employee = employeeUsers.find(u => u.id === userId);
-                          return (
-                            <TableRow key={userId}>
-                              <TableCell>
-                                {employee ? `${employee.first_name} ${employee.last_name}` : 'Usuario Desconocido'}
-                              </TableCell>
-                              <TableCell className="capitalize">
-                                {subsidy.subsidy_type === 'percentage' ? 'Porcentaje' : 'Monto Fijo'}
-                              </TableCell>
-                              <TableCell>
-                                {subsidy.subsidy_type === 'percentage' 
-                                  ? `${subsidy.percentage}%` 
-                                  : `$${subsidy.fixed_amount?.toLocaleString()}`}
-                              </TableCell>
-                              <TableCell>
-                                <Button variant="ghost" size="sm" onClick={() => {
-                                  setSelectedEmployee(userId);
-                                  setSubsidyType(subsidy.subsidy_type);
-                                  if (subsidy.percentage !== undefined) {
-                                    setSubsidyPercentage(subsidy.percentage);
-                                  }
-                                  if (subsidy.fixed_amount !== undefined) {
-                                    setFixedSubsidyAmount(subsidy.fixed_amount);
-                                  }
-                                }}>
-                                  Editar
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })
-                      ) : (
-                        <TableRow>
-                          <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">
-                            No hay subsidios específicos asignados.
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="reports">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Reportes</CardTitle>
-                  <CardDescription>
-                    Visualiza estadísticas y reportes de tus empleados
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={400}>
-                    <BarChart
-                      data={mockOrders}
-                      margin={{
-                        top: 5,
-                        right: 30,
-                        left: 20,
-                        bottom: 5,
-                      }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Bar dataKey="userId" fill="#8884d8" />
-                      <Bar dataKey="lunchOptionId" fill="#82ca9d" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
+            <SupervisorDashboardCard
+              title="Billing Details"
+              icon={<DollarSign size={16} className="text-white/80" />}
+              data={billingData}
+              animationDelay="0.4s"
+              path="/supervisor/billing"
+              onOpenDialog={() => openDialog('supervisor-billing')}
+              gradientClass="from-amber-500/30 to-orange-600/30"
+            />
+          </div>
         </div>
+
+        <AlertDialog 
+          open={['supervisor-snapshot', 'supervisor-provider', 'supervisor-team', 'supervisor-billing'].includes(activeDialog || '')} 
+          onOpenChange={() => closeDialog()}
+        >
+          <AlertDialogContent className="neo-blur modal-glassmorphism text-white border-white/20">
+            <SupervisorDialogContent 
+              dialogId={activeDialog || ''} 
+              stats={stats}
+              onClose={closeDialog}
+              navigateTo={navigate}
+            />
+          </AlertDialogContent>
+        </AlertDialog>
       </main>
     </div>
   );

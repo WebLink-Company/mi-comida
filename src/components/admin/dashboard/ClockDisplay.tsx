@@ -12,9 +12,16 @@ interface ClockDisplayProps {
     action: () => void;
     path: string;
   }>;
+  subtitle?: string;
+  role?: 'admin' | 'provider' | 'supervisor';
 }
 
-export const ClockDisplay: React.FC<ClockDisplayProps> = ({ user, quickActions }) => {
+export const ClockDisplay: React.FC<ClockDisplayProps> = ({ 
+  user, 
+  quickActions, 
+  subtitle = "What would you like to work on today?",
+  role = 'admin'
+}) => {
   const [time, setTime] = useState(new Date());
 
   useEffect(() => {
@@ -32,7 +39,7 @@ export const ClockDisplay: React.FC<ClockDisplayProps> = ({ user, quickActions }
   };
 
   const getFirstName = () => {
-    return user?.first_name || 'Admin';
+    return user?.first_name || role.charAt(0).toUpperCase() + role.slice(1);
   };
 
   return (
@@ -51,7 +58,7 @@ export const ClockDisplay: React.FC<ClockDisplayProps> = ({ user, quickActions }
           {getGreeting()}, {getFirstName()} 👋
         </div>
         <div className="mt-2 text-white/60 text-base font-light fade-up">
-          What would you like to work on today?
+          {subtitle}
         </div>
 
         {/* Quick action badges */}

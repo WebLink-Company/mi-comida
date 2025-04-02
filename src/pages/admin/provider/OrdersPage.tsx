@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -39,12 +38,16 @@ interface Order {
   lunch_option_id: string;
   date: string;
   status: 'pending' | 'approved' | 'rejected' | 'prepared' | 'delivered';
+  approved_by?: string | null;
   company_id: string;
-  created_at: string;
-  updated_at: string;
+  created_at?: string | null;
+  updated_at?: string | null;
   user_name?: string;
   meal_name?: string;
   company_name?: string;
+  profiles?: any;
+  lunch_options?: any;
+  companies?: any;
 }
 
 const OrdersPage = () => {
@@ -65,33 +68,8 @@ const OrdersPage = () => {
     setLoading(true);
     
     try {
-      let query = supabase
-        .from('orders')
-        .select(`
-          *,
-          profiles!orders_user_id_fkey(first_name, last_name),
-          lunch_options!orders_lunch_option_id_fkey(name),
-          companies!orders_company_id_fkey(name)
-        `)
-        .eq('date', format(selectedDate, 'yyyy-MM-dd'));
-      
-      if (activeTab !== 'all') {
-        query = query.eq('status', activeTab);
-      }
-      
-      const { data, error } = await query;
-      
-      if (error) throw error;
-      
-      // Format the data with additional user and meal information
-      const formattedOrders = data.map(order => ({
-        ...order,
-        user_name: `${order.profiles?.first_name || ''} ${order.profiles?.last_name || ''}`,
-        meal_name: order.lunch_options?.name || 'Unknown meal',
-        company_name: order.companies?.name || 'Unknown company'
-      }));
-      
-      setOrders(formattedOrders);
+      const fetchedOrders = await fetchOrdersForDate(format(selectedDate, 'yyyy-MM-dd'));
+      setOrders(fetchedOrders);
     } catch (error) {
       console.error('Error fetching orders:', error);
       toast({
@@ -104,6 +82,35 @@ const OrdersPage = () => {
     }
   };
 
+  const fetchOrdersForDate = async (date: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          profiles:user_id(first_name, last_name),
+          lunch_options:lunch_option_id(name),
+          companies:company_id(name)
+        `)
+        .eq('date', date);
+      
+      if (error) throw error;
+      
+      const formattedOrders: Order[] = (data || []).map(order => ({
+        ...order,
+        user_name: `${order.profiles?.first_name || ''} ${order.profiles?.last_name || ''}`.trim(),
+        meal_name: order.lunch_options?.name || 'Unknown Meal',
+        company_name: order.companies?.name || 'Unknown Company',
+        status: order.status as 'pending' | 'approved' | 'rejected' | 'prepared' | 'delivered',
+      }));
+      
+      return formattedOrders;
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      throw error;
+    }
+  };
+
   const updateOrderStatus = async (orderId: string, status: 'pending' | 'approved' | 'rejected' | 'prepared' | 'delivered') => {
     try {
       const { error } = await supabase
@@ -113,7 +120,6 @@ const OrdersPage = () => {
       
       if (error) throw error;
       
-      // Update local state
       setOrders(orders.map(order => 
         order.id === orderId ? { ...order, status } : order
       ));

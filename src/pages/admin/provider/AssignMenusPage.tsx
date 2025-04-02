@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -49,6 +48,7 @@ interface MenuItem {
   menu_type: 'predefined' | 'component';
   is_extra: boolean;
   category_name?: string;
+  menu_categories?: { name: string };
 }
 
 interface MenuAssignment {
@@ -98,9 +98,10 @@ const AssignMenusPage = () => {
         
       if (menuError) throw menuError;
       
-      // Format menu items with category name
-      const formattedMenuItems = (menuData || []).map(item => ({
+      // Format menu items with category name and proper type for menu_type
+      const formattedMenuItems: MenuItem[] = (menuData || []).map(item => ({
         ...item,
+        menu_type: (item.menu_type || 'predefined') as 'predefined' | 'component',
         category_name: item.menu_categories?.name || 'Uncategorized'
       }));
       

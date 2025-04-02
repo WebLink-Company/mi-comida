@@ -69,6 +69,7 @@ interface MenuItem {
   created_at: string;
   updated_at: string;
   category_name?: string;
+  menu_categories?: { name: string };
 }
 
 const MenuManagementPage = () => {
@@ -134,9 +135,10 @@ const MenuManagementPage = () => {
         
       if (menuError) throw menuError;
       
-      // Format menu items with category name
-      const formattedMenuItems = (menuData || []).map(item => ({
+      // Format menu items with category name and ensure menu_type is correctly typed
+      const formattedMenuItems: MenuItem[] = (menuData || []).map(item => ({
         ...item,
+        menu_type: (item.menu_type || 'predefined') as 'predefined' | 'component',
         category_name: item.menu_categories?.name || 'Uncategorized'
       }));
       
@@ -228,6 +230,10 @@ const MenuManagementPage = () => {
       const itemData = {
         ...currentItem,
         provider_id: user.id,
+        name: currentItem.name,
+        description: currentItem.description,
+        price: currentItem.price,
+        image: currentItem.image || '/placeholder.svg',
       };
       
       if (currentItem.id) {
@@ -244,12 +250,15 @@ const MenuManagementPage = () => {
           
         if (error) throw error;
         
-        // Update state
+        // Update state with properly typed menu_type
+        const updatedItem: MenuItem = {
+          ...data,
+          menu_type: (data.menu_type || 'predefined') as 'predefined' | 'component',
+          category_name: data.menu_categories?.name || 'Uncategorized'
+        };
+        
         setMenuItems(menuItems.map(item => 
-          item.id === data.id ? { 
-            ...data, 
-            category_name: data.menu_categories?.name || 'Uncategorized' 
-          } : item
+          item.id === updatedItem.id ? updatedItem : item
         ));
         
         toast({
@@ -269,11 +278,14 @@ const MenuManagementPage = () => {
           
         if (error) throw error;
         
-        // Update state
-        setMenuItems([...menuItems, { 
-          ...data, 
-          category_name: data.menu_categories?.name || 'Uncategorized' 
-        }]);
+        // Update state with properly typed menu_type
+        const newItem: MenuItem = {
+          ...data,
+          menu_type: (data.menu_type || 'predefined') as 'predefined' | 'component',
+          category_name: data.menu_categories?.name || 'Uncategorized'
+        };
+        
+        setMenuItems([...menuItems, newItem]);
         
         toast({
           title: 'Success',
@@ -318,6 +330,7 @@ const MenuManagementPage = () => {
       const categoryData = {
         ...currentCategory,
         provider_id: user.id,
+        name: currentCategory.name,
       };
       
       if (currentCategory.id) {

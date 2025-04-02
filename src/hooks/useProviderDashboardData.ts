@@ -82,7 +82,7 @@ export const useProviderDashboardData = () => {
           .from('orders')
           .select('company_id')
           .eq('date', formattedToday)
-          .is('company_id', 'not.null');
+          .not('company_id', 'is', null);
           
         if (error) throw error;
         

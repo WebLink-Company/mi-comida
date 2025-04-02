@@ -1,34 +1,19 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Save, Plus, Trash2, Clock, Calendar, AlertCircle } from 'lucide-react';
+import { format, addDays } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from '@/components/ui/card';
+import { DatePicker } from '@/components/ui/date-picker';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { DatePicker } from '@/components/ui/date-picker';
-import { format, addDays } from 'date-fns';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-// Mock delivery settings (in a real app, this would come from the database)
 interface DeliverySettings {
   cutoff_time: string;
   delivery_time: string;
@@ -55,7 +40,7 @@ const DeliverySettingsPage = () => {
     allow_same_day: false,
     min_advance_days: 1,
     max_advance_days: 7,
-    delivery_days: ['1', '2', '3', '4', '5'], // Monday to Friday
+    delivery_days: ['1', '2', '3', '4', '5'],
     blackout_dates: [],
   });
   
@@ -100,7 +85,6 @@ const DeliverySettingsPage = () => {
     
     const formattedDate = format(newBlackoutDate, 'yyyy-MM-dd');
     
-    // Check if date already exists
     if (blackoutDates.some(bd => format(bd.date, 'yyyy-MM-dd') === formattedDate)) {
       toast({
         title: 'Error',
@@ -122,7 +106,6 @@ const DeliverySettingsPage = () => {
       blackout_dates: [...settings.blackout_dates, formattedDate]
     });
     
-    // Reset form
     setNewBlackoutDate(undefined);
     setNewBlackoutDescription('');
   };
@@ -142,8 +125,6 @@ const DeliverySettingsPage = () => {
   };
 
   const saveSettings = async () => {
-    // In a real app, you would save the settings to the database
-    // For now, we'll just show a success message
     toast({
       title: 'Success',
       description: 'Delivery settings saved successfully',

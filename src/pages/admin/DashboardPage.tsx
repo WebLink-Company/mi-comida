@@ -31,21 +31,30 @@ const DashboardPage = () => {
       setLoading(true);
       setError(null);
       try {
-        // Fetch all data in parallel for better performance
+        // Fetch counts first
+        const usersCountResponse = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true });
+          
+        const companiesCountResponse = await supabase
+          .from('companies')
+          .select('*', { count: 'exact', head: true });
+          
+        const providersCountResponse = await supabase
+          .from('providers')
+          .select('*', { count: 'exact', head: true });
+          
+        const ordersCountResponse = await supabase
+          .from('orders')
+          .select('*', { count: 'exact', head: true });
+        
+        // Fetch recent data
         const [
-          usersResponse, 
-          companiesResponse, 
-          providersResponse, 
-          ordersResponse, 
           activityResponse,
           recentUsersResponse,
           recentCompaniesResponse,
           recentProvidersResponse
         ] = await Promise.all([
-          supabase.from('profiles').select('count'),
-          supabase.from('companies').select('count'),
-          supabase.from('providers').select('count'),
-          supabase.from('orders').select('count'),
           supabase.from('audit_logs')
             .select('*')
             .order('timestamp', { ascending: false })
@@ -75,10 +84,10 @@ const DashboardPage = () => {
           .limit(5);
 
         // Check for errors
-        if (usersResponse.error) throw new Error(`Error fetching users: ${usersResponse.error.message}`);
-        if (companiesResponse.error) throw new Error(`Error fetching companies: ${companiesResponse.error.message}`);
-        if (providersResponse.error) throw new Error(`Error fetching providers: ${providersResponse.error.message}`);
-        if (ordersResponse.error) throw new Error(`Error fetching orders: ${ordersResponse.error.message}`);
+        if (usersCountResponse.error) throw new Error(`Error fetching users count: ${usersCountResponse.error.message}`);
+        if (companiesCountResponse.error) throw new Error(`Error fetching companies count: ${companiesCountResponse.error.message}`);
+        if (providersCountResponse.error) throw new Error(`Error fetching providers count: ${providersCountResponse.error.message}`);
+        if (ordersCountResponse.error) throw new Error(`Error fetching orders count: ${ordersCountResponse.error.message}`);
         if (activityResponse.error) throw new Error(`Error fetching activity: ${activityResponse.error.message}`);
         if (recentUsersResponse.error) throw new Error(`Error fetching recent users: ${recentUsersResponse.error.message}`);
         if (recentCompaniesResponse.error) throw new Error(`Error fetching recent companies: ${recentCompaniesResponse.error.message}`);
@@ -86,10 +95,10 @@ const DashboardPage = () => {
         if (recentOrdersResponse.error) throw new Error(`Error fetching recent orders: ${recentOrdersResponse.error.message}`);
 
         setStats({
-          users: usersResponse.count || 0,
-          companies: companiesResponse.count || 0,
-          providers: providersResponse.count || 0,
-          orders: ordersResponse.count || 0,
+          users: usersCountResponse.count || 0,
+          companies: companiesCountResponse.count || 0,
+          providers: providersCountResponse.count || 0,
+          orders: ordersCountResponse.count || 0,
         });
 
         setRecentActivity(activityResponse.data || []);

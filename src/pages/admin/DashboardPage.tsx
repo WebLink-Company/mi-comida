@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -801,4 +802,14 @@ const DashboardPage = () => {
 
       {/* Dialog for Order Management */}
       <Dialog open={activeDialog === 'view-orders'} onOpenChange={() => activeDialog === 'view-orders' && setActiveDialog(null)}>
-        {activeDialog === 'view-orders' && <OrdersModal onClose={closeDialog}
+        {activeDialog === 'view-orders' && <OrdersModal onClose={closeDialog} />}
+      </Dialog>
+
+      {/* Dialog for Invoice Management */}
+      <Dialog open={activeDialog === 'review-invoices'} onOpenChange={() => activeDialog === 'review-invoices' && setActiveDialog(null)}>
+        {activeDialog === 'review-invoices' && <InvoicesModal onClose={closeDialog} />}
+      </Dialog>
+    </div>
+};
+
+export default DashboardPage;

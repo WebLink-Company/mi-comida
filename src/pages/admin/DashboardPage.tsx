@@ -6,6 +6,9 @@ import StatCard from '@/components/admin/StatCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { toast } from '@/hooks/use-toast';
+import { CompaniesTable } from '@/components/admin/companies/CompaniesTable';
+import { Badge } from '@/components/ui/badge';
+import { format, formatDistanceToNow } from 'date-fns';
 
 const DashboardPage = () => {
   const [stats, setStats] = useState({
@@ -17,6 +20,11 @@ const DashboardPage = () => {
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [recentUsers, setRecentUsers] = useState<any[]>([]);
+  const [recentCompanies, setRecentCompanies] = useState<any[]>([]);
+  const [recentProviders, setRecentProviders] = useState<any[]>([]);
+  const [recentOrders, setRecentOrders] = useState<any[]>([]);
+  const [lastUpdated, setLastUpdated] = useState("");
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -24,7 +32,17 @@ const DashboardPage = () => {
       setError(null);
       try {
         // Fetch all data in parallel for better performance
-        const [usersResponse, companiesResponse, providersResponse, ordersResponse, activityResponse] = await Promise.all([
+        const [
+          usersResponse, 
+          companiesResponse, 
+          providersResponse, 
+          ordersResponse, 
+          activityResponse,
+          recentUsersResponse,
+          recentCompaniesResponse,
+          recentProvidersResponse,
+          recentOrdersResponse
+        ] = await Promise.all([
           supabase.from('profiles').select('count'),
           supabase.from('companies').select('count'),
           supabase.from('providers').select('count'),
@@ -32,6 +50,22 @@ const DashboardPage = () => {
           supabase.from('audit_logs')
             .select('*')
             .order('timestamp', { ascending: false })
+            .limit(5),
+          supabase.from('profiles')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(5),
+          supabase.from('companies')
+            .select('*, providers(business_name)')
+            .order('created_at', { ascending: false })
+            .limit(5),
+          supabase.from('providers')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(5),
+          supabase.from('orders')
+            .select('*, profiles(first_name, last_name)')
+            .order('created_at', { ascending: false })
             .limit(5)
         ]);
 
@@ -41,6 +75,10 @@ const DashboardPage = () => {
         if (providersResponse.error) throw new Error(`Error fetching providers: ${providersResponse.error.message}`);
         if (ordersResponse.error) throw new Error(`Error fetching orders: ${ordersResponse.error.message}`);
         if (activityResponse.error) throw new Error(`Error fetching activity: ${activityResponse.error.message}`);
+        if (recentUsersResponse.error) throw new Error(`Error fetching recent users: ${recentUsersResponse.error.message}`);
+        if (recentCompaniesResponse.error) throw new Error(`Error fetching recent companies: ${recentCompaniesResponse.error.message}`);
+        if (recentProvidersResponse.error) throw new Error(`Error fetching recent providers: ${recentProvidersResponse.error.message}`);
+        if (recentOrdersResponse.error) throw new Error(`Error fetching recent orders: ${recentOrdersResponse.error.message}`);
 
         setStats({
           users: usersResponse.count || 0,
@@ -50,6 +88,11 @@ const DashboardPage = () => {
         });
 
         setRecentActivity(activityResponse.data || []);
+        setRecentUsers(recentUsersResponse.data || []);
+        setRecentCompanies(recentCompaniesResponse.data || []);
+        setRecentProviders(recentProvidersResponse.data || []);
+        setRecentOrders(recentOrdersResponse.data || []);
+        setLastUpdated(formatDistanceToNow(new Date(), { addSuffix: true }));
       } catch (err: any) {
         console.error('Error fetching dashboard stats:', err);
         setError(err.message);
@@ -64,6 +107,19 @@ const DashboardPage = () => {
     };
 
     fetchStats();
+
+    // Set up real-time listener for updates
+    const channel = supabase
+      .channel('public:profiles')
+      .on('postgres_changes', { event: '*', schema: 'public' }, () => {
+        // Refresh data when changes occur
+        fetchStats();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   // Calculate trend percentages - using random values for now as specified
@@ -72,6 +128,109 @@ const DashboardPage = () => {
     const isPositive = Math.random() > 0.3; // 70% chance of positive trend for better UX
     return { value, isPositive };
   };
+
+  // Quick view components
+  const UsersQuickView = () => (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Name</TableHead>
+          <TableHead>Email</TableHead>
+          <TableHead>Role</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {recentUsers.map((user) => (
+          <TableRow key={user.id}>
+            <TableCell className="font-medium">{`${user.first_name} ${user.last_name}`}</TableCell>
+            <TableCell>{user.email}</TableCell>
+            <TableCell>
+              <Badge variant="outline">{user.role}</Badge>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+
+  const CompaniesQuickView = () => (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Company Name</TableHead>
+          <TableHead>Provider</TableHead>
+          <TableHead>Subsidy %</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {recentCompanies.map((company) => (
+          <TableRow key={company.id}>
+            <TableCell className="font-medium">{company.name}</TableCell>
+            <TableCell>{company.providers?.business_name || 'Not assigned'}</TableCell>
+            <TableCell>{company.subsidy_percentage}%</TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+
+  const ProvidersQuickView = () => (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Provider Name</TableHead>
+          <TableHead>Contact Email</TableHead>
+          <TableHead>Status</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {recentProviders.map((provider) => (
+          <TableRow key={provider.id}>
+            <TableCell className="font-medium">{provider.business_name}</TableCell>
+            <TableCell>{provider.contact_email}</TableCell>
+            <TableCell>
+              <Badge variant={provider.is_active ? "success" : "secondary"}>
+                {provider.is_active ? 'Active' : 'Inactive'}
+              </Badge>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+
+  const OrdersQuickView = () => (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>User</TableHead>
+          <TableHead>Date</TableHead>
+          <TableHead>Status</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {recentOrders.map((order) => (
+          <TableRow key={order.id}>
+            <TableCell className="font-medium">
+              {order.profiles ? `${order.profiles.first_name} ${order.profiles.last_name}` : 'Unknown'}
+            </TableCell>
+            <TableCell>{order.date ? format(new Date(order.date), 'MMM d, yyyy') : 'N/A'}</TableCell>
+            <TableCell>
+              <Badge 
+                variant={
+                  order.status === 'approved' ? 'success' : 
+                  order.status === 'rejected' ? 'destructive' : 
+                  'secondary'
+                }
+              >
+                {order.status}
+              </Badge>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
 
   return (
     <div className="space-y-6">
@@ -97,6 +256,9 @@ const DashboardPage = () => {
           description="Active users across all roles"
           trend={calculateTrend()}
           loading={loading}
+          linkTo="/admin/users"
+          lastUpdated={lastUpdated}
+          quickViewComponent={<UsersQuickView />}
         />
         <StatCard 
           title="Companies" 
@@ -105,6 +267,9 @@ const DashboardPage = () => {
           description="Client companies registered"
           trend={calculateTrend()}
           loading={loading}
+          linkTo="/admin/companies"
+          lastUpdated={lastUpdated}
+          quickViewComponent={<CompaniesQuickView />}
         />
         <StatCard 
           title="Food Providers" 
@@ -113,6 +278,9 @@ const DashboardPage = () => {
           description="Active food providers"
           trend={calculateTrend()}
           loading={loading}
+          linkTo="/admin/providers"
+          lastUpdated={lastUpdated}
+          quickViewComponent={<ProvidersQuickView />}
         />
         <StatCard 
           title="Total Orders" 
@@ -121,6 +289,9 @@ const DashboardPage = () => {
           description="Orders processed to date"
           trend={calculateTrend()}
           loading={loading}
+          linkTo="/admin/orders"
+          lastUpdated={lastUpdated}
+          quickViewComponent={<OrdersQuickView />}
         />
       </div>
 

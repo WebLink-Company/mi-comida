@@ -219,7 +219,7 @@ const DashboardPage = () => {
                   <p className="text-xs text-muted-foreground">invoices</p>
                 </div>
               </div>
-              <div className="bg-transparent">
+              <div>
                 <h3 className="text-sm font-medium mb-2">Top Consumers</h3>
                 <div className="p-3 bg-white/10 rounded-lg flex justify-between">
                   <span>{stats.topCompanyByConsumption}</span>

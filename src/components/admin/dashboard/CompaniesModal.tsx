@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Provider, Company } from '@/lib/types';
 import { CompanyForm } from '@/components/admin/companies/CompanyForm';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
 
 interface CompaniesModalProps {
   onClose: () => void;
@@ -18,6 +19,7 @@ interface CompaniesModalProps {
 export const CompaniesModal: React.FC<CompaniesModalProps> = ({ onClose, providerId }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [providers, setProviders] = useState<Provider[]>([]);
   const [currentCompany, setCurrentCompany] = useState<Partial<Company>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -46,6 +48,13 @@ export const CompaniesModal: React.FC<CompaniesModalProps> = ({ onClose, provide
   }, [providerId]);
 
   const handleUpdateCompany = (key: string, value: any) => {
+    // Don't allow manual overriding of provider_id from the form
+    if (key === 'provider_id' && user?.role === 'provider') {
+      // If the user is a provider, we ignore attempts to change provider_id
+      console.log('Provider users cannot change provider_id');
+      return;
+    }
+    
     setCurrentCompany(prev => ({ ...prev, [key]: value }));
   };
 
@@ -66,15 +75,28 @@ export const CompaniesModal: React.FC<CompaniesModalProps> = ({ onClose, provide
     setIsSubmitting(true);
     
     try {
-      console.log(`Creating company with provider_id: ${currentCompany.provider_id}`);
+      // For provider users, always use their own provider_id
+      let effectiveProviderId = currentCompany.provider_id;
+      
+      // If the user is a provider, override with their own provider_id
+      if (user?.role === 'provider' && user?.provider_id) {
+        effectiveProviderId = user.provider_id;
+        console.log(`Provider user detected - using their provider_id: ${effectiveProviderId}`);
+      }
+      
+      console.log(`Creating company with provider_id: ${effectiveProviderId}`);
+      
       const { data, error } = await supabase.from('companies').insert({
         name: currentCompany.name,
-        provider_id: currentCompany.provider_id || null,
+        provider_id: effectiveProviderId || null,
         subsidy_percentage: currentCompany.subsidy_percentage || 0,
         fixed_subsidy_amount: currentCompany.fixed_subsidy_amount || 0
       }).select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating company:', error);
+        throw error;
+      }
       
       console.log('Company created successfully:', data);
       

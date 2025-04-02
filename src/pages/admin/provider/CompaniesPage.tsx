@@ -93,15 +93,28 @@ const CompaniesPage = () => {
       return;
     }
 
+    if (!user?.provider_id) {
+      toast({
+        title: 'Authentication error',
+        description: 'You must be logged in as a provider to create companies.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     try {
       const isNew = !currentCompany.id;
+      
+      // Important: Use the logged-in user's provider_id - do not allow overriding
       const companyData = {
         ...currentCompany,
-        provider_id: user?.provider_id,
+        provider_id: user.provider_id, // Always use the authenticated user's provider_id
         name: currentCompany.name,
         subsidy_percentage: currentCompany.subsidy_percentage || 0,
         fixed_subsidy_amount: currentCompany.fixed_subsidy_amount || 0,
       };
+
+      console.log('Creating/updating company with data:', companyData);
 
       let operation;
       if (isNew) {
@@ -110,6 +123,7 @@ const CompaniesPage = () => {
           .insert(companyData)
           .select();
       } else {
+        // For updates, make sure we don't change the provider_id
         operation = supabase
           .from('companies')
           .update(companyData)
@@ -119,8 +133,13 @@ const CompaniesPage = () => {
 
       const { data, error } = await operation;
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error in company operation:', error);
+        throw error;
+      }
 
+      console.log('Company operation successful:', data);
+      
       toast({
         title: isNew ? 'Company created' : 'Company updated',
         description: `Successfully ${isNew ? 'created' : 'updated'} company "${currentCompany.name}".`,
@@ -372,6 +391,66 @@ const CompaniesPage = () => {
         </DialogContent>
       </Dialog>
     </div>
+  );
+
+  function handleDelete() {
+    if (!currentCompany.id) return;
+
+    supabase
+      .from('companies')
+      .delete()
+      .eq('id', currentCompany.id)
+      .then(({ error }) => {
+        if (error) {
+          console.error('Error deleting company:', error);
+          toast({
+            title: 'Error',
+            description: 'Failed to delete company',
+            variant: 'destructive',
+          });
+          return;
+        }
+
+        toast({
+          title: 'Company deleted',
+          description: `Successfully deleted company "${currentCompany.name}".`,
+        });
+
+        fetchCompanies();
+        setIsDeleteDialogOpen(false);
+        resetCompanyForm();
+      });
+  }
+
+  function resetCompanyForm() {
+    setCurrentCompany({});
+  }
+
+  function openCreateDialog() {
+    resetCompanyForm();
+    setIsDialogOpen(true);
+  }
+
+  function openEditDialog(company: Company) {
+    setCurrentCompany({
+      id: company.id,
+      name: company.name,
+      subsidy_percentage: company.subsidy_percentage,
+      fixed_subsidy_amount: company.fixed_subsidy_amount,
+    });
+    setIsDialogOpen(true);
+  }
+
+  function openDeleteDialog(company: Company) {
+    setCurrentCompany({
+      id: company.id,
+      name: company.name,
+    });
+    setIsDeleteDialogOpen(true);
+  }
+
+  const filteredCompanies = companies.filter(company =>
+    company.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 };
 

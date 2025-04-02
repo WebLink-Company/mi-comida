@@ -2,6 +2,7 @@
 import { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface StatCardProps {
   title: string;
@@ -13,6 +14,7 @@ interface StatCardProps {
     isPositive: boolean;
   };
   className?: string;
+  loading?: boolean;
 }
 
 const StatCard = ({ 
@@ -21,7 +23,8 @@ const StatCard = ({
   icon, 
   description, 
   trend, 
-  className 
+  className,
+  loading = false
 }: StatCardProps) => {
   return (
     <Card className={cn("overflow-hidden", className)}>
@@ -30,8 +33,12 @@ const StatCard = ({
           <div>
             <p className="text-sm font-medium text-muted-foreground mb-1">{title}</p>
             <div className="flex items-baseline">
-              <h3 className="text-2xl font-bold">{value}</h3>
-              {trend && (
+              {loading ? (
+                <Skeleton className="h-8 w-16" />
+              ) : (
+                <h3 className="text-2xl font-bold">{value}</h3>
+              )}
+              {!loading && trend && (
                 <span className={cn(
                   "ml-2 text-xs font-medium",
                   trend.isPositive ? "text-green-500" : "text-red-500"

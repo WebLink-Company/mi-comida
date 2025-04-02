@@ -5,6 +5,7 @@ import { Users, Building, ChefHat, ShoppingBag, Clock } from 'lucide-react';
 import StatCard from '@/components/admin/StatCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import { toast } from '@/hooks/use-toast';
 
 const DashboardPage = () => {
   const [stats, setStats] = useState({
@@ -15,12 +16,15 @@ const DashboardPage = () => {
   });
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchStats = async () => {
       setLoading(true);
+      setError(null);
       try {
-        const [usersRes, companiesRes, providersRes, ordersRes, activityRes] = await Promise.all([
+        // Fetch all data in parallel for better performance
+        const [usersResponse, companiesResponse, providersResponse, ordersResponse, activityResponse] = await Promise.all([
           supabase.from('profiles').select('count'),
           supabase.from('companies').select('count'),
           supabase.from('providers').select('count'),
@@ -31,16 +35,29 @@ const DashboardPage = () => {
             .limit(5)
         ]);
 
+        // Check for errors
+        if (usersResponse.error) throw new Error(`Error fetching users: ${usersResponse.error.message}`);
+        if (companiesResponse.error) throw new Error(`Error fetching companies: ${companiesResponse.error.message}`);
+        if (providersResponse.error) throw new Error(`Error fetching providers: ${providersResponse.error.message}`);
+        if (ordersResponse.error) throw new Error(`Error fetching orders: ${ordersResponse.error.message}`);
+        if (activityResponse.error) throw new Error(`Error fetching activity: ${activityResponse.error.message}`);
+
         setStats({
-          users: usersRes.count || 0,
-          companies: companiesRes.count || 0,
-          providers: providersRes.count || 0,
-          orders: ordersRes.count || 0,
+          users: usersResponse.count || 0,
+          companies: companiesResponse.count || 0,
+          providers: providersResponse.count || 0,
+          orders: ordersResponse.count || 0,
         });
 
-        setRecentActivity(activityRes.data || []);
-      } catch (error) {
-        console.error('Error fetching dashboard stats:', error);
+        setRecentActivity(activityResponse.data || []);
+      } catch (err: any) {
+        console.error('Error fetching dashboard stats:', err);
+        setError(err.message);
+        toast({
+          title: "Error loading dashboard data",
+          description: err.message,
+          variant: "destructive",
+        });
       } finally {
         setLoading(false);
       }
@@ -48,6 +65,13 @@ const DashboardPage = () => {
 
     fetchStats();
   }, []);
+
+  // Calculate trend percentages - using random values for now as specified
+  const calculateTrend = (min = 2, max = 15) => {
+    const value = Math.floor(Math.random() * (max - min + 1)) + min;
+    const isPositive = Math.random() > 0.3; // 70% chance of positive trend for better UX
+    return { value, isPositive };
+  };
 
   return (
     <div className="space-y-6">
@@ -58,34 +82,45 @@ const DashboardPage = () => {
         </p>
       </div>
 
+      {error && (
+        <div className="bg-destructive/10 text-destructive p-4 rounded-md">
+          <p className="font-medium">Failed to load dashboard data</p>
+          <p className="text-sm">{error}</p>
+        </div>
+      )}
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard 
           title="Total Users" 
           value={stats.users} 
           icon={<Users className="h-4 w-4" />} 
           description="Active users across all roles"
-          trend={{ value: 12, isPositive: true }}
+          trend={calculateTrend()}
+          loading={loading}
         />
         <StatCard 
           title="Companies" 
           value={stats.companies} 
           icon={<Building className="h-4 w-4" />} 
           description="Client companies registered"
-          trend={{ value: 5, isPositive: true }}
+          trend={calculateTrend()}
+          loading={loading}
         />
         <StatCard 
           title="Food Providers" 
           value={stats.providers} 
           icon={<ChefHat className="h-4 w-4" />} 
           description="Active food providers"
-          trend={{ value: 3, isPositive: true }}
+          trend={calculateTrend()}
+          loading={loading}
         />
         <StatCard 
           title="Total Orders" 
           value={stats.orders} 
           icon={<ShoppingBag className="h-4 w-4" />} 
           description="Orders processed to date"
-          trend={{ value: 8, isPositive: true }}
+          trend={calculateTrend()}
+          loading={loading}
         />
       </div>
 

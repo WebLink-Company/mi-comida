@@ -1,21 +1,22 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
-import { Calendar, CheckCircle, XCircle, PackageCheck, AlertCircle, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import {
+import { CalendarIcon, ClipboardCheck, CheckCircle2, Package, TruckIcon } from 'lucide-react';
+import { 
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -28,20 +29,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { DatePicker } from "@/components/ui/date-picker";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { DatePicker } from '@/components/ui/date-picker';
 
+// Define the Order type with a specific status type that matches the database
 interface Order {
   id: string;
   user_id: string;
   lunch_option_id: string;
+  company_id: string;
   date: string;
   status: 'pending' | 'approved' | 'rejected' | 'prepared' | 'delivered';
-  approved_by?: string | null;
-  company_id: string;
-  created_at?: string | null;
-  updated_at?: string | null;
+  approved_by?: string;
+  created_at: string;
+  updated_at: string;
   user_name?: string;
   meal_name?: string;
   company_name?: string;
@@ -54,27 +60,71 @@ const OrdersPage = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [activeTab, setActiveTab] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
 
   useEffect(() => {
-    fetchOrders();
-  }, [selectedDate, activeTab]);
+    if (user) {
+      fetchOrders();
+    }
+  }, [user, selectedDate, statusFilter]);
 
   const fetchOrders = async () => {
-    if (!user?.id) return;
-    
     setLoading(true);
     
     try {
-      const fetchedOrders = await fetchOrdersForDate(format(selectedDate, 'yyyy-MM-dd'));
-      setOrders(fetchedOrders);
+      let query = supabase
+        .from('orders')
+        .select(`
+          *,
+          profiles:user_id (first_name, last_name),
+          lunch_options:lunch_option_id (*),
+          companies:company_id (name)
+        `)
+        .eq('date', format(selectedDate, 'yyyy-MM-dd'));
+      
+      // If provider is logged in, filter by companies associated with this provider
+      if (user?.role === 'provider') {
+        // First get companies for this provider
+        const { data: providerCompanies } = await supabase
+          .from('companies')
+          .select('id')
+          .eq('provider_id', user.id);
+
+        if (providerCompanies && providerCompanies.length > 0) {
+          const companyIds = providerCompanies.map(company => company.id);
+          query = query.in('company_id', companyIds);
+        }
+      }
+
+      // Apply status filter if not "all"
+      if (statusFilter !== 'all') {
+        query = query.eq('status', statusFilter);
+      }
+      
+      const { data, error } = await query;
+
+      if (error) {
+        throw error;
+      }
+
+      if (data) {
+        // Transform the data to add user_name and meal_name
+        const processedOrders = data.map(order => ({
+          ...order,
+          user_name: `${order.profiles?.first_name || ''} ${order.profiles?.last_name || ''}`,
+          meal_name: order.lunch_options?.name || '',
+          company_name: order.companies?.name || '',
+        }));
+
+        setOrders(processedOrders as Order[]);
+      }
     } catch (error) {
       console.error('Error fetching orders:', error);
       toast({
         title: 'Error',
-        description: 'Failed to fetch orders data',
+        description: 'Failed to load orders. Please try again.',
         variant: 'destructive',
       });
     } finally {
@@ -82,55 +132,28 @@ const OrdersPage = () => {
     }
   };
 
-  const fetchOrdersForDate = async (date: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('orders')
-        .select(`
-          *,
-          profiles:user_id(first_name, last_name),
-          lunch_options:lunch_option_id(name),
-          companies:company_id(name)
-        `)
-        .eq('date', date);
-      
-      if (error) throw error;
-      
-      const formattedOrders: Order[] = (data || []).map(order => ({
-        ...order,
-        user_name: `${order.profiles?.first_name || ''} ${order.profiles?.last_name || ''}`.trim(),
-        meal_name: order.lunch_options?.name || 'Unknown Meal',
-        company_name: order.companies?.name || 'Unknown Company',
-        status: order.status as 'pending' | 'approved' | 'rejected' | 'prepared' | 'delivered',
-      }));
-      
-      return formattedOrders;
-    } catch (error) {
-      console.error('Error fetching orders:', error);
-      throw error;
-    }
-  };
-
-  const updateOrderStatus = async (orderId: string, status: 'pending' | 'approved' | 'rejected' | 'prepared' | 'delivered') => {
+  const handleStatusChange = async (orderId: string, newStatus: Order['status']) => {
     try {
       const { error } = await supabase
         .from('orders')
-        .update({ status, updated_at: new Date().toISOString() })
+        .update({ status: newStatus, updated_at: new Date().toISOString() })
         .eq('id', orderId);
-      
+
       if (error) throw error;
-      
-      setOrders(orders.map(order => 
-        order.id === orderId ? { ...order, status } : order
-      ));
-      
+
+      // Update local state
+      setOrders(prevOrders =>
+        prevOrders.map(order =>
+          order.id === orderId ? { ...order, status: newStatus } : order
+        )
+      );
+
       toast({
         title: 'Success',
-        description: `Order status updated to ${status}`,
-        variant: 'default',
+        description: `Order status updated to ${newStatus}`,
       });
     } catch (error) {
-      console.error('Error updating order:', error);
+      console.error('Error updating order status:', error);
       toast({
         title: 'Error',
         description: 'Failed to update order status',
@@ -139,186 +162,138 @@ const OrdersPage = () => {
     }
   };
 
-  const renderStatusBadge = (status: string) => {
+  const getStatusBadge = (status: Order['status']) => {
     switch (status) {
       case 'pending':
-        return <Badge variant="secondary">Pending</Badge>;
+        return <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300">Pending</Badge>;
       case 'approved':
-        return <Badge className="bg-blue-500">Approved</Badge>;
+        return <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300">Approved</Badge>;
       case 'rejected':
-        return <Badge variant="destructive">Rejected</Badge>;
+        return <Badge variant="outline" className="bg-red-100 text-red-800 border-red-300">Rejected</Badge>;
       case 'prepared':
-        return <Badge className="bg-amber-500">Prepared</Badge>;
+        return <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-300">Prepared</Badge>;
       case 'delivered':
-        return <Badge variant="success">Delivered</Badge>;
+        return <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">Delivered</Badge>;
       default:
-        return <Badge>{status}</Badge>;
+        return <Badge variant="outline">{status}</Badge>;
     }
-  };
-
-  const renderActionButtons = (order: Order) => {
-    switch (order.status) {
-      case 'pending':
-        return (
-          <>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="text-green-500 border-green-500 hover:bg-green-500/10"
-              onClick={() => updateOrderStatus(order.id, 'approved')}
-            >
-              <CheckCircle className="h-4 w-4 mr-1" /> Approve
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="text-red-500 border-red-500 hover:bg-red-500/10 ml-2"
-              onClick={() => updateOrderStatus(order.id, 'rejected')}
-            >
-              <XCircle className="h-4 w-4 mr-1" /> Reject
-            </Button>
-          </>
-        );
-      case 'approved':
-        return (
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="text-amber-500 border-amber-500 hover:bg-amber-500/10"
-            onClick={() => updateOrderStatus(order.id, 'prepared')}
-          >
-            <PackageCheck className="h-4 w-4 mr-1" /> Mark Prepared
-          </Button>
-        );
-      case 'prepared':
-        return (
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="text-green-600 border-green-600 hover:bg-green-600/10"
-            onClick={() => updateOrderStatus(order.id, 'delivered')}
-          >
-            <CheckCircle className="h-4 w-4 mr-1" /> Mark Delivered
-          </Button>
-        );
-      case 'delivered':
-        return (
-          <Button variant="ghost" size="sm" disabled>
-            Completed
-          </Button>
-        );
-      default:
-        return null;
-    }
-  };
-
-  const countByStatus = {
-    all: orders.length,
-    pending: orders.filter(order => order.status === 'pending').length,
-    approved: orders.filter(order => order.status === 'approved').length,
-    prepared: orders.filter(order => order.status === 'prepared').length,
-    delivered: orders.filter(order => order.status === 'delivered').length,
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold mb-2 text-white">Orders Management</h1>
-          <p className="text-white/70">View and manage customer orders for meal delivery</p>
-        </div>
-        
-        <div className="mt-4 md:mt-0 flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4">
-          <div className="flex items-center space-x-2">
-            <Calendar className="h-5 w-5 text-white/70" />
-            <DatePicker
-              date={selectedDate}
-              onSelect={setSelectedDate}
-              className="bg-white/20 border-white/20 text-white"
-            />
-          </div>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Orders Management</h1>
+        <div className="flex items-center space-x-2">
+          <DatePicker 
+            date={selectedDate}
+            onSelect={setSelectedDate}
+            className="w-[180px]"
+          />
+          <Select
+            value={statusFilter}
+            onValueChange={setStatusFilter}
+          >
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Orders</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="approved">Approved</SelectItem>
+              <SelectItem value="rejected">Rejected</SelectItem>
+              <SelectItem value="prepared">Prepared</SelectItem>
+              <SelectItem value="delivered">Delivered</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button onClick={fetchOrders} variant="outline">
+            <ClipboardCheck className="mr-2 h-4 w-4" />
+            Refresh
+          </Button>
         </div>
       </div>
 
-      <Tabs 
-        defaultValue="all" 
-        value={activeTab}
-        onValueChange={setActiveTab}
-        className="w-full"
-      >
-        <div className="mb-4 overflow-x-auto">
-          <TabsList className="bg-white/5 border border-white/10">
-            <TabsTrigger value="all" className="text-white data-[state=active]:bg-white/10">
-              All Orders <Badge className="ml-2 bg-white/20 text-white">{countByStatus.all}</Badge>
-            </TabsTrigger>
-            <TabsTrigger value="pending" className="text-white data-[state=active]:bg-white/10">
-              Pending <Badge className="ml-2 bg-white/20 text-white">{countByStatus.pending}</Badge>
-            </TabsTrigger>
-            <TabsTrigger value="approved" className="text-white data-[state=active]:bg-white/10">
-              Approved <Badge className="ml-2 bg-white/20 text-white">{countByStatus.approved}</Badge>
-            </TabsTrigger>
-            <TabsTrigger value="prepared" className="text-white data-[state=active]:bg-white/10">
-              Prepared <Badge className="ml-2 bg-white/20 text-white">{countByStatus.prepared}</Badge>
-            </TabsTrigger>
-            <TabsTrigger value="delivered" className="text-white data-[state=active]:bg-white/10">
-              Delivered <Badge className="ml-2 bg-white/20 text-white">{countByStatus.delivered}</Badge>
-            </TabsTrigger>
-          </TabsList>
-        </div>
-        
-        <TabsContent value={activeTab}>
-          <Card className="bg-white/10 border-white/20 text-white">
-            <CardHeader>
-              <CardTitle>Orders for {format(selectedDate, 'MMMM d, yyyy')}</CardTitle>
-              <CardDescription className="text-white/70">
-                Manage orders and update their status
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin text-white/70" />
-                </div>
-              ) : orders.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-8 text-white/70">
-                  <AlertCircle className="h-12 w-12 mb-4" />
-                  <p className="text-lg font-medium">No orders found for this date</p>
-                  <p className="text-sm mt-2">Try selecting a different date or status filter</p>
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-white/10 hover:bg-white/5">
-                      <TableHead className="text-white/70">Customer</TableHead>
-                      <TableHead className="text-white/70">Company</TableHead>
-                      <TableHead className="text-white/70">Meal</TableHead>
-                      <TableHead className="text-white/70">Status</TableHead>
-                      <TableHead className="text-white/70">Order Time</TableHead>
-                      <TableHead className="text-white/70">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {orders.map((order) => (
-                      <TableRow key={order.id} className="border-white/10 hover:bg-white/5">
-                        <TableCell className="font-medium">{order.user_name}</TableCell>
-                        <TableCell>{order.company_name}</TableCell>
-                        <TableCell>{order.meal_name}</TableCell>
-                        <TableCell>{renderStatusBadge(order.status)}</TableCell>
-                        <TableCell>{format(new Date(order.created_at), 'h:mm a')}</TableCell>
-                        <TableCell>
-                          <div className="flex flex-wrap gap-2">
-                            {renderActionButtons(order)}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      <Card>
+        <CardHeader>
+          <CardTitle>Orders for {format(selectedDate, 'MMMM d, yyyy')}</CardTitle>
+          <CardDescription>
+            Manage lunch orders for the selected date
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="flex justify-center py-8">
+              <p>Loading orders...</p>
+            </div>
+          ) : orders.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>User</TableHead>
+                  <TableHead>Meal</TableHead>
+                  <TableHead>Company</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {orders.map((order) => (
+                  <TableRow key={order.id}>
+                    <TableCell>{order.user_name}</TableCell>
+                    <TableCell>{order.meal_name}</TableCell>
+                    <TableCell>{order.company_name}</TableCell>
+                    <TableCell>{getStatusBadge(order.status)}</TableCell>
+                    <TableCell>
+                      {order.status === 'approved' && (
+                        <Button 
+                          size="sm" 
+                          onClick={() => handleStatusChange(order.id, 'prepared')}
+                          className="mr-2"
+                        >
+                          <CheckCircle2 className="mr-1 h-4 w-4" />
+                          Mark Prepared
+                        </Button>
+                      )}
+                      {order.status === 'prepared' && (
+                        <Button 
+                          size="sm" 
+                          onClick={() => handleStatusChange(order.id, 'delivered')}
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          <TruckIcon className="mr-1 h-4 w-4" />
+                          Mark Delivered
+                        </Button>
+                      )}
+                      {(order.status === 'pending' || !['pending', 'approved', 'prepared', 'delivered'].includes(order.status)) && (
+                        <>
+                          <Button 
+                            size="sm" 
+                            onClick={() => handleStatusChange(order.id, 'approved')}
+                            className="mr-2"
+                          >
+                            Approve
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="destructive"
+                            onClick={() => handleStatusChange(order.id, 'rejected')}
+                          >
+                            Reject
+                          </Button>
+                        </>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <Package className="mx-auto h-12 w-12 opacity-30 mb-2" />
+              <p>No orders found for the selected date and filters</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };

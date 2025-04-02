@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -26,6 +27,12 @@ import CompaniesPage from "./pages/admin/CompaniesPage";
 import ProvidersPage from "./pages/admin/ProvidersPage";
 import ReportsPage from "./pages/admin/ReportsPage";
 import SettingsPage from "./pages/admin/SettingsPage";
+
+// Provider Pages
+import OrdersPage from "./pages/admin/provider/OrdersPage";
+import MenuManagementPage from "./pages/admin/provider/MenuManagementPage";
+import AssignMenusPage from "./pages/admin/provider/AssignMenusPage";
+import DeliverySettingsPage from "./pages/admin/provider/DeliverySettingsPage";
 
 const queryClient = new QueryClient();
 
@@ -114,10 +121,12 @@ const App = () => (
             }>
               <Route index element={<ProviderDashboardPage />} />
               <Route path="dashboard" element={<ProviderDashboardPage />} />
-              <Route path="menu" element={<DashboardPage />} />
-              <Route path="orders" element={<DashboardPage />} />
+              <Route path="menu" element={<MenuManagementPage />} />
+              <Route path="orders" element={<OrdersPage />} />
               <Route path="companies" element={<CompaniesPage />} />
               <Route path="users" element={<UsersPage />} />
+              <Route path="assign-menus" element={<AssignMenusPage />} />
+              <Route path="delivery-settings" element={<DeliverySettingsPage />} />
               <Route path="billing" element={<DashboardPage />} />
             </Route>
             

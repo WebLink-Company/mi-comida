@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import GlassSidebar from '@/components/GlassSidebar';
@@ -9,6 +9,7 @@ import NavigationBar from '@/components/NavigationBar';
 const AdminLayout = () => {
   const { user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(true); // Default to collapsed
   const { toast } = useToast();
   const userRole = user?.role || "admin";
@@ -17,8 +18,22 @@ const AdminLayout = () => {
   useEffect(() => {
     const path = location.pathname.split('/').pop() || 'dashboard';
     const title = path.charAt(0).toUpperCase() + path.slice(1);
-    document.title = `Admin | ${title}`;
-  }, [location]);
+    document.title = `${userRole === 'admin' ? 'Admin' : 'Provider'} | ${title}`;
+  }, [location, userRole]);
+
+  // Redirect to correct section based on user role
+  useEffect(() => {
+    if (user) {
+      const isInAdminSection = location.pathname.startsWith('/admin');
+      const isInProviderSection = location.pathname.startsWith('/provider');
+      
+      if (user.role === 'admin' && isInProviderSection) {
+        navigate('/admin');
+      } else if (user.role === 'provider' && isInAdminSection) {
+        navigate('/provider');
+      }
+    }
+  }, [user, location.pathname, navigate]);
 
   // Retrieve sidebar state from localStorage
   useEffect(() => {

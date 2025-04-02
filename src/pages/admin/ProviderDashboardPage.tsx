@@ -36,7 +36,7 @@ const ProviderDashboardPage = () => {
     {
       label: 'Add User',
       icon: UserPlus,
-      action: () => openDialog('add-user'),
+      action: () => navigate('/provider/users'),
       path: '/provider/users'
     },
     {

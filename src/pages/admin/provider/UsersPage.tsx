@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent } from '@/components/ui/card';
 import { Dialog } from '@/components/ui/dialog';
 import { AlertDialog } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
@@ -152,6 +151,18 @@ const ProviderUsersPage = () => {
     }
   };
 
+  const handleCloseUserModal = () => {
+    setIsUserModalOpen(false);
+    setSelectedCompany(null);
+    setCompanyUsers([]);
+  };
+
+  const handleCloseDetailsModal = () => {
+    setIsDetailsModalOpen(false);
+    setSelectedUser(null);
+    setUserOrders([]);
+  };
+
   return (
     <div className="container mx-auto py-6 px-4 sm:px-6 lg:px-8 animate-fade-in">
       <div className="flex flex-col space-y-4">
@@ -184,33 +195,37 @@ const ProviderUsersPage = () => {
       </div>
 
       {/* Users Modal (Level 2) */}
-      {selectedCompany && (
-        <Dialog 
-          open={isUserModalOpen} 
-          onOpenChange={setIsUserModalOpen}
-        >
+      <Dialog 
+        open={isUserModalOpen} 
+        onOpenChange={(open) => {
+          if (!open) handleCloseUserModal();
+        }}
+      >
+        {selectedCompany && (
           <UsersModal
             company={selectedCompany}
             users={companyUsers}
             onUserClick={handleUserClick}
-            onClose={() => setIsUserModalOpen(false)}
+            onClose={handleCloseUserModal}
           />
-        </Dialog>
-      )}
+        )}
+      </Dialog>
 
       {/* User Details Modal (Level 3) */}
-      {selectedUser && (
-        <AlertDialog 
-          open={isDetailsModalOpen} 
-          onOpenChange={setIsDetailsModalOpen}
-        >
+      <AlertDialog 
+        open={isDetailsModalOpen} 
+        onOpenChange={(open) => {
+          if (!open) handleCloseDetailsModal();
+        }}
+      >
+        {selectedUser && (
           <UserDetailsModal
             user={selectedUser}
             orders={userOrders}
-            onClose={() => setIsDetailsModalOpen(false)}
+            onClose={handleCloseDetailsModal}
           />
-        </AlertDialog>
-      )}
+        )}
+      </AlertDialog>
     </div>
   );
 };

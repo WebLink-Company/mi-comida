@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Calendar, DollarSign, Package } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 
 interface User {
@@ -52,13 +52,13 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, orders, onClo
             {user.first_name} {user.last_name}
           </AlertDialogTitle>
         </div>
-        <AlertDialogDescription className="flex flex-wrap gap-2 items-center">
+        <div className="flex flex-wrap gap-2 items-center">
           <span className="text-sm text-gray-500 dark:text-gray-400">{user.email}</span>
           <span className="text-gray-300 dark:text-gray-600">•</span>
           <Badge variant="outline" className="capitalize">
             {user.role}
           </Badge>
-        </AlertDialogDescription>
+        </div>
       </AlertDialogHeader>
 
       <div className="my-3">

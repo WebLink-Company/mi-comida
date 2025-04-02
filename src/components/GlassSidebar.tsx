@@ -89,6 +89,14 @@ const GlassSidebar = ({ collapsed, setCollapsed, userRole = 'admin' }: GlassSide
     if (userRole === 'provider') {
       items.push(
         { 
+          name: 'Users', 
+          icon: Users, 
+          adminPath: '/admin/users',
+          providerPath: '/provider/users',
+          exact: false,
+          roles: ['provider'] 
+        },
+        { 
           name: 'Companies', 
           icon: Building, 
           adminPath: '/admin/companies',

@@ -86,12 +86,17 @@ export const ProvidersModal: React.FC<ProvidersModalProps> = ({ onClose }) => {
 
   return (
     <DialogContent 
-      className="sm:max-w-md modal-glassmorphism"
+      className="sm:max-w-md modal-glassmorphism overflow-y-auto max-h-[90vh] bg-gradient-to-br from-slate-900/90 to-slate-800/90 border border-white/10 shadow-xl backdrop-blur-md"
       onInteractOutside={handleClose}
       onEscapeKeyDown={handleClose}
     >
-      <DialogHeader>
-        <DialogTitle className="text-gradient">Add Provider</DialogTitle>
+      <div className="absolute inset-0 rounded-lg bg-blue-500/5 z-[-1]"></div>
+      <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-indigo-500/10 to-purple-500/10 z-[-1]"></div>
+      
+      <DialogHeader className="pb-4 border-b border-white/10">
+        <DialogTitle className="text-gradient text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-500">
+          Add Provider
+        </DialogTitle>
         <DialogDescription className="text-white/70">
           Register a new food service provider
         </DialogDescription>
@@ -152,7 +157,7 @@ export const ProvidersModal: React.FC<ProvidersModalProps> = ({ onClose }) => {
               e.stopPropagation();
               handleClose();
             }}
-            className="modal-button modal-button-cancel"
+            className="modal-button modal-button-cancel bg-white/10 hover:bg-white/20 text-white"
             type="button"
           >
             Cancel
@@ -160,7 +165,7 @@ export const ProvidersModal: React.FC<ProvidersModalProps> = ({ onClose }) => {
           <Button 
             type="submit"
             disabled={isSubmitting}
-            className="modal-button modal-button-primary bg-gradient-to-r from-blue-500 to-purple-600 text-white"
+            className="modal-button modal-button-primary bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:opacity-90"
           >
             {isSubmitting ? 'Creating...' : 'Create Provider'}
           </Button>
@@ -170,7 +175,7 @@ export const ProvidersModal: React.FC<ProvidersModalProps> = ({ onClose }) => {
       <DialogFooter className="flex flex-wrap gap-2 justify-end mt-4 border-t border-white/10 pt-4">
         <Badge 
           variant="secondary"
-          className="py-2 z-50 cursor-pointer hover:bg-primary/20 modal-button"
+          className="py-2 z-50 cursor-pointer hover:bg-primary/20 modal-button transition-all duration-300 bg-white/10 hover:bg-white/20"
           onClick={(e) => {
             e.stopPropagation();
             handleNavigation('/admin/providers');
@@ -181,7 +186,7 @@ export const ProvidersModal: React.FC<ProvidersModalProps> = ({ onClose }) => {
         </Badge>
         <Badge 
           variant="secondary"
-          className="py-2 z-50 cursor-pointer hover:bg-primary/20 modal-button"
+          className="py-2 z-50 cursor-pointer hover:bg-primary/20 modal-button transition-all duration-300 bg-white/10 hover:bg-white/20"
           onClick={(e) => {
             e.stopPropagation();
             handleNavigation('/admin/companies');

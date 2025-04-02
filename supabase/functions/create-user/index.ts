@@ -28,6 +28,16 @@ serve(async (req) => {
       password
     } = body;
 
+    console.log("Create user request received:", JSON.stringify({
+      email,
+      first_name,
+      last_name,
+      role,
+      provider_id,
+      company_id,
+      password: "***REDACTED***"
+    }));
+
     // Validate required fields
     if (!email || !first_name || !last_name || !role || !password) {
       return new Response(
@@ -51,106 +61,44 @@ serve(async (req) => {
       }
     );
 
-    // Check if user already exists in auth.users by listing users with matching email
-    const { data: existingAuthUsers } = await supabaseAdmin.auth.admin.listUsers({
-      filter: `email.eq.${email}`
-    });
+    // Check if user exists in auth.users by email
+    const { data: authUsers, error: authUsersError } = await supabaseAdmin.auth.admin.listUsers();
     
-    let existingUserId = null;
-    
-    // Only consider it an existing user if we get valid data back with users
-    if (existingAuthUsers && existingAuthUsers.users && existingAuthUsers.users.length > 0) {
-      existingUserId = existingAuthUsers.users[0].id;
-      
-      // Check if a profile exists for this user
-      const { data: existingProfile, error: profileCheckError } = await supabaseAdmin
-        .from("profiles")
-        .select("id")
-        .eq("id", existingUserId)
-        .maybeSingle();
-      
-      if (profileCheckError) {
-        console.error("Error checking existing profile:", profileCheckError);
-      }
-      
-      if (existingProfile) {
-        return new Response(
-          JSON.stringify({ 
-            error: "User with this email already exists",
-            user: {
-              id: existingUserId,
-              email,
-              first_name,
-              last_name,
-              role,
-              provider_id: provider_id || null,
-              company_id: company_id || null,
-            }
-          }),
-          { 
-            status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
-          }
-        );
-      }
-      
-      // If user exists in auth but not in profiles, create the profile
-      const { error: profileError } = await supabaseAdmin
-        .from("profiles")
-        .insert({
-          id: existingUserId,
-          email,
-          first_name,
-          last_name,
-          role,
-          provider_id: provider_id || null,
-          company_id: company_id || null,
-        });
-      
-      if (profileError) {
-        console.error("Error creating profile:", profileError);
-        return new Response(
-          JSON.stringify({ error: profileError.message }),
-          { 
-            status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
-          }
-        );
-      }
-      
+    if (authUsersError) {
+      console.error("Error listing auth users:", authUsersError);
       return new Response(
-        JSON.stringify({ 
-          success: true, 
-          message: "User profile created successfully for existing auth user",
-          user: {
-            id: existingUserId,
-            email,
-            first_name,
-            last_name,
-            role,
-            provider_id: provider_id || null,
-            company_id: company_id || null,
-          } 
-        }),
+        JSON.stringify({ error: authUsersError.message }),
         { 
-          status: 201, 
+          status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         }
       );
     }
 
-    // If no existing user found, double-check in profiles
-    const { data: existingProfileCheck } = await supabaseAdmin
+    // Find if user email already exists
+    const existingAuthUser = authUsers.users.find(user => 
+      user.email?.toLowerCase() === email.toLowerCase()
+    );
+
+    // Next, check if email exists in profiles table
+    const { data: existingProfile, error: profileCheckError } = await supabaseAdmin
       .from("profiles")
-      .select("id")
-      .eq("email", email)
+      .select("id, email")
+      .ilike("email", email)
       .maybeSingle();
       
-    if (existingProfileCheck) {
+    if (profileCheckError) {
+      console.error("Error checking existing profile:", profileCheckError);
+    }
+    
+    // If user exists in either auth or profiles, return error
+    if (existingAuthUser || existingProfile) {
+      console.log("User already exists - Auth:", !!existingAuthUser, "Profile:", !!existingProfile);
       return new Response(
         JSON.stringify({ 
-          error: "User with this email already exists in profiles but not in auth",
-          user: existingProfileCheck
+          error: "User with this email already exists",
+          existingAuthUser: existingAuthUser ? true : false,
+          existingProfile: existingProfile ? true : false
         }),
         { 
           status: 400,

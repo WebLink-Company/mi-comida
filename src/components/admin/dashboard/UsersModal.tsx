@@ -57,24 +57,30 @@ export const UsersModal: React.FC<UsersModalProps> = ({ onClose }) => {
         throw new Error('No authenticated session');
       }
       
+      // Create the payload and log it
+      const payload = {
+        email: formData.email,
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        role: formData.role,
+        provider_id: formData.provider_id || null,
+        company_id: formData.company_id || null,
+        password: formData.password
+      };
+      
+      console.log("Creating user with payload:", JSON.stringify(payload));
+      
       const response = await fetch(`${SUPABASE_URL}/functions/v1/create-user`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({
-          email: formData.email,
-          first_name: formData.first_name,
-          last_name: formData.last_name,
-          role: formData.role,
-          provider_id: formData.provider_id,
-          company_id: formData.company_id,
-          password: formData.password
-        }),
+        body: JSON.stringify(payload),
       });
       
       const result = await response.json();
+      console.log("Create user response:", result);
       
       if (!response.ok) {
         throw new Error(result.error || 'Failed to create user');

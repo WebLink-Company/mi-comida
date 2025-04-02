@@ -19,8 +19,16 @@ const AdminLayout = () => {
     document.title = `Admin | ${title}`;
   }, [location]);
 
+  // Retrieve sidebar state from localStorage
+  useEffect(() => {
+    const storedState = localStorage.getItem('sidebarCollapsed');
+    if (storedState !== null) {
+      setCollapsed(storedState === 'true');
+    }
+  }, []);
+
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700 flex flex-col">
       <NavigationBar 
         userRole="admin" 
         userName={`${user?.first_name || ''} ${user?.last_name || ''}`} 
@@ -29,7 +37,7 @@ const AdminLayout = () => {
       <div className="flex flex-1 pt-16">
         <GlassSidebar collapsed={collapsed} setCollapsed={setCollapsed} />
         
-        <main className={`flex-1 transition-all duration-300 p-4 md:p-6 ${collapsed ? 'md:ml-[70px]' : 'md:ml-[240px]'}`}>
+        <main className={`flex-1 transition-all duration-300 ease-in-out p-4 md:p-6 ${collapsed ? 'ml-[70px]' : 'ml-[240px]'}`}>
           <Outlet />
         </main>
       </div>

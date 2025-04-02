@@ -142,11 +142,7 @@ const DashboardPage = () => {
   ];
 
   return (
-    <div style={{
-      backgroundImage: `url('/win11-background.svg')`,
-      backgroundSize: 'cover',
-      backgroundPosition: 'center'
-    }}>
+    <div>
       <ClockDisplay user={user} quickActions={quickActions} />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-7xl mx-auto mt-auto p-4">

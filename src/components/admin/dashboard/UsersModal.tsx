@@ -59,7 +59,7 @@ export const UsersModal: React.FC<UsersModalProps> = ({ onClose }) => {
       
       // Create the payload and log it
       const payload = {
-        email: formData.email,
+        email: formData.email.trim().toLowerCase(),
         first_name: formData.first_name,
         last_name: formData.last_name,
         role: formData.role,
@@ -68,7 +68,10 @@ export const UsersModal: React.FC<UsersModalProps> = ({ onClose }) => {
         password: formData.password
       };
       
-      console.log("Creating user with payload:", JSON.stringify(payload));
+      console.log("Creating user with payload:", JSON.stringify({
+        ...payload,
+        password: "***REDACTED***"
+      }));
       
       const response = await fetch(`${SUPABASE_URL}/functions/v1/create-user`, {
         method: 'POST',

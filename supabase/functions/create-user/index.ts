@@ -75,12 +75,27 @@ serve(async (req) => {
       );
     }
 
-    // Find if user email already exists
+    // Find if user email already exists (case-insensitive)
     const existingAuthUser = authUsers.users.find(user => 
       user.email?.toLowerCase() === email.toLowerCase()
     );
 
-    // Next, check if email exists in profiles table
+    if (existingAuthUser) {
+      console.log("User already exists in auth.users:", existingAuthUser.email);
+      return new Response(
+        JSON.stringify({ 
+          error: "User with this email already exists",
+          existingAuthUser: true,
+          existingProfile: false
+        }),
+        { 
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        }
+      );
+    }
+
+    // Check if email exists in profiles table (case-insensitive)
     const { data: existingProfile, error: profileCheckError } = await supabaseAdmin
       .from("profiles")
       .select("id, email")
@@ -91,14 +106,13 @@ serve(async (req) => {
       console.error("Error checking existing profile:", profileCheckError);
     }
     
-    // If user exists in either auth or profiles, return error
-    if (existingAuthUser || existingProfile) {
-      console.log("User already exists - Auth:", !!existingAuthUser, "Profile:", !!existingProfile);
+    if (existingProfile) {
+      console.log("User already exists in profiles:", existingProfile.email);
       return new Response(
         JSON.stringify({ 
-          error: "User with this email already exists",
-          existingAuthUser: existingAuthUser ? true : false,
-          existingProfile: existingProfile ? true : false
+          error: "User with this email already exists in profiles",
+          existingAuthUser: false,
+          existingProfile: true
         }),
         { 
           status: 400,
@@ -140,30 +154,77 @@ serve(async (req) => {
       );
     }
 
-    // Insert profile
-    const { error: profileError } = await supabaseAdmin
-      .from("profiles")
-      .insert({
-        id: userData.user.id,
-        email,
-        first_name,
-        last_name,
-        role,
-        provider_id: provider_id || null,
-        company_id: company_id || null,
-      });
+    console.log("Auth user created successfully:", userData.user.id);
 
-    if (profileError) {
-      console.error("Error creating profile:", profileError);
-      // Try to delete the auth user if profile creation fails
-      await supabaseAdmin.auth.admin.deleteUser(userData.user.id);
-      return new Response(
-        JSON.stringify({ error: profileError.message }),
-        { 
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
-        }
-      );
+    // Check if a profile with this ID already exists (shouldn't happen but let's be sure)
+    const { data: existingProfileById, error: profileByIdError } = await supabaseAdmin
+      .from("profiles")
+      .select("id")
+      .eq("id", userData.user.id)
+      .maybeSingle();
+      
+    if (profileByIdError) {
+      console.error("Error checking for existing profile by ID:", profileByIdError);
+    }
+    
+    if (existingProfileById) {
+      console.log("Profile already exists for this user ID:", userData.user.id);
+      
+      // Update the existing profile instead of creating a new one
+      const { error: updateProfileError } = await supabaseAdmin
+        .from("profiles")
+        .update({
+          email,
+          first_name,
+          last_name,
+          role,
+          provider_id: provider_id || null,
+          company_id: company_id || null,
+        })
+        .eq("id", userData.user.id);
+        
+      if (updateProfileError) {
+        console.error("Error updating profile:", updateProfileError);
+        // Try to delete the auth user since profile creation failed
+        await supabaseAdmin.auth.admin.deleteUser(userData.user.id);
+        return new Response(
+          JSON.stringify({ error: updateProfileError.message }),
+          { 
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
+          }
+        );
+      }
+      
+      console.log("Profile updated successfully");
+    } else {
+      // Insert new profile
+      const { error: profileError } = await supabaseAdmin
+        .from("profiles")
+        .insert({
+          id: userData.user.id,
+          email,
+          first_name,
+          last_name,
+          role,
+          provider_id: provider_id || null,
+          company_id: company_id || null,
+        });
+
+      if (profileError) {
+        console.error("Error creating profile:", profileError);
+        // Try to delete the auth user if profile creation fails
+        await supabaseAdmin.auth.admin.deleteUser(userData.user.id);
+        return new Response(
+          JSON.stringify({ error: profileError.message }),
+          { 
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
+          }
+        );
+      }
+      
+      console.log("Profile created successfully");
     }
 
     // Return success
@@ -189,7 +250,7 @@ serve(async (req) => {
   } catch (err) {
     console.error("Unexpected error:", err);
     return new Response(
-      JSON.stringify({ error: "An unexpected error occurred" }),
+      JSON.stringify({ error: "An unexpected error occurred", details: err.message }),
       { 
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" }

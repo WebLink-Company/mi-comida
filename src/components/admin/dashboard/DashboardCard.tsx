@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,15 +23,23 @@ export const DashboardCard: React.FC<DashboardCardProps> = ({
 }) => {
   const navigate = useNavigate();
 
-  const formatValue = (value: string | number | null | undefined): string => {
+  const formatValue = (value: string | number | null | undefined, label: string): string => {
     if (value === undefined || value === null) return "No data";
     
-    if (typeof value === 'number') {
-      // Handle currency values (assume values with $ prefix should be formatted as currency)
-      if (String(value).startsWith('$') || title.toLowerCase().includes('revenue') || 
-          title.toLowerCase().includes('billing')) {
-        return `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    const isCurrency = label.toLowerCase().includes('revenue') || 
+                      label.toLowerCase().includes('billing') || 
+                      label.toLowerCase().includes('amount') ||
+                      label.toLowerCase().includes('invoice');
+    
+    if (isCurrency) {
+      if (typeof value === 'number') {
+        return `$${value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
       }
+      if (typeof value === 'string' && value.startsWith('$')) return value;
+      return `$${value}`;
+    }
+    
+    if (typeof value === 'number') {
       return value.toLocaleString();
     }
     
@@ -41,7 +48,7 @@ export const DashboardCard: React.FC<DashboardCardProps> = ({
 
   return (
     <div
-      className="rounded-xl backdrop-blur-md border border-white/20 p-4 fade-up dashboard-card"
+      className="rounded-xl backdrop-blur-md bg-white/8 border border-white/20 p-4 fade-up dashboard-card"
       style={{ animationDelay }}
       onClick={() => navigate(path)}
     >
@@ -72,7 +79,7 @@ export const DashboardCard: React.FC<DashboardCardProps> = ({
                   navigate(item.path);
                 }}
               >
-                {formatValue(item.value)}
+                {formatValue(item.value, item.label)}
               </div>
             </React.Fragment>
           ))}

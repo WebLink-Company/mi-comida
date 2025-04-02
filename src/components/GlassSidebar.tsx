@@ -9,7 +9,10 @@ import {
   Package, 
   Receipt,
   Settings,
-  BarChart3
+  BarChart3,
+  Clock,
+  Truck,
+  Utensils
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -75,8 +78,8 @@ const GlassSidebar = ({ collapsed, setCollapsed, userRole = 'admin' }: GlassSide
 
     const providerItems = [
       { 
-        name: 'Menu', 
-        icon: Package, 
+        name: 'Menu Management', 
+        icon: Utensils, 
         path: '/admin/menu',
         exact: false,
         roles: ['provider'] 
@@ -89,16 +92,16 @@ const GlassSidebar = ({ collapsed, setCollapsed, userRole = 'admin' }: GlassSide
         roles: ['provider'] 
       },
       { 
-        name: 'Companies', 
+        name: 'Assign Menus', 
         icon: Building, 
-        path: '/admin/companies',
+        path: '/admin/assign-menus',
         exact: false,
         roles: ['provider'] 
       },
       { 
-        name: 'Users', 
-        icon: Users, 
-        path: '/admin/users',
+        name: 'Delivery Settings', 
+        icon: Truck, 
+        path: '/admin/delivery',
         exact: false,
         roles: ['provider'] 
       },
@@ -106,6 +109,13 @@ const GlassSidebar = ({ collapsed, setCollapsed, userRole = 'admin' }: GlassSide
         name: 'Invoices', 
         icon: Receipt, 
         path: '/admin/invoices',
+        exact: false,
+        roles: ['provider'] 
+      },
+      { 
+        name: 'Reports', 
+        icon: BarChart3, 
+        path: '/admin/provider-reports',
         exact: false,
         roles: ['provider'] 
       }

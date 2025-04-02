@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -6,9 +5,18 @@ import { format } from 'date-fns';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Users, Building, ShoppingBag, FileText, TrendingUp, AlertTriangle, Calendar, DollarSign, Clock, Globe, ChevronRight, ExternalLink, X, ChefHat, UserPlus, Plus, FileSpreadsheet } from 'lucide-react';
+import { Users, Building, ShoppingBag, FileText, TrendingUp, Calendar, DollarSign, Globe, ChevronRight, ExternalLink, UserPlus, Plus, FileSpreadsheet, ChefHat } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose, DialogFooter } from "@/components/ui/dialog";
+import { Dialog } from "@/components/ui/dialog";
+import { UsersModal } from '@/components/admin/dashboard/UsersModal';
+import { CompaniesModal } from '@/components/admin/dashboard/CompaniesModal';
+import { ProvidersModal } from '@/components/admin/dashboard/ProvidersModal';
+import { OrdersModal } from '@/components/admin/dashboard/OrdersModal';
+import { InvoicesModal } from '@/components/admin/dashboard/InvoicesModal';
+import '../styles/dashboard.css';
+
+// Import our existing modal dialogs for other dashboard data
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter } from '@/components/ui/alert-dialog';
 
 const DashboardPage = () => {
   const navigate = useNavigate();
@@ -115,6 +123,10 @@ const DashboardPage = () => {
     setActiveDialog(dialogId);
   };
 
+  const closeDialog = () => {
+    setActiveDialog(null);
+  };
+
   // Quick action badges data
   const quickActions = [
     { label: 'Add User', icon: UserPlus, action: () => openDialog('add-user'), path: '/admin/users' },
@@ -124,7 +136,36 @@ const DashboardPage = () => {
     { label: 'Review Invoices', icon: FileSpreadsheet, action: () => openDialog('review-invoices'), path: '/admin/reports' },
   ];
 
-  const renderDialogContent = () => {
+  // Platform overview card data
+  const platformOverviewData = [
+    { label: 'Users', value: stats.totalUsers, path: '/admin/users' },
+    { label: 'Companies', value: stats.totalCompanies, path: '/admin/companies' },
+    { label: 'Providers', value: stats.totalProviders, path: '/admin/providers' },
+    { label: 'Total Orders', value: stats.totalOrders, path: '/admin/reports' }
+  ];
+  
+  // Provider performance card data
+  const providerPerformanceData = [
+    { label: 'Most Active', value: stats.mostActiveProvider, path: '/admin/providers' },
+    { label: 'Inactive Providers', value: stats.inactiveProviders, path: '/admin/providers' },
+    { label: 'Without Companies', value: stats.providersWithNoCompanies, path: '/admin/providers' }
+  ];
+  
+  // Order metrics card data
+  const orderMetricsData = [
+    { label: 'Orders Today', value: stats.ordersToday, path: '/admin/reports' },
+    { label: 'Orders This Week', value: stats.ordersThisWeek, path: '/admin/reports' },
+    { label: 'Avg per Provider', value: stats.avgOrdersPerProvider, path: '/admin/reports' }
+  ];
+  
+  // Finance insights card data
+  const financeInsightsData = [
+    { label: 'Billing This Month', value: `$${formatNumber(stats.billingThisMonth)}`, path: '/admin/reports' },
+    { label: 'Pending Invoices', value: stats.pendingInvoices, path: '/admin/reports' },
+    { label: 'Top Consumer', value: stats.topCompanyByConsumption, path: '/admin/companies' }
+  ];
+
+  const renderAlertContent = () => {
     switch (activeDialog) {
       case 'platform-overview':
         return <>
@@ -571,7 +612,8 @@ const DashboardPage = () => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-7xl mx-auto mt-auto p-4">
-        <div className="rounded-xl backdrop-blur-md border border-white/20 p-4 fade-up hover:shadow-lg transition-all duration-300 cursor-pointer" 
+        {/* Platform Overview Card */}
+        <div className="rounded-xl backdrop-blur-md border border-white/20 p-4 fade-up dashboard-card" 
             style={{ animationDelay: "0.1s" }} 
             onClick={() => navigateTo('/admin/users')}>
           <div className="flex justify-between items-center">
@@ -588,49 +630,20 @@ const DashboardPage = () => {
           </div>
           <div className="mt-4">
             <div className="grid grid-cols-2 gap-y-3">
-              <div className="text-sm text-white/80">Users</div>
-              <div 
-                className="text-sm font-medium text-right text-white cursor-pointer hover:underline"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigateTo('/admin/users');
-                }}
-              >
-                {formatNumber(stats.totalUsers)}
-              </div>
-              
-              <div className="text-sm text-white/80">Companies</div>
-              <div 
-                className="text-sm font-medium text-right text-white cursor-pointer hover:underline"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigateTo('/admin/companies');
-                }}
-              >
-                {formatNumber(stats.totalCompanies)}
-              </div>
-              
-              <div className="text-sm text-white/80">Providers</div>
-              <div 
-                className="text-sm font-medium text-right text-white cursor-pointer hover:underline"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigateTo('/admin/providers');
-                }}
-              >
-                {formatNumber(stats.totalProviders)}
-              </div>
-              
-              <div className="text-sm text-white/80">Total Orders</div>
-              <div 
-                className="text-sm font-medium text-right text-white cursor-pointer hover:underline"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigateTo('/admin/reports');
-                }}
-              >
-                {formatNumber(stats.totalOrders)}
-              </div>
+              {platformOverviewData.map((item, index) => (
+                <React.Fragment key={index}>
+                  <div className="text-sm text-white/80">{item.label}</div>
+                  <div 
+                    className="text-sm font-medium text-right text-white cursor-pointer hover:underline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigateTo(item.path);
+                    }}
+                  >
+                    {formatNumber(typeof item.value === 'number' ? item.value : 0)}
+                  </div>
+                </React.Fragment>
+              ))}
             </div>
             <div className="flex justify-end mt-3">
               <Button variant="link" size="sm" className="text-white p-0 hover:text-white/80">
@@ -640,7 +653,8 @@ const DashboardPage = () => {
           </div>
         </div>
 
-        <div className="rounded-xl backdrop-blur-md border border-white/20 p-4 fade-up hover:shadow-lg transition-all duration-300 cursor-pointer" 
+        {/* Provider Performance Card */}
+        <div className="rounded-xl backdrop-blur-md border border-white/20 p-4 fade-up dashboard-card" 
             style={{ animationDelay: "0.2s" }} 
             onClick={() => navigateTo('/admin/providers')}>
           <div className="flex justify-between items-center">
@@ -657,38 +671,20 @@ const DashboardPage = () => {
           </div>
           <div className="mt-4">
             <div className="grid grid-cols-2 gap-y-3">
-              <div className="text-sm text-white/80">Most Active</div>
-              <div 
-                className="text-sm font-medium text-right text-white cursor-pointer hover:underline"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigateTo('/admin/providers');
-                }}
-              >
-                {stats.mostActiveProvider}
-              </div>
-              
-              <div className="text-sm text-white/80">Inactive Providers</div>
-              <div 
-                className="text-sm font-medium text-right text-white cursor-pointer hover:underline"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigateTo('/admin/providers');
-                }}
-              >
-                {stats.inactiveProviders}
-              </div>
-              
-              <div className="text-sm text-white/80">Without Companies</div>
-              <div 
-                className="text-sm font-medium text-right text-white cursor-pointer hover:underline"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigateTo('/admin/providers');
-                }}
-              >
-                {stats.providersWithNoCompanies}
-              </div>
+              {providerPerformanceData.map((item, index) => (
+                <React.Fragment key={index}>
+                  <div className="text-sm text-white/80">{item.label}</div>
+                  <div 
+                    className="text-sm font-medium text-right text-white cursor-pointer hover:underline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigateTo(item.path);
+                    }}
+                  >
+                    {item.value}
+                  </div>
+                </React.Fragment>
+              ))}
             </div>
             <div className="flex justify-end mt-3">
               <Button variant="link" size="sm" className="text-white p-0 hover:text-white/80">
@@ -698,7 +694,8 @@ const DashboardPage = () => {
           </div>
         </div>
 
-        <div className="rounded-xl backdrop-blur-md border border-white/20 p-4 fade-up hover:shadow-lg transition-all duration-300 cursor-pointer" 
+        {/* Order Metrics Card */}
+        <div className="rounded-xl backdrop-blur-md border border-white/20 p-4 fade-up dashboard-card" 
             style={{ animationDelay: "0.3s" }} 
             onClick={() => navigateTo('/admin/reports')}>
           <div className="flex justify-between items-center">
@@ -715,38 +712,20 @@ const DashboardPage = () => {
           </div>
           <div className="mt-4">
             <div className="grid grid-cols-2 gap-y-3">
-              <div className="text-sm text-white/80">Orders Today</div>
-              <div 
-                className="text-sm font-medium text-right text-white cursor-pointer hover:underline"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigateTo('/admin/reports');
-                }}
-              >
-                {stats.ordersToday}
-              </div>
-              
-              <div className="text-sm text-white/80">Orders This Week</div>
-              <div 
-                className="text-sm font-medium text-right text-white cursor-pointer hover:underline"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigateTo('/admin/reports');
-                }}
-              >
-                {stats.ordersThisWeek}
-              </div>
-              
-              <div className="text-sm text-white/80">Avg per Provider</div>
-              <div 
-                className="text-sm font-medium text-right text-white cursor-pointer hover:underline"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigateTo('/admin/reports');
-                }}
-              >
-                {stats.avgOrdersPerProvider}
-              </div>
+              {orderMetricsData.map((item, index) => (
+                <React.Fragment key={index}>
+                  <div className="text-sm text-white/80">{item.label}</div>
+                  <div 
+                    className="text-sm font-medium text-right text-white cursor-pointer hover:underline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigateTo(item.path);
+                    }}
+                  >
+                    {item.value}
+                  </div>
+                </React.Fragment>
+              ))}
             </div>
             <div className="flex justify-end mt-3">
               <Button variant="link" size="sm" className="text-white p-0 hover:text-white/80">
@@ -756,7 +735,8 @@ const DashboardPage = () => {
           </div>
         </div>
 
-        <div className="rounded-xl backdrop-blur-md border border-white/20 p-4 fade-up hover:shadow-lg transition-all duration-300 cursor-pointer" 
+        {/* Finance Insights Card */}
+        <div className="rounded-xl backdrop-blur-md border border-white/20 p-4 fade-up dashboard-card" 
             style={{ animationDelay: "0.4s" }} 
             onClick={() => navigateTo('/admin/reports')}>
           <div className="flex justify-between items-center">
@@ -773,38 +753,20 @@ const DashboardPage = () => {
           </div>
           <div className="mt-4">
             <div className="grid grid-cols-2 gap-y-3">
-              <div className="text-sm text-white/80">Billing This Month</div>
-              <div 
-                className="text-sm font-medium text-right text-white cursor-pointer hover:underline"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigateTo('/admin/reports');
-                }}
-              >
-                ${formatNumber(stats.billingThisMonth)}
-              </div>
-              
-              <div className="text-sm text-white/80">Pending Invoices</div>
-              <div 
-                className="text-sm font-medium text-right text-white cursor-pointer hover:underline"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigateTo('/admin/reports');
-                }}
-              >
-                {stats.pendingInvoices}
-              </div>
-              
-              <div className="text-sm text-white/80">Top Consumer</div>
-              <div 
-                className="text-sm font-medium text-right text-white cursor-pointer hover:underline"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigateTo('/admin/companies');
-                }}
-              >
-                {stats.topCompanyByConsumption}
-              </div>
+              {financeInsightsData.map((item, index) => (
+                <React.Fragment key={index}>
+                  <div className="text-sm text-white/80">{item.label}</div>
+                  <div 
+                    className="text-sm font-medium text-right text-white cursor-pointer hover:underline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigateTo(item.path);
+                    }}
+                  >
+                    {item.value}
+                  </div>
+                </React.Fragment>
+              ))}
             </div>
             <div className="flex justify-end mt-3">
               <Button variant="link" size="sm" className="text-white p-0 hover:text-white/80">
@@ -815,16 +777,28 @@ const DashboardPage = () => {
         </div>
       </div>
 
-      <Dialog open={!!activeDialog} onOpenChange={open => !open && setActiveDialog(null)}>
-        <DialogContent className="sm:max-w-[600px] neo-blur text-white border-white/20">
-          <DialogClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
-            <X className="h-4 w-4" />
-            <span className="sr-only">Close</span>
-          </DialogClose>
-          {renderDialogContent()}
-        </DialogContent>
-      </Dialog>
-    </div>;
-};
+      {/* Alert Dialog for Dashboard Stats */}
+      <AlertDialog open={['platform-overview', 'provider-performance', 'order-metrics', 'finance-insights'].includes(activeDialog || '')} onOpenChange={() => activeDialog && setActiveDialog(null)}>
+        <AlertDialogContent className="neo-blur text-white border-white/20">
+          {renderAlertContent()}
+        </AlertDialogContent>
+      </AlertDialog>
 
-export default DashboardPage;
+      {/* Dialog for User Management */}
+      <Dialog open={activeDialog === 'add-user'} onOpenChange={() => activeDialog === 'add-user' && setActiveDialog(null)}>
+        {activeDialog === 'add-user' && <UsersModal onClose={closeDialog} />}
+      </Dialog>
+
+      {/* Dialog for Company Management */}
+      <Dialog open={activeDialog === 'create-company'} onOpenChange={() => activeDialog === 'create-company' && setActiveDialog(null)}>
+        {activeDialog === 'create-company' && <CompaniesModal onClose={closeDialog} />}
+      </Dialog>
+
+      {/* Dialog for Provider Management */}
+      <Dialog open={activeDialog === 'add-provider'} onOpenChange={() => activeDialog === 'add-provider' && setActiveDialog(null)}>
+        {activeDialog === 'add-provider' && <ProvidersModal onClose={closeDialog} />}
+      </Dialog>
+
+      {/* Dialog for Order Management */}
+      <Dialog open={activeDialog === 'view-orders'} onOpenChange={() => activeDialog === 'view-orders' && setActiveDialog(null)}>
+        {activeDialog === 'view-orders' && <OrdersModal onClose={closeDialog}

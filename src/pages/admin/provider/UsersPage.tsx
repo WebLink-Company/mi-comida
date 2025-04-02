@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -183,6 +182,15 @@ const ProviderUsersPage = () => {
     }, 300);
   };
 
+  const handleBackFromDetails = () => {
+    setIsDetailsModalOpen(false);
+    
+    setTimeout(() => {
+      setSelectedUser(null);
+      setUserOrders([]);
+    }, 300);
+  };
+
   return (
     <div className="container mx-auto py-6 px-4 sm:px-6 lg:px-8 animate-fade-in">
       <div className="flex flex-col space-y-4">
@@ -238,7 +246,7 @@ const ProviderUsersPage = () => {
         open={isDetailsModalOpen} 
         onOpenChange={(open) => {
           if (!open) {
-            handleCloseDetailsModal();
+            handleBackFromDetails();
           }
         }}
       >
@@ -246,7 +254,7 @@ const ProviderUsersPage = () => {
           <UserDetailsModal
             user={selectedUser}
             orders={userOrders}
-            onClose={handleCloseDetailsModal}
+            onClose={handleBackFromDetails}
           />
         )}
       </AlertDialog>

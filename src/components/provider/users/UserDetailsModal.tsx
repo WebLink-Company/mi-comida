@@ -41,7 +41,10 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, orders, onClo
             variant="ghost"
             size="sm"
             className="mr-2 rounded-full p-0 h-8 w-8 text-white hover:bg-white/10"
-            onClick={onClose}
+            onClick={(e) => {
+              e.stopPropagation(); // Prevent event bubbling
+              onClose();
+            }}
           >
             <ArrowLeft size={16} />
           </Button>

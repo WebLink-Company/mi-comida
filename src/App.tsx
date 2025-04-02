@@ -72,11 +72,12 @@ const App = () => (
               <Route path="dashboard" element={<ProviderDashboardPage />} />
               <Route path="menu" element={<MenuManagementPage />} />
               <Route path="orders" element={<OrdersPage />} />
-              <Route path="companies" element={<CompaniesPage />} />
-              <Route path="users" element={<UsersPage />} />
               <Route path="assign-menus" element={<AssignMenusPage />} />
               <Route path="delivery-settings" element={<DeliverySettingsPage />} />
               <Route path="billing" element={<DashboardPage />} />
+              <Route path="companies" element={<CompaniesPage />} />
+              <Route path="users" element={<UsersPage />} />
+              <Route path="reports" element={<ReportsPage />} />
             </Route>
             
             {/* Company Routes */}

@@ -33,7 +33,9 @@ const AdminLayout = () => {
       // Redirect based on role if user is in the wrong section
       switch (user.role) {
         case 'admin':
-          if (!isInAdminSection) navigate('/admin');
+          if (!isInAdminSection) {
+            navigate('/admin');
+          }
           break;
         case 'provider':
           if (!isInProviderSection) {

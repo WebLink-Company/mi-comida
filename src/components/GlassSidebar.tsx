@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { 
   ChevronLeft,
   LayoutDashboard, 
@@ -10,11 +10,11 @@ import {
   Receipt,
   Settings,
   BarChart3,
-  Clock,
   Truck,
   Utensils
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import RoleBasedLink from './RoleBasedLink';
 
 interface GlassSidebarProps {
   collapsed: boolean;
@@ -26,112 +26,116 @@ const GlassSidebar = ({ collapsed, setCollapsed, userRole = 'admin' }: GlassSide
   const location = useLocation();
   const [mounted, setMounted] = useState(false);
   
-  // Define sidebar items based on user role
+  // Define sidebar items with correct paths for each role
   const getSidebarItems = () => {
-    const commonItems = [
+    const items = [
       { 
         name: 'Dashboard', 
         icon: LayoutDashboard, 
-        path: '/admin',
+        adminPath: '/admin',
+        providerPath: '/provider',
         exact: true,
         roles: ['admin', 'provider'] 
       }
     ];
 
-    const adminOnlyItems = [
-      { 
-        name: 'Users', 
-        icon: Users, 
-        path: '/admin/users',
-        exact: false,
-        roles: ['admin'] 
-      },
-      { 
-        name: 'Companies', 
-        icon: Building, 
-        path: '/admin/companies',
-        exact: false,
-        roles: ['admin'] 
-      },
-      { 
-        name: 'Providers', 
-        icon: Package, 
-        path: '/admin/providers',
-        exact: false,
-        roles: ['admin'] 
-      },
-      { 
-        name: 'Reports', 
-        icon: BarChart3, 
-        path: '/admin/reports',
-        exact: false,
-        roles: ['admin'] 
-      },
-      { 
-        name: 'Settings', 
-        icon: Settings, 
-        path: '/admin/settings',
-        exact: false,
-        roles: ['admin'] 
-      }
-    ];
-
-    const providerItems = [
-      { 
-        name: 'Menu Management', 
-        icon: Utensils, 
-        path: '/admin/menu',
-        exact: false,
-        roles: ['provider'] 
-      },
-      { 
-        name: 'Orders', 
-        icon: Package, 
-        path: '/admin/orders',
-        exact: false,
-        roles: ['provider'] 
-      },
-      { 
-        name: 'Assign Menus', 
-        icon: Building, 
-        path: '/admin/assign-menus',
-        exact: false,
-        roles: ['provider'] 
-      },
-      { 
-        name: 'Delivery Settings', 
-        icon: Truck, 
-        path: '/admin/delivery',
-        exact: false,
-        roles: ['provider'] 
-      },
-      { 
-        name: 'Invoices', 
-        icon: Receipt, 
-        path: '/admin/invoices',
-        exact: false,
-        roles: ['provider'] 
-      },
-      { 
-        name: 'Reports', 
-        icon: BarChart3, 
-        path: '/admin/provider-reports',
-        exact: false,
-        roles: ['provider'] 
-      }
-    ];
-
-    // Combine items
-    let allItems = [...commonItems];
-    
+    // Items shown to admin users
     if (userRole === 'admin') {
-      allItems = [...allItems, ...adminOnlyItems];
-    } else if (userRole === 'provider') {
-      allItems = [...allItems, ...providerItems];
+      items.push(
+        { 
+          name: 'Users', 
+          icon: Users, 
+          adminPath: '/admin/users',
+          exact: false,
+          roles: ['admin'] 
+        },
+        { 
+          name: 'Companies', 
+          icon: Building, 
+          adminPath: '/admin/companies',
+          exact: false,
+          roles: ['admin'] 
+        },
+        { 
+          name: 'Providers', 
+          icon: Package, 
+          adminPath: '/admin/providers',
+          exact: false,
+          roles: ['admin'] 
+        },
+        { 
+          name: 'Reports', 
+          icon: BarChart3, 
+          adminPath: '/admin/reports',
+          exact: false,
+          roles: ['admin'] 
+        },
+        { 
+          name: 'Settings', 
+          icon: Settings, 
+          adminPath: '/admin/settings',
+          exact: false,
+          roles: ['admin'] 
+        }
+      );
     }
 
-    // Filter items by role
-    return allItems.filter(item => item.roles.includes(userRole));
+    // Items shown to provider users
+    if (userRole === 'provider') {
+      items.push(
+        { 
+          name: 'Menu Management', 
+          icon: Utensils, 
+          adminPath: '/admin/menu',
+          providerPath: '/provider/menu',
+          exact: false,
+          roles: ['provider'] 
+        },
+        { 
+          name: 'Orders', 
+          icon: Package, 
+          adminPath: '/admin/orders',
+          providerPath: '/provider/orders',
+          exact: false,
+          roles: ['provider'] 
+        },
+        { 
+          name: 'Assign Menus', 
+          icon: Building, 
+          adminPath: '/admin/assign-menus',
+          providerPath: '/provider/assign-menus',
+          exact: false,
+          roles: ['provider'] 
+        },
+        { 
+          name: 'Delivery Settings', 
+          icon: Truck, 
+          adminPath: '/admin/delivery',
+          providerPath: '/provider/delivery-settings',
+          exact: false,
+          roles: ['provider'] 
+        },
+        { 
+          name: 'Invoices', 
+          icon: Receipt, 
+          adminPath: '/admin/invoices',
+          providerPath: '/provider/billing',
+          exact: false,
+          roles: ['provider'] 
+        },
+        { 
+          name: 'Reports', 
+          icon: BarChart3, 
+          adminPath: '/admin/provider-reports',
+          providerPath: '/provider/reports',
+          exact: false,
+          roles: ['provider'] 
+        }
+      );
+    }
+
+    // Filter items based on user role
+    return items.filter(item => item.roles.includes(userRole));
   };
 
   const sidebarItems = getSidebarItems();
@@ -181,9 +185,10 @@ const GlassSidebar = ({ collapsed, setCollapsed, userRole = 'admin' }: GlassSide
             collapsed ? "flex flex-col items-center" : ""
           )}>
             {sidebarItems.map(item => (
-              <NavLink
-                key={item.path}
-                to={item.path}
+              <RoleBasedLink
+                key={item.adminPath}
+                adminPath={item.adminPath}
+                providerPath={item.providerPath}
                 end={item.exact}
                 className={({ isActive }) => cn(
                   "flex items-center p-2 my-2 rounded-md transition-all duration-200 group hover:scale-105",
@@ -204,7 +209,7 @@ const GlassSidebar = ({ collapsed, setCollapsed, userRole = 'admin' }: GlassSide
                 )}>
                   {item.name}
                 </span>
-              </NavLink>
+              </RoleBasedLink>
             ))}
           </nav>
         </div>

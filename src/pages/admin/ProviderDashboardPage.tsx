@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { ClockDisplay } from '@/components/admin/dashboard/ClockDisplay';
 import { useNavigate } from 'react-router-dom';
@@ -20,8 +19,10 @@ const ProviderDashboardPage = () => {
   const { toast } = useToast();
   const [activeDialog, setActiveDialog] = useState<string | null>(null);
   
-  // Fetch dashboard stats using our hook with the provider ID
-  const stats = useProviderDashboardData(user?.id);
+  console.log("Provider dashboard - Current user:", user);
+  
+  // Fetch dashboard stats using our hook with the provider ID from user profile
+  const stats = useProviderDashboardData(user?.provider_id);
   
   // Quick actions for the provider
   const quickActions = [
@@ -111,7 +112,7 @@ const ProviderDashboardPage = () => {
           }
         }}
       >
-        {activeDialog === 'create-company' && <CompaniesModal onClose={closeDialog} providerId={user?.id} />}
+        {activeDialog === 'create-company' && <CompaniesModal onClose={closeDialog} providerId={user?.provider_id} />}
       </Dialog>
 
       <Dialog 

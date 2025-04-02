@@ -67,20 +67,31 @@ const AssignMenusPage = () => {
   const [filter, setFilter] = useState<'all' | 'assigned' | 'unassigned'>('all');
   
   useEffect(() => {
-    if (user?.id) {
+    if (user?.provider_id) {
+      console.log(`Fetching data for provider_id: ${user.provider_id}`);
       fetchData();
+    } else {
+      console.error("No provider_id found in user profile:", user);
+      toast({
+        title: 'Error',
+        description: 'Unable to load provider data. Please check your account settings.',
+        variant: 'destructive',
+      });
     }
-  }, [user?.id]);
+  }, [user]);
 
   const fetchData = async () => {
     setLoading(true);
     
     try {
-      // Fetch companies belonging to the logged-in provider
+      // Fetch companies belonging to the logged-in provider using provider_id (not user.id)
+      const providerIdToUse = user?.provider_id;
+      
+      console.log(`Fetching companies for provider_id: ${providerIdToUse}`);
       const { data: companiesData, error: companiesError } = await supabase
         .from('companies')
         .select('*')
-        .eq('provider_id', user?.id);
+        .eq('provider_id', providerIdToUse);
         
       if (companiesError) throw companiesError;
       
@@ -88,13 +99,14 @@ const AssignMenusPage = () => {
       setCompanies(companiesData || []);
       
       // Fetch menu items with categories
+      console.log(`Fetching menu items for provider_id: ${providerIdToUse}`);
       const { data: menuData, error: menuError } = await supabase
         .from('lunch_options')
         .select(`
           *,
           menu_categories(name)
         `)
-        .eq('provider_id', user?.id)
+        .eq('provider_id', providerIdToUse)
         .eq('available', true);
         
       if (menuError) throw menuError;

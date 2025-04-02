@@ -37,6 +37,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
         
         if (profile) {
+          console.log('User profile loaded:', profile);
           setUser({
             id: profile.id,
             first_name: profile.first_name,
@@ -46,6 +47,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             role: profile.role,
             company_id: profile.company_id,
             companyId: profile.company_id,
+            provider_id: profile.provider_id,
             created_at: profile.created_at,
           });
         }

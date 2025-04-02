@@ -39,6 +39,7 @@ export const CompaniesModal: React.FC<CompaniesModalProps> = ({ onClose, provide
     fetchProviders();
     
     if (providerId) {
+      console.log(`Setting provider_id in CompaniesModal to: ${providerId}`);
       setCurrentCompany(prev => ({ ...prev, provider_id: providerId }));
     }
   }, [providerId]);
@@ -64,6 +65,7 @@ export const CompaniesModal: React.FC<CompaniesModalProps> = ({ onClose, provide
     setIsSubmitting(true);
     
     try {
+      console.log(`Creating company with provider_id: ${currentCompany.provider_id}`);
       const { error } = await supabase.from('companies').insert({
         name: currentCompany.name,
         provider_id: currentCompany.provider_id || null,

@@ -19,8 +19,12 @@ export interface DashboardStats {
 export const useProviderDashboardData = (providerId?: string) => {
   const { user } = useAuth();
   const { toast } = useToast();
-  // Use the providerId parameter if provided, otherwise fall back to the logged-in user's ID
-  const effectiveProviderId = providerId || user?.id;
+  
+  // Use the providerId parameter if provided, otherwise use the user's provider_id (not user.id)
+  const effectiveProviderId = providerId || user?.provider_id;
+  
+  console.log(`Using provider_id for data fetching: ${effectiveProviderId}`);
+  console.log(`User data:`, user);
   
   const today = new Date();
   const formattedToday = today.toISOString().split('T')[0]; // Format as YYYY-MM-DD
@@ -32,13 +36,16 @@ export const useProviderDashboardData = (providerId?: string) => {
     queryKey: ['activeCompanies', effectiveProviderId],
     queryFn: async () => {
       try {
-        const { count, error } = await supabase
+        console.log(`Fetching active companies with provider_id: ${effectiveProviderId}`);
+        const { count, error, data } = await supabase
           .from('companies')
-          .select('*', { count: 'exact', head: true })
+          .select('*', { count: 'exact', head: false })
           .eq('provider_id', effectiveProviderId);
           
         if (error) throw error;
-        console.log(`Active companies for provider ${effectiveProviderId}:`, count);
+        
+        console.log(`Active companies query result:`, data);
+        console.log(`Active companies count for provider ${effectiveProviderId}:`, count);
         return count || 0;
       } catch (error) {
         console.error('Error fetching active companies:', error);

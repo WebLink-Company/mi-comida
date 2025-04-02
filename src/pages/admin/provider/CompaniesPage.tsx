@@ -392,66 +392,7 @@ const CompaniesPage = () => {
       </Dialog>
     </div>
   );
-
-  function handleDelete() {
-    if (!currentCompany.id) return;
-
-    supabase
-      .from('companies')
-      .delete()
-      .eq('id', currentCompany.id)
-      .then(({ error }) => {
-        if (error) {
-          console.error('Error deleting company:', error);
-          toast({
-            title: 'Error',
-            description: 'Failed to delete company',
-            variant: 'destructive',
-          });
-          return;
-        }
-
-        toast({
-          title: 'Company deleted',
-          description: `Successfully deleted company "${currentCompany.name}".`,
-        });
-
-        fetchCompanies();
-        setIsDeleteDialogOpen(false);
-        resetCompanyForm();
-      });
-  }
-
-  function resetCompanyForm() {
-    setCurrentCompany({});
-  }
-
-  function openCreateDialog() {
-    resetCompanyForm();
-    setIsDialogOpen(true);
-  }
-
-  function openEditDialog(company: Company) {
-    setCurrentCompany({
-      id: company.id,
-      name: company.name,
-      subsidy_percentage: company.subsidy_percentage,
-      fixed_subsidy_amount: company.fixed_subsidy_amount,
-    });
-    setIsDialogOpen(true);
-  }
-
-  function openDeleteDialog(company: Company) {
-    setCurrentCompany({
-      id: company.id,
-      name: company.name,
-    });
-    setIsDeleteDialogOpen(true);
-  }
-
-  const filteredCompanies = companies.filter(company =>
-    company.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 };
 
 export default CompaniesPage;
+

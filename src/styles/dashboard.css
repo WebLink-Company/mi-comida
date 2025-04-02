@@ -88,7 +88,16 @@ body {
   backdrop-filter: blur(12px) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   color: white !important;
-  z-index: 9999 !important;
+  z-index: 50 !important; /* Base z-index for modals */
+}
+
+/* Z-index layering for nested modals */
+[role="dialog"] + [role="alertdialog"] {
+  z-index: 100 !important;
+}
+
+[role="alertdialog"] .modal-glassmorphism {
+  z-index: 100 !important;
 }
 
 /* Modal form inputs */
@@ -130,8 +139,13 @@ body {
 
 /* Fix dialog overlay to prevent click-through */
 .dialog-overlay {
-  z-index: 9998 !important;
+  z-index: 40 !important;
   pointer-events: auto !important;
+}
+
+/* Proper z-index stacking for nested dialogs */
+[role="alertdialog"] .dialog-overlay {
+  z-index: 60 !important;
 }
 
 /* Make the dialog content pointer events auto to ensure clickability */
@@ -151,7 +165,13 @@ body[data-state="open"] [role="dialog"] {
 
 /* Ensure DialogContent is properly styled and clickable */
 [role="dialog"] {
-  z-index: 10000 !important;
+  z-index: 50 !important;
+  pointer-events: auto !important;
+}
+
+/* Higher z-index for alert dialogs */
+[role="alertdialog"] {
+  z-index: 60 !important;
   pointer-events: auto !important;
 }
 

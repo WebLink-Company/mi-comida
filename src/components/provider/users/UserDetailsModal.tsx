@@ -32,7 +32,7 @@ interface UserDetailsModalProps {
 const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, orders, onClose }) => {
   return (
     <AlertDialogContent 
-      className="sm:max-w-md modal-glassmorphism overflow-y-auto max-h-[90vh] bg-gradient-to-br from-slate-50/90 to-white/90 dark:from-slate-900/90 dark:to-slate-800/90 border border-white/10 shadow-xl backdrop-blur-md"
+      className="sm:max-w-md modal-glassmorphism overflow-y-auto max-h-[90vh] bg-gradient-to-br from-slate-50/90 to-white/90 dark:from-slate-900/90 dark:to-slate-800/90 border border-white/10 shadow-xl backdrop-blur-md z-[1000]"
       onClick={(e) => e.stopPropagation()}
     >
       <div className="absolute inset-0 rounded-lg bg-blue-500/5 z-[-1]"></div>

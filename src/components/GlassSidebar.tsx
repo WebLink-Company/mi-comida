@@ -40,30 +40,35 @@ const GlassSidebar = ({ collapsed, setCollapsed, userRole = 'admin' }: GlassSide
         name: 'Users', 
         icon: Users, 
         path: '/admin/users',
+        exact: false,
         roles: ['admin'] 
       },
       { 
         name: 'Companies', 
         icon: Building, 
         path: '/admin/companies',
+        exact: false,
         roles: ['admin'] 
       },
       { 
         name: 'Providers', 
         icon: Package, 
         path: '/admin/providers',
+        exact: false,
         roles: ['admin'] 
       },
       { 
         name: 'Reports', 
         icon: BarChart3, 
         path: '/admin/reports',
+        exact: false,
         roles: ['admin'] 
       },
       { 
         name: 'Settings', 
         icon: Settings, 
         path: '/admin/settings',
+        exact: false,
         roles: ['admin'] 
       }
     ];
@@ -73,30 +78,35 @@ const GlassSidebar = ({ collapsed, setCollapsed, userRole = 'admin' }: GlassSide
         name: 'Menu', 
         icon: Package, 
         path: '/admin/menu',
+        exact: false,
         roles: ['provider'] 
       },
       { 
         name: 'Orders', 
         icon: Package, 
         path: '/admin/orders',
+        exact: false,
         roles: ['provider'] 
       },
       { 
         name: 'Companies', 
         icon: Building, 
         path: '/admin/companies',
+        exact: false,
         roles: ['provider'] 
       },
       { 
         name: 'Users', 
         icon: Users, 
         path: '/admin/users',
+        exact: false,
         roles: ['provider'] 
       },
       { 
         name: 'Invoices', 
         icon: Receipt, 
         path: '/admin/invoices',
+        exact: false,
         roles: ['provider'] 
       }
     ];

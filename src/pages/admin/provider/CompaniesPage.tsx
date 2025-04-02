@@ -108,38 +108,41 @@ const CompaniesPage = () => {
       // For provider users, we'll ALWAYS use their own provider_id
       // This is crucial to satisfy the RLS policy
       const companyData = {
-        ...currentCompany,
-        provider_id: user.provider_id, // Always use the authenticated provider's ID
         name: currentCompany.name,
+        provider_id: user.provider_id, // Always use the authenticated provider's ID
         subsidy_percentage: currentCompany.subsidy_percentage || 0,
         fixed_subsidy_amount: currentCompany.fixed_subsidy_amount || 0,
       };
 
       console.log('Creating/updating company with data:', companyData);
 
-      let operation;
       if (isNew) {
         // For new companies, insert with the provider's ID
-        operation = supabase
+        const { data, error } = await supabase
           .from('companies')
           .insert(companyData);
+
+        if (error) {
+          console.error('Error in company operation:', error);
+          throw error;
+        }
+
+        console.log('Company operation successful:', data);
       } else {
         // For updates, we still ensure provider_id is set correctly
         // and we're only updating the company if it belongs to this provider (RLS will enforce this)
-        operation = supabase
+        const { data, error } = await supabase
           .from('companies')
           .update(companyData)
           .eq('id', currentCompany.id);
+
+        if (error) {
+          console.error('Error in company operation:', error);
+          throw error;
+        }
+
+        console.log('Company operation successful:', data);
       }
-
-      const { data, error } = await operation;
-
-      if (error) {
-        console.error('Error in company operation:', error);
-        throw error;
-      }
-
-      console.log('Company operation successful:', data);
       
       toast({
         title: isNew ? 'Company created' : 'Company updated',

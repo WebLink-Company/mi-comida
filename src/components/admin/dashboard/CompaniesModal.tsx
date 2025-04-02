@@ -88,14 +88,16 @@ export const CompaniesModal: React.FC<CompaniesModalProps> = ({ onClose, provide
         console.log(`Provider user detected - using their provider_id: ${effectiveProviderId}`);
       }
       
-      console.log(`Creating company with provider_id: ${effectiveProviderId}`);
-      
-      const { data, error } = await supabase.from('companies').insert({
+      const companyData = {
         name: currentCompany.name,
-        provider_id: effectiveProviderId || null,
+        provider_id: effectiveProviderId,
         subsidy_percentage: currentCompany.subsidy_percentage || 0,
         fixed_subsidy_amount: currentCompany.fixed_subsidy_amount || 0
-      }).select();
+      };
+      
+      console.log(`Creating company with data:`, companyData);
+      
+      const { data, error } = await supabase.from('companies').insert(companyData);
 
       if (error) {
         console.error('Error creating company:', error);

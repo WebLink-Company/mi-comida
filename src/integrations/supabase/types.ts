@@ -543,6 +543,10 @@ export type Database = {
       }
     }
     Functions: {
+      get_user_provider_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string

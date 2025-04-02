@@ -543,6 +543,10 @@ export type Database = {
       }
     }
     Functions: {
+      get_auth_user_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_user_provider_id: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -550,6 +554,14 @@ export type Database = {
       get_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_admin_safe: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
       }
     }
     Enums: {

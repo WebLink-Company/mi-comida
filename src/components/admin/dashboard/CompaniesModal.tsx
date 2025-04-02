@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Building, ChefHat } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Provider } from '@/lib/types';
+import { Provider, Company } from '@/lib/types';
 import { CompanyForm } from '@/components/admin/companies/CompanyForm';
 import { useToast } from '@/hooks/use-toast';
 
@@ -19,7 +19,7 @@ export const CompaniesModal: React.FC<CompaniesModalProps> = ({ onClose, provide
   const navigate = useNavigate();
   const { toast } = useToast();
   const [providers, setProviders] = useState<Provider[]>([]);
-  const [currentCompany, setCurrentCompany] = useState<any>({});
+  const [currentCompany, setCurrentCompany] = useState<Partial<Company>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {

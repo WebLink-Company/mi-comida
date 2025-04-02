@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -37,6 +36,17 @@ export const DialogContent: React.FC<DialogContentProps> = ({ dialogId, stats, o
     return new Intl.NumberFormat().format(num);
   };
 
+  const handleNavigate = (e: React.MouseEvent, path: string) => {
+    e.stopPropagation();
+    onClose();
+    navigateTo(path);
+  };
+
+  const handleClose = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onClose();
+  };
+
   const platformOverviewContent = (
     <>
       <AlertDialogHeader>
@@ -69,33 +79,24 @@ export const DialogContent: React.FC<DialogContentProps> = ({ dialogId, stats, o
         <AlertDialogFooter className="flex flex-wrap gap-2 justify-end mt-4">
           <Badge 
             variant="secondary"
-            className="py-2 cursor-pointer hover:bg-primary/20"
-            onClick={() => {
-              onClose();
-              navigateTo('/admin/users');
-            }}
+            className="py-2 cursor-pointer hover:bg-primary/20 modal-button"
+            onClick={(e) => handleNavigate(e, '/admin/users')}
           >
             <Users size={14} className="mr-1" />
             Users
           </Badge>
           <Badge 
             variant="secondary"
-            className="py-2 cursor-pointer hover:bg-primary/20"
-            onClick={() => {
-              onClose();
-              navigateTo('/admin/companies');
-            }}
+            className="py-2 cursor-pointer hover:bg-primary/20 modal-button"
+            onClick={(e) => handleNavigate(e, '/admin/companies')}
           >
             <Building size={14} className="mr-1" />
             Companies
           </Badge>
           <Badge 
             variant="secondary"
-            className="py-2 cursor-pointer hover:bg-primary/20"
-            onClick={() => {
-              onClose();
-              navigateTo('/admin/reports');
-            }}
+            className="py-2 cursor-pointer hover:bg-primary/20 modal-button"
+            onClick={(e) => handleNavigate(e, '/admin/reports')}
           >
             <FileText size={14} className="mr-1" />
             Reports
@@ -141,22 +142,16 @@ export const DialogContent: React.FC<DialogContentProps> = ({ dialogId, stats, o
         <AlertDialogFooter className="flex flex-wrap gap-2 justify-end mt-4">
           <Badge 
             variant="secondary"
-            className="py-2 cursor-pointer hover:bg-primary/20"
-            onClick={() => {
-              onClose();
-              navigateTo('/admin/providers');
-            }}
+            className="py-2 cursor-pointer hover:bg-primary/20 modal-button"
+            onClick={(e) => handleNavigate(e, '/admin/providers')}
           >
             <ChefHat size={14} className="mr-1" />
             Providers
           </Badge>
           <Badge 
             variant="secondary"
-            className="py-2 cursor-pointer hover:bg-primary/20"
-            onClick={() => {
-              onClose();
-              navigateTo('/admin/reports');
-            }}
+            className="py-2 cursor-pointer hover:bg-primary/20 modal-button"
+            onClick={(e) => handleNavigate(e, '/admin/reports')}
           >
             <TrendingUp size={14} className="mr-1" />
             Analytics
@@ -195,22 +190,16 @@ export const DialogContent: React.FC<DialogContentProps> = ({ dialogId, stats, o
         <AlertDialogFooter className="flex flex-wrap gap-2 justify-end mt-4">
           <Badge 
             variant="secondary"
-            className="py-2 cursor-pointer hover:bg-primary/20"
-            onClick={() => {
-              onClose();
-              navigateTo('/admin/reports');
-            }}
+            className="py-2 cursor-pointer hover:bg-primary/20 modal-button"
+            onClick={(e) => handleNavigate(e, '/admin/reports')}
           >
             <ShoppingBag size={14} className="mr-1" />
             Orders
           </Badge>
           <Badge 
             variant="secondary"
-            className="py-2 cursor-pointer hover:bg-primary/20"
-            onClick={() => {
-              onClose();
-              navigateTo('/admin/providers');
-            }}
+            className="py-2 cursor-pointer hover:bg-primary/20 modal-button"
+            onClick={(e) => handleNavigate(e, '/admin/providers')}
           >
             <ChefHat size={14} className="mr-1" />
             Providers
@@ -249,22 +238,16 @@ export const DialogContent: React.FC<DialogContentProps> = ({ dialogId, stats, o
         <AlertDialogFooter className="flex flex-wrap gap-2 justify-end mt-4">
           <Badge 
             variant="secondary"
-            className="py-2 cursor-pointer hover:bg-primary/20"
-            onClick={() => {
-              onClose();
-              navigateTo('/admin/reports');
-            }}
+            className="py-2 cursor-pointer hover:bg-primary/20 modal-button"
+            onClick={(e) => handleNavigate(e, '/admin/reports')}
           >
             <DollarSign size={14} className="mr-1" />
             Finance
           </Badge>
           <Badge 
             variant="secondary"
-            className="py-2 cursor-pointer hover:bg-primary/20"
-            onClick={() => {
-              onClose();
-              navigateTo('/admin/companies');
-            }}
+            className="py-2 cursor-pointer hover:bg-primary/20 modal-button"
+            onClick={(e) => handleNavigate(e, '/admin/companies')}
           >
             <Building size={14} className="mr-1" />
             Companies
@@ -274,7 +257,6 @@ export const DialogContent: React.FC<DialogContentProps> = ({ dialogId, stats, o
     </>
   );
 
-  // Action dialog contents
   const addUserContent = (
     <>
       <AlertDialogHeader>
@@ -286,22 +268,16 @@ export const DialogContent: React.FC<DialogContentProps> = ({ dialogId, stats, o
         <p className="text-xs text-muted-foreground">Users can have different roles and permissions based on their responsibilities.</p>
       </div>
       <AlertDialogFooter className="flex flex-wrap gap-2 justify-end mt-4">
-        <Button variant="outline" onClick={onClose}>
+        <Button variant="outline" onClick={handleClose} className="modal-button">
           Cancel
         </Button>
-        <Button onClick={() => {
-          onClose();
-          navigateTo('/admin/users');
-        }}>
+        <Button onClick={(e) => handleNavigate(e, '/admin/users')} className="modal-button">
           Go to Users
         </Button>
         <Badge 
           variant="secondary"
-          className="py-2 cursor-pointer hover:bg-primary/20"
-          onClick={() => {
-            onClose();
-            navigateTo('/admin/settings');
-          }}
+          className="py-2 cursor-pointer hover:bg-primary/20 modal-button"
+          onClick={(e) => handleNavigate(e, '/admin/settings')}
         >
           <FileText size={14} className="mr-1" />
           Permissions
@@ -321,22 +297,16 @@ export const DialogContent: React.FC<DialogContentProps> = ({ dialogId, stats, o
         <p className="text-xs text-muted-foreground">Companies can be assigned to providers and have their own employees.</p>
       </div>
       <AlertDialogFooter className="flex flex-wrap gap-2 justify-end mt-4">
-        <Button variant="outline" onClick={onClose}>
+        <Button variant="outline" onClick={handleClose} className="modal-button">
           Cancel
         </Button>
-        <Button onClick={() => {
-          onClose();
-          navigateTo('/admin/companies');
-        }}>
+        <Button onClick={(e) => handleNavigate(e, '/admin/companies')} className="modal-button">
           Go to Companies
         </Button>
         <Badge 
           variant="secondary"
-          className="py-2 cursor-pointer hover:bg-primary/20"
-          onClick={() => {
-            onClose();
-            navigateTo('/admin/providers');
-          }}
+          className="py-2 cursor-pointer hover:bg-primary/20 modal-button"
+          onClick={(e) => handleNavigate(e, '/admin/providers')}
         >
           <ChefHat size={14} className="mr-1" />
           Providers
@@ -356,22 +326,16 @@ export const DialogContent: React.FC<DialogContentProps> = ({ dialogId, stats, o
         <p className="text-xs text-muted-foreground">Providers can be linked to companies and create their own menu items.</p>
       </div>
       <AlertDialogFooter className="flex flex-wrap gap-2 justify-end mt-4">
-        <Button variant="outline" onClick={onClose}>
+        <Button variant="outline" onClick={handleClose} className="modal-button">
           Cancel
         </Button>
-        <Button onClick={() => {
-          onClose();
-          navigateTo('/admin/providers');
-        }}>
+        <Button onClick={(e) => handleNavigate(e, '/admin/providers')} className="modal-button">
           Go to Providers
         </Button>
         <Badge 
           variant="secondary"
-          className="py-2 cursor-pointer hover:bg-primary/20"
-          onClick={() => {
-            onClose();
-            navigateTo('/admin/companies');
-          }}
+          className="py-2 cursor-pointer hover:bg-primary/20 modal-button"
+          onClick={(e) => handleNavigate(e, '/admin/companies')}
         >
           <Building size={14} className="mr-1" />
           Companies
@@ -391,22 +355,16 @@ export const DialogContent: React.FC<DialogContentProps> = ({ dialogId, stats, o
         <p className="text-xs text-muted-foreground">You can filter orders by date, company, provider, and status.</p>
       </div>
       <AlertDialogFooter className="flex flex-wrap gap-2 justify-end mt-4">
-        <Button variant="outline" onClick={onClose}>
+        <Button variant="outline" onClick={handleClose} className="modal-button">
           Cancel
         </Button>
-        <Button onClick={() => {
-          onClose();
-          navigateTo('/admin/reports');
-        }}>
+        <Button onClick={(e) => handleNavigate(e, '/admin/reports')} className="modal-button">
           Go to Orders
         </Button>
         <Badge 
           variant="secondary"
-          className="py-2 cursor-pointer hover:bg-primary/20"
-          onClick={() => {
-            onClose();
-            navigateTo('/admin/providers');
-          }}
+          className="py-2 cursor-pointer hover:bg-primary/20 modal-button"
+          onClick={(e) => handleNavigate(e, '/admin/providers')}
         >
           <ChefHat size={14} className="mr-1" />
           Providers
@@ -426,22 +384,16 @@ export const DialogContent: React.FC<DialogContentProps> = ({ dialogId, stats, o
         <p className="text-xs text-muted-foreground">You can track payments, generate reports, and manage billing cycles.</p>
       </div>
       <AlertDialogFooter className="flex flex-wrap gap-2 justify-end mt-4">
-        <Button variant="outline" onClick={onClose}>
+        <Button variant="outline" onClick={handleClose} className="modal-button">
           Cancel
         </Button>
-        <Button onClick={() => {
-          onClose();
-          navigateTo('/admin/reports');
-        }}>
+        <Button onClick={(e) => handleNavigate(e, '/admin/reports')} className="modal-button">
           Go to Invoices
         </Button>
         <Badge 
           variant="secondary"
-          className="py-2 cursor-pointer hover:bg-primary/20"
-          onClick={() => {
-            onClose();
-            navigateTo('/admin/companies');
-          }}
+          className="py-2 cursor-pointer hover:bg-primary/20 modal-button"
+          onClick={(e) => handleNavigate(e, '/admin/companies')}
         >
           <Building size={14} className="mr-1" />
           Companies

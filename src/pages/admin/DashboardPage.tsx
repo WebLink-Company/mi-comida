@@ -106,9 +106,12 @@ const DashboardPage = () => {
   };
 
   const closeDialog = () => {
-    setActiveDialog(null);
+    // Use setTimeout to prevent event propagation issues
+    setTimeout(() => {
+      setActiveDialog(null);
+    }, 50);
   };
-
+  
   // Quick action badges data
   const quickActions: Array<{
     label: string;
@@ -203,8 +206,11 @@ const DashboardPage = () => {
       </div>
 
       {/* Alert Dialog for Dashboard Stats */}
-      <AlertDialog open={['platform-overview', 'provider-performance', 'order-metrics', 'finance-insights', 'add-user', 'create-company', 'add-provider', 'view-orders', 'review-invoices'].includes(activeDialog || '')} onOpenChange={() => activeDialog && setActiveDialog(null)}>
-        <AlertDialogContent className="neo-blur text-white border-white/20">
+      <AlertDialog 
+        open={['platform-overview', 'provider-performance', 'order-metrics', 'finance-insights', 'add-user', 'create-company', 'add-provider', 'view-orders', 'review-invoices'].includes(activeDialog || '')} 
+        onOpenChange={() => closeDialog()}
+      >
+        <AlertDialogContent className="neo-blur modal-glassmorphism text-white border-white/20">
           <DashboardDialogContent 
             dialogId={activeDialog || ''} 
             stats={stats}
@@ -215,36 +221,36 @@ const DashboardPage = () => {
       </AlertDialog>
 
       {/* Dialog for User Management */}
-      <Dialog open={activeDialog === 'add-user'} onOpenChange={() => activeDialog === 'add-user' && setActiveDialog(null)}>
-        <DialogContent>
+      <Dialog open={activeDialog === 'add-user'} onOpenChange={closeDialog}>
+        <DialogContent className="modal-glassmorphism">
           {activeDialog === 'add-user' && <UsersModal onClose={closeDialog} />}
         </DialogContent>
       </Dialog>
 
       {/* Dialog for Company Management */}
-      <Dialog open={activeDialog === 'create-company'} onOpenChange={() => activeDialog === 'create-company' && setActiveDialog(null)}>
-        <DialogContent>
+      <Dialog open={activeDialog === 'create-company'} onOpenChange={closeDialog}>
+        <DialogContent className="modal-glassmorphism">
           {activeDialog === 'create-company' && <CompaniesModal onClose={closeDialog} />}
         </DialogContent>
       </Dialog>
 
       {/* Dialog for Provider Management */}
-      <Dialog open={activeDialog === 'add-provider'} onOpenChange={() => activeDialog === 'add-provider' && setActiveDialog(null)}>
-        <DialogContent>
+      <Dialog open={activeDialog === 'add-provider'} onOpenChange={closeDialog}>
+        <DialogContent className="modal-glassmorphism">
           {activeDialog === 'add-provider' && <ProvidersModal onClose={closeDialog} />}
         </DialogContent>
       </Dialog>
 
       {/* Dialog for Order Management */}
-      <Dialog open={activeDialog === 'view-orders'} onOpenChange={() => activeDialog === 'view-orders' && setActiveDialog(null)}>
-        <DialogContent>
+      <Dialog open={activeDialog === 'view-orders'} onOpenChange={closeDialog}>
+        <DialogContent className="modal-glassmorphism">
           {activeDialog === 'view-orders' && <OrdersModal onClose={closeDialog} />}
         </DialogContent>
       </Dialog>
 
       {/* Dialog for Invoice Management */}
-      <Dialog open={activeDialog === 'review-invoices'} onOpenChange={() => activeDialog === 'review-invoices' && setActiveDialog(null)}>
-        <DialogContent>
+      <Dialog open={activeDialog === 'review-invoices'} onOpenChange={closeDialog}>
+        <DialogContent className="modal-glassmorphism">
           {activeDialog === 'review-invoices' && <InvoicesModal onClose={closeDialog} />}
         </DialogContent>
       </Dialog>

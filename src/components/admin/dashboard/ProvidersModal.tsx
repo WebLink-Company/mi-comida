@@ -13,6 +13,11 @@ interface ProvidersModalProps {
 export const ProvidersModal: React.FC<ProvidersModalProps> = ({ onClose }) => {
   const navigate = useNavigate();
 
+  const handleNavigation = (path: string) => {
+    onClose();
+    navigate(path);
+  };
+
   return (
     <DialogContent className="sm:max-w-md neo-blur text-white border-white/20">
       <DialogHeader>
@@ -27,15 +32,22 @@ export const ProvidersModal: React.FC<ProvidersModalProps> = ({ onClose }) => {
         <p className="text-xs text-muted-foreground">Providers can be linked to companies and create their own menu items.</p>
         
         <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={onClose} className="border-white/20 text-white hover:bg-white/10">
+          <Button 
+            variant="outline" 
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }}
+            className="modal-button border-white/20 text-white hover:bg-white/10"
+          >
             Cancel
           </Button>
           <Button 
-            onClick={() => {
-              onClose();
-              navigate('/admin/providers');
+            onClick={(e) => {
+              e.stopPropagation();
+              handleNavigation('/admin/providers');
             }}
-            className="bg-gradient-to-br from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+            className="modal-button bg-gradient-to-br from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
           >
             Go to Providers
           </Button>
@@ -45,10 +57,10 @@ export const ProvidersModal: React.FC<ProvidersModalProps> = ({ onClose }) => {
       <DialogFooter className="flex flex-wrap gap-2 justify-end mt-4 border-t border-white/10 pt-4">
         <Badge 
           variant="secondary"
-          className="py-2 cursor-pointer hover:bg-primary/20"
-          onClick={() => {
-            onClose();
-            navigate('/admin/providers');
+          className="py-2 cursor-pointer hover:bg-primary/20 modal-button"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleNavigation('/admin/providers');
           }}
         >
           <ChefHat size={14} className="mr-1" />
@@ -56,10 +68,10 @@ export const ProvidersModal: React.FC<ProvidersModalProps> = ({ onClose }) => {
         </Badge>
         <Badge 
           variant="secondary"
-          className="py-2 cursor-pointer hover:bg-primary/20"
-          onClick={() => {
-            onClose();
-            navigate('/admin/companies');
+          className="py-2 cursor-pointer hover:bg-primary/20 modal-button"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleNavigation('/admin/companies');
           }}
         >
           <Building size={14} className="mr-1" />

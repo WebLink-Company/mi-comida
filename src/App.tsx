@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -21,6 +20,7 @@ import NotFound from "./pages/NotFound";
 
 // Admin Pages
 import DashboardPage from "./pages/admin/DashboardPage";
+import ProviderDashboardPage from "./pages/admin/ProviderDashboardPage";
 import UsersPage from "./pages/admin/UsersPage";
 import CompaniesPage from "./pages/admin/CompaniesPage";
 import ProvidersPage from "./pages/admin/ProvidersPage";
@@ -47,6 +47,7 @@ const App = () => (
               </ProtectedRoute>
             }>
               <Route index element={<DashboardPage />} />
+              <Route path="provider-dashboard" element={<ProviderDashboardPage />} />
               <Route path="users" element={<UsersPage />} />
               <Route path="companies" element={<CompaniesPage />} />
               <Route path="providers" element={<ProvidersPage />} />
@@ -108,34 +109,17 @@ const App = () => (
             {/* Provider Routes */}
             <Route path="/provider" element={
               <ProtectedRoute allowedRoles={['provider']}>
-                <ProviderDashboard />
+                <AdminLayout />
               </ProtectedRoute>
-            } />
-            <Route path="/provider/menu" element={
-              <ProtectedRoute allowedRoles={['provider']}>
-                <ProviderDashboard activeTab="menu" />
-              </ProtectedRoute>
-            } />
-            <Route path="/provider/orders" element={
-              <ProtectedRoute allowedRoles={['provider']}>
-                <ProviderDashboard activeTab="orders" />
-              </ProtectedRoute>
-            } />
-            <Route path="/provider/billing" element={
-              <ProtectedRoute allowedRoles={['provider']}>
-                <ProviderDashboard activeTab="billing" />
-              </ProtectedRoute>
-            } />
-            <Route path="/provider/companies" element={
-              <ProtectedRoute allowedRoles={['provider']}>
-                <ProviderDashboard activeTab="companies" />
-              </ProtectedRoute>
-            } />
-            <Route path="/provider/users" element={
-              <ProtectedRoute allowedRoles={['provider']}>
-                <ProviderDashboard activeTab="users" />
-              </ProtectedRoute>
-            } />
+            }>
+              <Route index element={<ProviderDashboardPage />} />
+              <Route path="dashboard" element={<ProviderDashboardPage />} />
+              <Route path="menu" element={<DashboardPage />} />
+              <Route path="orders" element={<DashboardPage />} />
+              <Route path="companies" element={<CompaniesPage />} />
+              <Route path="users" element={<UsersPage />} />
+              <Route path="billing" element={<DashboardPage />} />
+            </Route>
             
             {/* Catch-all for non-existent routes */}
             <Route path="*" element={<NotFound />} />

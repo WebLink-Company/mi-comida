@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
-import { LucideIcon } from 'lucide-react';
+import { LucideIcon, PlusCircle, Users, Package, Receipt } from 'lucide-react';
 
 interface ClockDisplayProps {
   user: { first_name?: string } | null;
@@ -32,7 +32,7 @@ export const ClockDisplay: React.FC<ClockDisplayProps> = ({ user, quickActions }
   };
 
   const getFirstName = () => {
-    return user?.first_name || 'Admin';
+    return user?.first_name || 'Provider';
   };
 
   return (

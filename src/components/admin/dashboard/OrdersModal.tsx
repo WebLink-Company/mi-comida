@@ -48,7 +48,7 @@ export const OrdersModal: React.FC<OrdersModalProps> = ({ onClose }) => {
               e.stopPropagation();
               handleClose();
             }}
-            className="modal-button z-50 border-white/20 text-white hover:bg-white/10"
+            className="modal-button modal-button-cancel"
           >
             Cancel
           </Button>
@@ -57,7 +57,7 @@ export const OrdersModal: React.FC<OrdersModalProps> = ({ onClose }) => {
               e.stopPropagation();
               handleNavigation('/admin/reports');
             }}
-            className="modal-button z-50 bg-gradient-to-br from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+            className="modal-button modal-button-primary"
           >
             Go to Orders
           </Button>

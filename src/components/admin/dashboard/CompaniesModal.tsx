@@ -3,11 +3,12 @@ import React, { useState, useEffect } from 'react';
 import { DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Building, ChefHat, FileText } from 'lucide-react';
+import { Building, ChefHat } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Provider } from '@/lib/types';
 import { CompanyForm } from '@/components/admin/companies/CompanyForm';
+import { useToast } from '@/hooks/use-toast';
 
 interface CompaniesModalProps {
   onClose: () => void;
@@ -15,8 +16,10 @@ interface CompaniesModalProps {
 
 export const CompaniesModal: React.FC<CompaniesModalProps> = ({ onClose }) => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [providers, setProviders] = useState<Provider[]>([]);
   const [currentCompany, setCurrentCompany] = useState<any>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchProviders = async () => {
@@ -40,12 +43,48 @@ export const CompaniesModal: React.FC<CompaniesModalProps> = ({ onClose }) => {
     setCurrentCompany(prev => ({ ...prev, [key]: value }));
   };
 
-  const handleClose = (e?: React.MouseEvent) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
+  const handleClose = () => {
     onClose();
+  };
+
+  const handleSave = async () => {
+    if (!currentCompany.name) {
+      toast({
+        title: "Missing information",
+        description: "Company name is required",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      const { error } = await supabase.from('companies').insert({
+        name: currentCompany.name,
+        provider_id: currentCompany.provider_id || null,
+        subsidy_percentage: currentCompany.subsidy_percentage || 0,
+        fixed_subsidy_amount: currentCompany.fixed_subsidy_amount || 0
+      });
+
+      if (error) throw error;
+      
+      toast({
+        title: "Company created",
+        description: "The company has been successfully created",
+      });
+      
+      navigateToCompanies();
+    } catch (error) {
+      console.error('Error creating company:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create company. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const navigateToCompanies = () => {
@@ -56,14 +95,8 @@ export const CompaniesModal: React.FC<CompaniesModalProps> = ({ onClose }) => {
   return (
     <DialogContent 
       className="sm:max-w-md modal-glassmorphism"
-      onInteractOutside={(e) => {
-        e.preventDefault();
-        handleClose();
-      }}
-      onEscapeKeyDown={(e) => {
-        e.preventDefault();
-        handleClose();
-      }}
+      onInteractOutside={handleClose}
+      onEscapeKeyDown={handleClose}
     >
       <DialogHeader>
         <DialogTitle className="text-gradient">Create Company</DialogTitle>
@@ -76,7 +109,7 @@ export const CompaniesModal: React.FC<CompaniesModalProps> = ({ onClose }) => {
         currentCompany={currentCompany}
         providers={providers}
         onUpdateCompany={handleUpdateCompany}
-        onSave={navigateToCompanies}
+        onSave={handleSave}
         onCancel={handleClose}
       />
 

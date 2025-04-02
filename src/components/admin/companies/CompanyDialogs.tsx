@@ -31,10 +31,10 @@ export const CompanyDialogs: React.FC<CompanyDialogsProps> = ({
   return (
     <>
       <Dialog open={isDialogOpen} onOpenChange={onCloseDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md modal-glassmorphism">
           <DialogHeader>
-            <DialogTitle>{currentCompany.id ? 'Edit Company' : 'Create New Company'}</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-gradient">{currentCompany.id ? 'Edit Company' : 'Create New Company'}</DialogTitle>
+            <DialogDescription className="text-white/70">
               Fill in the company details below
             </DialogDescription>
           </DialogHeader>
@@ -49,18 +49,18 @@ export const CompanyDialogs: React.FC<CompanyDialogsProps> = ({
       </Dialog>
 
       <Dialog open={isDeleteDialogOpen} onOpenChange={onCloseDeleteDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md modal-glassmorphism">
           <DialogHeader>
-            <DialogTitle>Delete Company</DialogTitle>
+            <DialogTitle className="text-gradient">Delete Company</DialogTitle>
           </DialogHeader>
           <div className="py-4">
-            <p>Are you sure you want to delete <strong>{currentCompany.name}</strong>?</p>
-            <p className="text-sm text-muted-foreground mt-2">
+            <p className="text-white">Are you sure you want to delete <strong>{currentCompany.name}</strong>?</p>
+            <p className="text-sm text-white/70 mt-2">
               This action cannot be undone. All data associated with this company will be permanently removed.
             </p>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={onCloseDeleteDialog}>
+            <Button variant="outline" onClick={onCloseDeleteDialog} className="modal-button-cancel">
               Cancel
             </Button>
             <Button variant="destructive" onClick={onDelete}>

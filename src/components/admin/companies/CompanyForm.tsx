@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { DialogFooter } from '@/components/ui/dialog';
 import { Company, Provider } from '@/lib/types';
+import { Label } from '@/components/ui/label';
 
 interface CompanyFormProps {
   currentCompany: Partial<Company>;
@@ -24,23 +25,24 @@ export const CompanyForm: React.FC<CompanyFormProps> = ({
     <>
       <div className="grid gap-4 py-4">
         <div className="grid gap-2">
-          <label htmlFor="company-name" className="text-sm font-medium">
+          <Label htmlFor="company-name" className="text-white">
             Company Name
-          </label>
+          </Label>
           <Input
             id="company-name"
             value={currentCompany.name || ''}
             onChange={(e) => onUpdateCompany('name', e.target.value)}
             placeholder="Enter company name"
+            className="modal-input"
           />
         </div>
         <div className="grid gap-2">
-          <label htmlFor="company-provider" className="text-sm font-medium">
+          <Label htmlFor="company-provider" className="text-white">
             Provider
-          </label>
+          </Label>
           <select
             id="company-provider"
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex h-10 w-full rounded-md px-3 py-2 text-sm modal-select"
             value={currentCompany.provider_id || ''}
             onChange={(e) => onUpdateCompany('provider_id', e.target.value)}
           >
@@ -54,9 +56,9 @@ export const CompanyForm: React.FC<CompanyFormProps> = ({
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div className="grid gap-2">
-            <label htmlFor="subsidy-percentage" className="text-sm font-medium">
+            <Label htmlFor="subsidy-percentage" className="text-white">
               Subsidy Percentage (%)
-            </label>
+            </Label>
             <Input
               id="subsidy-percentage"
               type="number"
@@ -64,27 +66,29 @@ export const CompanyForm: React.FC<CompanyFormProps> = ({
               max="100"
               value={currentCompany.subsidy_percentage || 0}
               onChange={(e) => onUpdateCompany('subsidy_percentage', parseFloat(e.target.value) || 0)}
+              className="modal-input"
             />
           </div>
           <div className="grid gap-2">
-            <label htmlFor="fixed-amount" className="text-sm font-medium">
+            <Label htmlFor="fixed-amount" className="text-white">
               Fixed Amount ($)
-            </label>
+            </Label>
             <Input
               id="fixed-amount"
               type="number"
               min="0"
               value={currentCompany.fixed_subsidy_amount || 0}
               onChange={(e) => onUpdateCompany('fixed_subsidy_amount', parseFloat(e.target.value) || 0)}
+              className="modal-input"
             />
           </div>
         </div>
       </div>
       <DialogFooter>
-        <Button variant="outline" onClick={onCancel}>
+        <Button variant="outline" onClick={onCancel} className="modal-button-cancel">
           Cancel
         </Button>
-        <Button onClick={onSave}>
+        <Button onClick={onSave} className="modal-button-primary">
           {currentCompany.id ? 'Save Changes' : 'Create Company'}
         </Button>
       </DialogFooter>

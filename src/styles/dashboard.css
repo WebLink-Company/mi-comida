@@ -62,11 +62,41 @@
 
 /* Fix for modals */
 .modal-glassmorphism {
-  background-color: rgba(0, 0, 0, 0.6) !important;
+  background-color: rgba(13, 17, 38, 0.9) !important;
   backdrop-filter: blur(12px) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   color: white !important;
   z-index: 9999 !important;
+}
+
+/* Modal form inputs */
+.modal-input {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 6px !important;
+  color: #333 !important;
+}
+
+.modal-select {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 6px !important;
+  color: #333 !important;
+}
+
+.modal-button-primary {
+  background: linear-gradient(to right, #106af7, #2c8ff3) !important;
+  color: white !important;
+  border: none !important;
+  font-weight: 500 !important;
+  border-radius: 6px !important;
+}
+
+.modal-button-cancel {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+  border-radius: 6px !important;
 }
 
 /* Ensure buttons and badges remain clickable */

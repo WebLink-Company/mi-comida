@@ -5,7 +5,7 @@ import {
   Calendar, ShoppingBag, Building, Award, 
   Clock, Briefcase, UserPlus, ListOrdered, DollarSign 
 } from 'lucide-react';
-import { TopMealResult } from '@/hooks/useProviderDashboardStats';
+import { TopMeal } from '@/hooks/useProviderDashboardStats';
 
 interface DashboardMetricsProps {
   ordersToday: number | undefined;
@@ -14,7 +14,7 @@ interface DashboardMetricsProps {
   loadingMealsToday: boolean;
   companiesWithOrdersToday: number | undefined;
   loadingCompaniesOrders: boolean;
-  topOrderedMeal: TopMealResult | undefined;
+  topOrderedMeal: string | undefined;
   loadingTopMeal: boolean;
   pendingOrders: number | undefined;
   loadingPending: boolean;
@@ -48,9 +48,9 @@ const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
   monthlyRevenue,
   loadingMonthlyRevenue
 }) => {
-  const formatTopMeal = (meal: TopMealResult | undefined): string => {
+  const formatTopMeal = (meal: string | undefined): string => {
     if (!meal) return 'No data';
-    return `${meal.name}${meal.count > 0 ? ` x${meal.count}` : ''}`;
+    return meal;
   };
 
   return (

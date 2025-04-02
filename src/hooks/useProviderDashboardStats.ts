@@ -1,6 +1,5 @@
 
 import { useQuery } from '@tanstack/react-query';
-import { useState, useEffect } from 'react';
 
 // Mock data and API calls would be replaced with real API calls
 const fetchOrdersToday = async () => Promise.resolve({ count: 24 });
@@ -13,8 +12,8 @@ const fetchMonthlyOrders = async () => Promise.resolve({ count: 342 });
 const fetchMonthlyRevenue = async () => Promise.resolve({ amount: 12750.50 });
 const fetchTopOrderedMeal = async () => Promise.resolve({ name: "Vegetarian Bowl", count: 34 });
 
-// Simplified interface for the top meal
-interface TopMeal {
+// Export the interface for the top meal so it can be used in other components
+export interface TopMeal {
   name: string;
   count: number;
 }

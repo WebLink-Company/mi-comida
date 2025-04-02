@@ -153,21 +153,25 @@ const ProviderUsersPage = () => {
 
   const handleCloseUserModal = () => {
     setIsUserModalOpen(false);
-    setSelectedCompany(null);
-    setCompanyUsers([]);
+    setTimeout(() => {
+      setSelectedCompany(null);
+      setCompanyUsers([]);
+    }, 300); // Wait for animation to complete
   };
 
   const handleCloseDetailsModal = () => {
     setIsDetailsModalOpen(false);
-    setSelectedUser(null);
-    setUserOrders([]);
+    setTimeout(() => {
+      setSelectedUser(null);
+      setUserOrders([]);
+    }, 300); // Wait for animation to complete
   };
 
   return (
     <div className="container mx-auto py-6 px-4 sm:px-6 lg:px-8 animate-fade-in">
       <div className="flex flex-col space-y-4">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-semibold text-gray-800 dark:text-gray-100">Companies & Users</h1>
+          <h1 className="text-2xl font-semibold text-gray-100">Companies & Users</h1>
         </div>
         
         {loading ? (
@@ -186,8 +190,8 @@ const ProviderUsersPage = () => {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center h-64 text-center">
-            <p className="text-lg text-gray-500 dark:text-gray-400">No companies found for your provider account.</p>
-            <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">
+            <p className="text-lg text-gray-300">No companies found for your provider account.</p>
+            <p className="text-sm text-gray-400 mt-2">
               Companies will appear here once they are associated with your provider account.
             </p>
           </div>

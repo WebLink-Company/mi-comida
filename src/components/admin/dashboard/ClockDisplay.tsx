@@ -38,9 +38,14 @@ export const ClockDisplay: React.FC<ClockDisplayProps> = ({ user, quickActions }
   return (
     <div className="win11-clock-container flex-grow flex flex-col items-center justify-center">
       <div className="text-center">
-        <h1 className="text-white/90 text-2xl font-light mb-1 fade-up">{getFirstName()}</h1>
-        <div className="win11-clock fade-up">{format(time, 'h:mm')}</div>
+        {/* Display the user's first name prominently where the time was */}
+        <div className="win11-clock fade-up">{getFirstName()}</div>
+        
+        {/* Display the date */}
         <div className="win11-date fade-up">{format(time, 'EEEE, MMMM d')}</div>
+        
+        {/* Display the time in a smaller size under the date */}
+        <div className="text-white/80 text-xl font-light mt-1 fade-up">{format(time, 'h:mm a')}</div>
 
         <div className="mt-4 text-white/80 text-lg font-light fade-up">
           {getGreeting()}, {getFirstName()} 👋

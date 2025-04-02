@@ -28,7 +28,14 @@ const AdminLayout = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700 flex flex-col">
+    <div 
+      className="min-h-screen flex flex-col"
+      style={{
+        background: 'linear-gradient(135deg, #1877F2 0%, #1158D1 50%, #7B3FE4 100%)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center'
+      }}
+    >
       <NavigationBar 
         userRole="admin" 
         userName={`${user?.first_name || ''} ${user?.last_name || ''}`} 

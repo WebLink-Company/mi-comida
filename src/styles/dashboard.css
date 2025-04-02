@@ -45,6 +45,13 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
+/* Define blue gradient background */
+.blue-gradient-bg {
+  background: linear-gradient(135deg, #1877F2 0%, #1158D1 50%, #7B3FE4 100%);
+  background-size: cover;
+  background-position: center;
+}
+
 /* Animation classes */
 .fade-up {
   opacity: 0;

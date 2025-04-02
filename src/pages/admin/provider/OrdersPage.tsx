@@ -78,9 +78,9 @@ const OrdersPage = () => {
         .from('orders')
         .select(`
           *,
-          profiles:user_id (first_name, last_name),
-          lunch_options:lunch_option_id (*),
-          companies:company_id (name)
+          profiles!orders_user_id_fkey(first_name, last_name),
+          lunch_options(name),
+          companies(name)
         `)
         .eq('date', format(selectedDate, 'yyyy-MM-dd'));
       

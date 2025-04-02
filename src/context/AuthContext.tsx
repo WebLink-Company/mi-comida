@@ -45,7 +45,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           .from('profiles')
           .select('*')
           .eq('id', session.user.id)
-          .maybeSingle(); 
+          .single(); 
           
         if (error) {
           console.error('Error fetching user profile:', error);

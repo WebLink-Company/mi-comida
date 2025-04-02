@@ -56,7 +56,7 @@ serve(async (req) => {
       .from('profiles')
       .select('role')
       .eq('id', user.id)
-      .maybeSingle();
+      .single();
 
     if (profileError) {
       console.error("Error fetching user profile:", profileError);

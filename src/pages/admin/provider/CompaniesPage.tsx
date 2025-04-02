@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -44,21 +45,29 @@ const CompaniesPage = () => {
   const [searchTerm, setSearchTerm] = useState<string>('');
 
   useEffect(() => {
-    if (user?.id) {
+    if (user?.provider_id) {
       fetchCompanies();
     }
-  }, [user?.id]);
+  }, [user?.provider_id]);
 
   const fetchCompanies = async () => {
     setLoading(true);
     try {
+      console.log(`Fetching companies for provider_id: ${user?.provider_id}`);
+      
+      // Debug: print the query being made
+      console.log(`QUERY: SELECT * FROM companies WHERE provider_id = '${user?.provider_id}'`);
+      
       const { data, error } = await supabase
         .from('companies')
         .select('*')
-        .eq('provider_id', user?.id)
+        .eq('provider_id', user?.provider_id)
         .order('name');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error in companies query:', error);
+        throw error;
+      }
       
       console.log('Companies fetched:', data);
       setCompanies(data || []);
@@ -88,7 +97,7 @@ const CompaniesPage = () => {
       const isNew = !currentCompany.id;
       const companyData = {
         ...currentCompany,
-        provider_id: user?.id,
+        provider_id: user?.provider_id,
         name: currentCompany.name,
         subsidy_percentage: currentCompany.subsidy_percentage || 0,
         fixed_subsidy_amount: currentCompany.fixed_subsidy_amount || 0,

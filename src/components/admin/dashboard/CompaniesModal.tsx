@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -95,7 +96,7 @@ export const CompaniesModal: React.FC<CompaniesModalProps> = ({ onClose, provide
 
   const navigateToCompanies = () => {
     onClose();
-    setTimeout(() => navigate('/admin/companies'), 100);
+    setTimeout(() => navigate('/provider/companies'), 100);
   };
 
   return (
@@ -126,7 +127,7 @@ export const CompaniesModal: React.FC<CompaniesModalProps> = ({ onClose, provide
           onClick={(e) => {
             e.stopPropagation();
             onClose();
-            setTimeout(() => navigate('/admin/companies'), 100);
+            setTimeout(() => navigate('/provider/companies'), 100);
           }}
         >
           <Building size={14} className="mr-1" />

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,7 +21,7 @@ export const useProviderDashboardData = (providerId?: string) => {
   const { user } = useAuth();
   const { toast } = useToast();
   
-  // Use the providerId parameter if provided, otherwise use the user's provider_id (not user.id)
+  // Use the providerId parameter if provided, otherwise use the user's provider_id
   const effectiveProviderId = providerId || user?.provider_id;
   
   console.log(`Using provider_id for data fetching: ${effectiveProviderId}`);
@@ -37,12 +38,19 @@ export const useProviderDashboardData = (providerId?: string) => {
     queryFn: async () => {
       try {
         console.log(`Fetching active companies with provider_id: ${effectiveProviderId}`);
+        
+        // Debug: print the query being made
+        console.log(`QUERY: SELECT * FROM companies WHERE provider_id = '${effectiveProviderId}'`);
+        
         const { count, error, data } = await supabase
           .from('companies')
           .select('*', { count: 'exact', head: false })
           .eq('provider_id', effectiveProviderId);
           
-        if (error) throw error;
+        if (error) {
+          console.error('Error in companies query:', error);
+          throw error;
+        }
         
         console.log(`Active companies query result:`, data);
         console.log(`Active companies count for provider ${effectiveProviderId}:`, count);

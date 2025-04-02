@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+
+import React, { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog } from '@/components/ui/dialog';
@@ -44,23 +45,8 @@ const ProviderUsersPage = () => {
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
-  useEffect(() => {
-    if (user?.provider_id) {
-      fetchCompanies();
-    }
-  }, [user]);
-
-  // Clean up modals on unmount to prevent issues
-  useEffect(() => {
-    return () => {
-      setIsUserModalOpen(false);
-      setIsDetailsModalOpen(false);
-      setSelectedCompany(null);
-      setSelectedUser(null);
-    };
-  }, []);
-
-  const fetchCompanies = async () => {
+  // Use useCallback to memoize the fetchCompanies function
+  const fetchCompanies = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -99,23 +85,37 @@ const ProviderUsersPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.provider_id, toast]);
 
-  const handleCompanyClick = async (company: Company) => {
+  useEffect(() => {
+    if (user?.provider_id) {
+      fetchCompanies();
+    }
+  }, [user, fetchCompanies]);
+
+  // Clean up modals on unmount to prevent issues
+  useEffect(() => {
+    return () => {
+      setIsUserModalOpen(false);
+      setIsDetailsModalOpen(false);
+      setSelectedCompany(null);
+      setSelectedUser(null);
+    };
+  }, []);
+
+  // Create a fetchUsers function that refreshes the user list for the selected company
+  const fetchUsers = useCallback(async (companyId: string) => {
     try {
-      setSelectedCompany(company);
-      
       // Get all users for the selected company
       const { data: users, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('company_id', company.id)
+        .eq('company_id', companyId)
         .eq('provider_id', user?.provider_id);
 
       if (error) throw error;
       
       setCompanyUsers(users || []);
-      setIsUserModalOpen(true);
     } catch (error) {
       console.error('Error fetching company users:', error);
       toast({
@@ -123,6 +123,16 @@ const ProviderUsersPage = () => {
         description: 'Failed to load company users',
         variant: 'destructive',
       });
+    }
+  }, [user?.provider_id, toast]);
+
+  const handleCompanyClick = async (company: Company) => {
+    try {
+      setSelectedCompany(company);
+      await fetchUsers(company.id);
+      setIsUserModalOpen(true);
+    } catch (error) {
+      console.error('Error in handleCompanyClick:', error);
     }
   };
 
@@ -189,6 +199,16 @@ const ProviderUsersPage = () => {
       setSelectedUser(null);
       setUserOrders([]);
     }, 300);
+  };
+
+  const handleUserCreated = async () => {
+    if (selectedCompany) {
+      // Refresh the users list
+      await fetchUsers(selectedCompany.id);
+      
+      // Also refresh the company list to update user counts
+      fetchCompanies();
+    }
   };
 
   return (

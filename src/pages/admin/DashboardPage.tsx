@@ -1,18 +1,23 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { format } from 'date-fns';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Users, Building, ShoppingBag, FileText, TrendingUp, AlertTriangle, Calendar, DollarSign, Clock, Globe, ChevronRight, ExternalLink, X } from 'lucide-react';
+import { Users, Building, ShoppingBag, FileText, Globe, DollarSign, ChefHat, UserPlus, Plus, LucideIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
+import { Dialog } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogContent } from '@/components/ui/alert-dialog';
+import { UsersModal } from '@/components/admin/dashboard/UsersModal';
+import { CompaniesModal } from '@/components/admin/dashboard/CompaniesModal';
+import { ProvidersModal } from '@/components/admin/dashboard/ProvidersModal';
+import { OrdersModal } from '@/components/admin/dashboard/OrdersModal';
+import { InvoicesModal } from '@/components/admin/dashboard/InvoicesModal';
+import { ClockDisplay } from '@/components/admin/dashboard/ClockDisplay';
+import { DashboardCard } from '@/components/admin/dashboard/DashboardCard';
+import { DialogContent as DashboardDialogContent } from '@/components/admin/dashboard/DialogContents';
+import "@/styles/dashboard.css";
+
 const DashboardPage = () => {
   const navigate = useNavigate();
-  const {
-    user
-  } = useAuth();
-  const [time, setTime] = useState(new Date());
+  const { user } = useAuth();
   const [activeDialog, setActiveDialog] = useState<string | null>(null);
   const [stats, setStats] = useState({
     totalUsers: 0,
@@ -29,12 +34,7 @@ const DashboardPage = () => {
     mostActiveProvider: 'N/A',
     topCompanyByConsumption: 'N/A'
   });
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTime(new Date());
-    }, 60000);
-    return () => clearInterval(timer);
-  }, []);
+
   const fetchDashboardData = async () => {
     try {
       const {
@@ -43,24 +43,28 @@ const DashboardPage = () => {
         count: 'exact',
         head: true
       });
+
       const {
         count: companyCount
       } = await supabase.from('companies').select('*', {
         count: 'exact',
         head: true
       });
+
       const {
         count: providerCount
       } = await supabase.from('providers').select('*', {
         count: 'exact',
         head: true
       });
+
       const {
         count: orderCount
       } = await supabase.from('orders').select('*', {
         count: 'exact',
         head: true
       });
+
       setStats({
         totalUsers: userCount || 0,
         totalCompanies: companyCount || 0,
@@ -80,329 +84,179 @@ const DashboardPage = () => {
       console.error('Error fetching dashboard data:', error);
     }
   };
+
   useEffect(() => {
     fetchDashboardData();
   }, []);
-  const getGreeting = () => {
-    const hour = time.getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 18) return 'Good afternoon';
-    return 'Good evening';
-  };
-  const getFirstName = () => {
-    return user?.first_name || 'Admin';
-  };
-  const formatNumber = (num: number) => {
-    return new Intl.NumberFormat().format(num);
-  };
+
   const navigateTo = (path: string) => {
     navigate(path);
   };
+
   const openDialog = (dialogId: string) => {
     setActiveDialog(dialogId);
   };
-  const renderDialogContent = () => {
-    switch (activeDialog) {
-      case 'platform-overview':
-        return <>
-            <DialogHeader>
-              <DialogTitle>Platform Overview</DialogTitle>
-              <DialogDescription>Detailed statistics about platform usage</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 mt-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-white/10 p-4 rounded-lg">
-                  <h3 className="text-sm font-medium mb-1">Total Users</h3>
-                  <p className="text-2xl font-bold">{formatNumber(stats.totalUsers)}</p>
-                  <p className="text-xs text-muted-foreground">+12% from last month</p>
-                </div>
-                <div className="bg-white/10 p-4 rounded-lg">
-                  <h3 className="text-sm font-medium mb-1">Total Companies</h3>
-                  <p className="text-2xl font-bold">{formatNumber(stats.totalCompanies)}</p>
-                  <p className="text-xs text-muted-foreground">+5% from last month</p>
-                </div>
-                <div className="bg-white/10 p-4 rounded-lg">
-                  <h3 className="text-sm font-medium mb-1">Total Providers</h3>
-                  <p className="text-2xl font-bold">{formatNumber(stats.totalProviders)}</p>
-                  <p className="text-xs text-muted-foreground">+3% from last month</p>
-                </div>
-                <div className="bg-white/10 p-4 rounded-lg">
-                  <h3 className="text-sm font-medium mb-1">Total Orders</h3>
-                  <p className="text-2xl font-bold bg-transparent">{formatNumber(stats.totalOrders)}</p>
-                  <p className="text-xs text-muted-foreground">+18% from last month</p>
-                </div>
-              </div>
-              <Button className="w-full" onClick={() => navigateTo('/admin/reports')}>View Full Reports</Button>
-            </div>
-          </>;
-      case 'provider-performance':
-        return <>
-            <DialogHeader>
-              <DialogTitle>Provider Performance</DialogTitle>
-              <DialogDescription>Analytics for service providers</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 mt-4">
-              <div>
-                <h3 className="text-sm font-medium mb-2">Top Performers</h3>
-                <ul className="space-y-2">
-                  <li className="p-3 bg-white/10 rounded-lg flex justify-between">
-                    <span>{stats.mostActiveProvider}</span>
-                    <span className="text-green-400">98% satisfaction</span>
-                  </li>
-                  <li className="p-3 bg-white/10 rounded-lg flex justify-between">
-                    <span>Quick Bites</span>
-                    <span className="text-green-400">95% satisfaction</span>
-                  </li>
-                </ul>
-              </div>
-              <div>
-                <h3 className="text-sm font-medium mb-2">Needs Attention</h3>
-                <ul className="space-y-2">
-                  <li className="p-3 bg-white/10 rounded-lg flex justify-between">
-                    <span>Inactive Providers</span>
-                    <span className="text-amber-400">{stats.inactiveProviders} providers</span>
-                  </li>
-                  <li className="p-3 bg-white/10 rounded-lg flex justify-between">
-                    <span>Without Companies</span>
-                    <span className="text-red-400">{stats.providersWithNoCompanies} providers</span>
-                  </li>
-                </ul>
-              </div>
-              <Button className="w-full" onClick={() => navigateTo('/admin/providers')}>Manage Providers</Button>
-            </div>
-          </>;
-      case 'order-metrics':
-        return <>
-            <DialogHeader>
-              <DialogTitle>Order Metrics</DialogTitle>
-              <DialogDescription>Detailed order statistics</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 mt-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-white/10 p-4 rounded-lg">
-                  <h3 className="text-sm font-medium mb-1">Today</h3>
-                  <p className="text-2xl font-bold">{stats.ordersToday}</p>
-                  <p className="text-xs text-muted-foreground">orders placed</p>
-                </div>
-                <div className="bg-white/10 p-4 rounded-lg">
-                  <h3 className="text-sm font-medium mb-1">This Week</h3>
-                  <p className="text-2xl font-bold">{stats.ordersThisWeek}</p>
-                  <p className="text-xs text-muted-foreground">orders placed</p>
-                </div>
-              </div>
-              <div>
-                <h3 className="text-sm font-medium mb-2">By Provider</h3>
-                <div className="p-3 bg-white/10 rounded-lg">
-                  <p className="mb-1">Average orders per provider</p>
-                  <p className="text-xl font-bold">{stats.avgOrdersPerProvider}</p>
-                </div>
-              </div>
-              <Button className="w-full" onClick={() => navigateTo('/admin/reports')}>View Order Reports</Button>
-            </div>
-          </>;
-      case 'finance-insights':
-        return <>
-            <DialogHeader>
-              <DialogTitle>Finance Insights</DialogTitle>
-              <DialogDescription>Financial statistics and metrics</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 mt-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-white/10 p-4 rounded-lg">
-                  <h3 className="text-sm font-medium mb-1">This Month</h3>
-                  <p className="text-2xl font-bold">${formatNumber(stats.billingThisMonth)}</p>
-                  <p className="text-xs text-muted-foreground">total billing</p>
-                </div>
-                <div className="bg-white/10 p-4 rounded-lg">
-                  <h3 className="text-sm font-medium mb-1">Pending</h3>
-                  <p className="text-2xl font-bold">{stats.pendingInvoices}</p>
-                  <p className="text-xs text-muted-foreground">invoices</p>
-                </div>
-              </div>
-              <div>
-                <h3 className="text-sm font-medium mb-2">Top Consumers</h3>
-                <div className="p-3 bg-white/10 rounded-lg flex justify-between">
-                  <span>{stats.topCompanyByConsumption}</span>
-                  <span className="text-primary">${formatNumber(Math.floor(stats.billingThisMonth * 0.3))}</span>
-                </div>
-              </div>
-              <Button className="w-full" onClick={() => navigateTo('/admin/reports')}>Financial Reports</Button>
-            </div>
-          </>;
-      default:
-        return null;
-    }
+
+  const closeDialog = () => {
+    setTimeout(() => {
+      setActiveDialog(null);
+    }, 50);
   };
-  return <div style={{
-    backgroundImage: `url('/win11-background.svg')`,
-    backgroundSize: 'cover',
-    backgroundPosition: 'center'
-  }} className="">
-      <div className="win11-clock-container flex-grow flex flex-col items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-white/90 text-2xl font-light mb-1 fade-up">{getFirstName()}</h1>
-          <div className="win11-clock fade-up">{format(time, 'h:mm')}</div>
-          <div className="win11-date fade-up">{format(time, 'EEEE, MMMM d')}</div>
-          
-          <div className="mt-4 text-white/80 text-lg font-light fade-up">
-            {getGreeting()}, {getFirstName()} 👋
-          </div>
-          <div className="mt-2 text-white/60 text-base font-light fade-up">
-            What would you like to work on today?
-          </div>
-        </div>
-      </div>
+
+  const quickActions: Array<{
+    label: string;
+    icon: LucideIcon;
+    action: () => void;
+    path: string;
+  }> = [
+    { label: 'Add User', icon: UserPlus, action: () => openDialog('add-user'), path: '/admin/users' },
+    { label: 'Create Company', icon: Building, action: () => openDialog('create-company'), path: '/admin/companies' },
+    { label: 'Add Provider', icon: ChefHat, action: () => openDialog('add-provider'), path: '/admin/providers' },
+    { label: 'View Orders', icon: ShoppingBag, action: () => openDialog('view-orders'), path: '/admin/reports' },
+    { label: 'Review Invoices', icon: Plus, action: () => openDialog('review-invoices'), path: '/admin/reports' },
+  ];
+
+  const platformOverviewData = [
+    { label: 'Users', value: stats.totalUsers, path: '/admin/users' },
+    { label: 'Companies', value: stats.totalCompanies, path: '/admin/companies' },
+    { label: 'Providers', value: stats.totalProviders, path: '/admin/providers' },
+    { label: 'Total Orders', value: stats.totalOrders, path: '/admin/reports' }
+  ];
+
+  const providerPerformanceData = [
+    { label: 'Most Active', value: stats.mostActiveProvider, path: '/admin/providers' },
+    { label: 'Inactive Providers', value: stats.inactiveProviders, path: '/admin/providers' },
+    { label: 'Without Companies', value: stats.providersWithNoCompanies, path: '/admin/providers' }
+  ];
+
+  const orderMetricsData = [
+    { label: 'Orders Today', value: stats.ordersToday, path: '/admin/reports' },
+    { label: 'Orders This Week', value: stats.ordersThisWeek, path: '/admin/reports' },
+    { label: 'Avg per Provider', value: stats.avgOrdersPerProvider, path: '/admin/reports' }
+  ];
+
+  const financeInsightsData = [
+    { label: 'Billing This Month', value: `$${new Intl.NumberFormat().format(stats.billingThisMonth)}`, path: '/admin/reports' },
+    { label: 'Pending Invoices', value: stats.pendingInvoices, path: '/admin/reports' },
+    { label: 'Top Consumer', value: stats.topCompanyByConsumption, path: '/admin/companies' }
+  ];
+
+  return (
+    <div style={{
+      backgroundImage: `url('/win11-background.svg')`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center'
+    }}>
+      <ClockDisplay user={user} quickActions={quickActions} />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-7xl mx-auto mt-auto p-4">
-        <div className="rounded-xl backdrop-blur-md bg-white/10 border border-white/20 p-4 fade-up cursor-pointer" style={{
-        animationDelay: "0.1s"
-      }} onClick={() => navigateTo('/admin/users')}>
-          <div className="flex justify-between items-center">
-            <div className="text-white font-medium">Platform Overview</div>
-            <div className="flex gap-2">
-              <button onClick={e => {
-              e.stopPropagation();
-              openDialog('platform-overview');
-            }} className="text-white/70 hover:text-white">
-                <ExternalLink size={16} />
-              </button>
-              <Globe size={16} className="text-white/80" />
-            </div>
-          </div>
-          <div className="mt-4">
-            <div className="grid grid-cols-2 gap-y-3">
-              <div className="text-sm text-white/80">Users</div>
-              <div className="text-sm font-medium text-right text-white">{formatNumber(stats.totalUsers)}</div>
-              
-              <div className="text-sm text-white/80">Companies</div>
-              <div className="text-sm font-medium text-right text-white">{formatNumber(stats.totalCompanies)}</div>
-              
-              <div className="text-sm text-white/80">Providers</div>
-              <div className="text-sm font-medium text-right text-white">{formatNumber(stats.totalProviders)}</div>
-              
-              <div className="text-sm text-white/80">Total Orders</div>
-              <div className="text-sm font-medium text-right text-white">{formatNumber(stats.totalOrders)}</div>
-            </div>
-            <div className="flex justify-end mt-3">
-              <Button variant="link" size="sm" className="text-white p-0 hover:text-white/80">
-                View Details <ChevronRight size={14} className="ml-1" />
-              </Button>
-            </div>
-          </div>
-        </div>
+        <DashboardCard
+          title="Platform Overview"
+          icon={<Globe size={16} className="text-white/80" />}
+          data={platformOverviewData}
+          animationDelay="0.1s"
+          path="/admin/users"
+          onOpenDialog={() => openDialog('platform-overview')}
+        />
 
-        <div className="rounded-xl backdrop-blur-md bg-white/10 border border-white/20 p-4 fade-up cursor-pointer" style={{
-        animationDelay: "0.2s"
-      }} onClick={() => navigateTo('/admin/providers')}>
-          <div className="flex justify-between items-center">
-            <div className="text-white font-medium">Provider Performance</div>
-            <div className="flex gap-2">
-              <button onClick={e => {
-              e.stopPropagation();
-              openDialog('provider-performance');
-            }} className="text-white/70 hover:text-white">
-                <ExternalLink size={16} />
-              </button>
-              <Building size={16} className="text-white/80" />
-            </div>
-          </div>
-          <div className="mt-4">
-            <div className="grid grid-cols-2 gap-y-3">
-              <div className="text-sm text-white/80">Most Active</div>
-              <div className="text-sm font-medium text-right text-white">{stats.mostActiveProvider}</div>
-              
-              <div className="text-sm text-white/80">Inactive Providers</div>
-              <div className="text-sm font-medium text-right text-white">{stats.inactiveProviders}</div>
-              
-              <div className="text-sm text-white/80">Without Companies</div>
-              <div className="text-sm font-medium text-right text-white">{stats.providersWithNoCompanies}</div>
-            </div>
-            <div className="flex justify-end mt-3">
-              <Button variant="link" size="sm" className="text-white p-0 hover:text-white/80">
-                View Details <ChevronRight size={14} className="ml-1" />
-              </Button>
-            </div>
-          </div>
-        </div>
+        <DashboardCard
+          title="Provider Performance"
+          icon={<Building size={16} className="text-white/80" />}
+          data={providerPerformanceData}
+          animationDelay="0.2s"
+          path="/admin/providers"
+          onOpenDialog={() => openDialog('provider-performance')}
+        />
 
-        <div className="rounded-xl backdrop-blur-md bg-white/10 border border-white/20 p-4 fade-up cursor-pointer" style={{
-        animationDelay: "0.3s"
-      }} onClick={() => navigateTo('/admin/reports')}>
-          <div className="flex justify-between items-center">
-            <div className="text-white font-medium">Order Metrics</div>
-            <div className="flex gap-2">
-              <button onClick={e => {
-              e.stopPropagation();
-              openDialog('order-metrics');
-            }} className="text-white/70 hover:text-white">
-                <ExternalLink size={16} />
-              </button>
-              <ShoppingBag size={16} className="text-white/80" />
-            </div>
-          </div>
-          <div className="mt-4">
-            <div className="grid grid-cols-2 gap-y-3">
-              <div className="text-sm text-white/80">Orders Today</div>
-              <div className="text-sm font-medium text-right text-white">{stats.ordersToday}</div>
-              
-              <div className="text-sm text-white/80">Orders This Week</div>
-              <div className="text-sm font-medium text-right text-white">{stats.ordersThisWeek}</div>
-              
-              <div className="text-sm text-white/80">Avg per Provider</div>
-              <div className="text-sm font-medium text-right text-white">{stats.avgOrdersPerProvider}</div>
-            </div>
-            <div className="flex justify-end mt-3">
-              <Button variant="link" size="sm" className="text-white p-0 hover:text-white/80">
-                View Details <ChevronRight size={14} className="ml-1" />
-              </Button>
-            </div>
-          </div>
-        </div>
+        <DashboardCard
+          title="Order Metrics"
+          icon={<ShoppingBag size={16} className="text-white/80" />}
+          data={orderMetricsData}
+          animationDelay="0.3s"
+          path="/admin/reports"
+          onOpenDialog={() => openDialog('order-metrics')}
+        />
 
-        <div className="rounded-xl backdrop-blur-md bg-white/10 border border-white/20 p-4 fade-up cursor-pointer" style={{
-        animationDelay: "0.4s"
-      }} onClick={() => navigateTo('/admin/reports')}>
-          <div className="flex justify-between items-center">
-            <div className="text-white font-medium">Finance Insights</div>
-            <div className="flex gap-2">
-              <button onClick={e => {
-              e.stopPropagation();
-              openDialog('finance-insights');
-            }} className="text-white/70 hover:text-white">
-                <ExternalLink size={16} />
-              </button>
-              <DollarSign size={16} className="text-white/80" />
-            </div>
-          </div>
-          <div className="mt-4">
-            <div className="grid grid-cols-2 gap-y-3">
-              <div className="text-sm text-white/80">Billing This Month</div>
-              <div className="text-sm font-medium text-right text-white">${formatNumber(stats.billingThisMonth)}</div>
-              
-              <div className="text-sm text-white/80">Pending Invoices</div>
-              <div className="text-sm font-medium text-right text-white">{stats.pendingInvoices}</div>
-              
-              <div className="text-sm text-white/80">Top Consumer</div>
-              <div className="text-sm font-medium text-right text-white">{stats.topCompanyByConsumption}</div>
-            </div>
-            <div className="flex justify-end mt-3">
-              <Button variant="link" size="sm" className="text-white p-0 hover:text-white/80">
-                View Details <ChevronRight size={14} className="ml-1" />
-              </Button>
-            </div>
-          </div>
-        </div>
+        <DashboardCard
+          title="Finance Insights"
+          icon={<DollarSign size={16} className="text-white/80" />}
+          data={financeInsightsData}
+          animationDelay="0.4s"
+          path="/admin/reports"
+          onOpenDialog={() => openDialog('finance-insights')}
+        />
       </div>
 
-      <Dialog open={!!activeDialog} onOpenChange={open => !open && setActiveDialog(null)}>
-        <DialogContent className="sm:max-w-[600px] neo-blur text-white border-white/20">
-          <DialogClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
-            <X className="h-4 w-4" />
-            <span className="sr-only">Close</span>
-          </DialogClose>
-          {renderDialogContent()}
-        </DialogContent>
+      <AlertDialog 
+        open={['platform-overview', 'provider-performance', 'order-metrics', 'finance-insights'].includes(activeDialog || '')} 
+        onOpenChange={() => closeDialog()}
+      >
+        <AlertDialogContent className="neo-blur modal-glassmorphism text-white border-white/20">
+          <DashboardDialogContent 
+            dialogId={activeDialog || ''} 
+            stats={stats}
+            onClose={closeDialog}
+            navigateTo={navigateTo}
+          />
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog 
+        open={activeDialog === 'add-user'} 
+        onOpenChange={() => {
+          if (activeDialog === 'add-user') {
+            closeDialog();
+          }
+        }}
+      >
+        {activeDialog === 'add-user' && <UsersModal onClose={closeDialog} />}
       </Dialog>
-    </div>;
+
+      <Dialog 
+        open={activeDialog === 'create-company'} 
+        onOpenChange={() => {
+          if (activeDialog === 'create-company') {
+            closeDialog();
+          }
+        }}
+      >
+        {activeDialog === 'create-company' && <CompaniesModal onClose={closeDialog} />}
+      </Dialog>
+
+      <Dialog 
+        open={activeDialog === 'add-provider'} 
+        onOpenChange={() => {
+          if (activeDialog === 'add-provider') {
+            closeDialog();
+          }
+        }}
+      >
+        {activeDialog === 'add-provider' && <ProvidersModal onClose={closeDialog} />}
+      </Dialog>
+
+      <Dialog 
+        open={activeDialog === 'view-orders'} 
+        onOpenChange={() => {
+          if (activeDialog === 'view-orders') {
+            closeDialog();
+          }
+        }}
+      >
+        {activeDialog === 'view-orders' && <OrdersModal onClose={closeDialog} />}
+      </Dialog>
+
+      <Dialog 
+        open={activeDialog === 'review-invoices'} 
+        onOpenChange={() => {
+          if (activeDialog === 'review-invoices') {
+            closeDialog();
+          }
+        }}
+      >
+        {activeDialog === 'review-invoices' && <InvoicesModal onClose={closeDialog} />}
+      </Dialog>
+    </div>
+  );
 };
+
 export default DashboardPage;

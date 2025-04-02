@@ -34,6 +34,7 @@ import MenuManagementPage from "./pages/admin/provider/MenuManagementPage";
 import AssignMenusPage from "./pages/admin/provider/AssignMenusPage";
 import DeliverySettingsPage from "./pages/admin/provider/DeliverySettingsPage";
 import ProviderCompaniesPage from "./pages/admin/provider/CompaniesPage";
+import ProviderUsersPage from "./pages/admin/provider/UsersPage";
 
 const queryClient = new QueryClient();
 
@@ -77,7 +78,7 @@ const App = () => (
               <Route path="companies" element={<ProviderCompaniesPage />} />
               <Route path="delivery-settings" element={<DeliverySettingsPage />} />
               <Route path="billing" element={<DashboardPage />} />
-              <Route path="users" element={<UsersPage />} />
+              <Route path="users" element={<ProviderUsersPage />} />
               <Route path="reports" element={<ReportsPage />} />
             </Route>
             

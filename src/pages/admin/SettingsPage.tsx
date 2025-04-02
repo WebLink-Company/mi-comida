@@ -13,8 +13,11 @@ import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { ChangePasswordForm } from '@/components/account/ChangePasswordForm';
+import { useAuth } from '@/context/AuthContext';
 
 const SettingsPage = () => {
+  const { user } = useAuth();
   const [generalSettings, setGeneralSettings] = useState({
     systemName: 'LunchWise Admin',
     languageDefault: 'English',
@@ -45,6 +48,22 @@ const SettingsPage = () => {
       </div>
 
       <div className="grid gap-6">
+        {/* Account Security Section */}
+        {user && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Shield className="mr-2 h-5 w-5" />
+                Account Security
+              </CardTitle>
+              <CardDescription>Manage your account security settings</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ChangePasswordForm />
+            </CardContent>
+          </Card>
+        )}
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">

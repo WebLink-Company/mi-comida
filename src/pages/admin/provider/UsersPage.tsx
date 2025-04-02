@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -49,6 +50,16 @@ const ProviderUsersPage = () => {
       fetchCompanies();
     }
   }, [user]);
+
+  // Clean up modals on unmount to prevent issues
+  useEffect(() => {
+    return () => {
+      setIsUserModalOpen(false);
+      setIsDetailsModalOpen(false);
+      setSelectedCompany(null);
+      setSelectedUser(null);
+    };
+  }, []);
 
   const fetchCompanies = async () => {
     try {
@@ -151,18 +162,20 @@ const ProviderUsersPage = () => {
   };
 
   const handleCloseUserModal = () => {
-    if (!isDetailsModalOpen) {
-      setIsUserModalOpen(false);
-      // Use a small timeout to ensure state is cleaned up after animation
-      setTimeout(() => {
+    setIsUserModalOpen(false);
+    
+    // Use a small timeout to ensure state is cleaned up after animation
+    setTimeout(() => {
+      if (!isDetailsModalOpen) {
         setSelectedCompany(null);
         setCompanyUsers([]);
-      }, 300); 
-    }
+      }
+    }, 300); 
   };
 
   const handleCloseDetailsModal = () => {
     setIsDetailsModalOpen(false);
+    
     // Use a small timeout to ensure state is cleaned up after animation
     setTimeout(() => {
       setSelectedUser(null);
@@ -205,8 +218,9 @@ const ProviderUsersPage = () => {
       <Dialog 
         open={isUserModalOpen} 
         onOpenChange={(open) => {
-          if (!open) handleCloseUserModal();
-          else if (isDetailsModalOpen) setIsDetailsModalOpen(false);
+          if (!open) {
+            handleCloseUserModal();
+          }
         }}
       >
         {selectedCompany && (
@@ -223,7 +237,9 @@ const ProviderUsersPage = () => {
       <AlertDialog 
         open={isDetailsModalOpen} 
         onOpenChange={(open) => {
-          if (!open) handleCloseDetailsModal();
+          if (!open) {
+            handleCloseDetailsModal();
+          }
         }}
       >
         {selectedUser && (

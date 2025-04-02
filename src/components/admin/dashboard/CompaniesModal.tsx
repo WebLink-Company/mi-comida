@@ -40,13 +40,31 @@ export const CompaniesModal: React.FC<CompaniesModalProps> = ({ onClose }) => {
     setCurrentCompany(prev => ({ ...prev, [key]: value }));
   };
 
+  const handleClose = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    onClose();
+  };
+
   const navigateToCompanies = () => {
     onClose();
-    navigate('/admin/companies');
+    setTimeout(() => navigate('/admin/companies'), 100);
   };
 
   return (
-    <DialogContent className="sm:max-w-md neo-blur text-white border-white/20">
+    <DialogContent 
+      className="sm:max-w-md modal-glassmorphism"
+      onInteractOutside={(e) => {
+        e.preventDefault();
+        handleClose();
+      }}
+      onEscapeKeyDown={(e) => {
+        e.preventDefault();
+        handleClose();
+      }}
+    >
       <DialogHeader>
         <DialogTitle className="text-gradient">Create Company</DialogTitle>
         <DialogDescription className="text-white/70">
@@ -59,16 +77,17 @@ export const CompaniesModal: React.FC<CompaniesModalProps> = ({ onClose }) => {
         providers={providers}
         onUpdateCompany={handleUpdateCompany}
         onSave={navigateToCompanies}
-        onCancel={onClose}
+        onCancel={handleClose}
       />
 
       <DialogFooter className="flex flex-wrap gap-2 justify-end mt-4 border-t border-white/10 pt-4">
         <Badge 
           variant="secondary"
-          className="py-2 cursor-pointer hover:bg-primary/20"
-          onClick={() => {
+          className="py-2 z-50 cursor-pointer hover:bg-primary/20 modal-button"
+          onClick={(e) => {
+            e.stopPropagation();
             onClose();
-            navigate('/admin/companies');
+            setTimeout(() => navigate('/admin/companies'), 100);
           }}
         >
           <Building size={14} className="mr-1" />
@@ -76,10 +95,11 @@ export const CompaniesModal: React.FC<CompaniesModalProps> = ({ onClose }) => {
         </Badge>
         <Badge 
           variant="secondary"
-          className="py-2 cursor-pointer hover:bg-primary/20"
-          onClick={() => {
+          className="py-2 z-50 cursor-pointer hover:bg-primary/20 modal-button"
+          onClick={(e) => {
+            e.stopPropagation();
             onClose();
-            navigate('/admin/providers');
+            setTimeout(() => navigate('/admin/providers'), 100);
           }}
         >
           <ChefHat size={14} className="mr-1" />

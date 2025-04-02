@@ -62,15 +62,38 @@
 
 /* Fix for modals */
 .modal-glassmorphism {
-  background-color: rgba(0, 0, 0, 0.4) !important;
+  background-color: rgba(0, 0, 0, 0.6) !important;
   backdrop-filter: blur(12px) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   color: white !important;
+  z-index: 9999 !important;
 }
 
 /* Ensure buttons and badges remain clickable */
 .modal-button {
   position: relative;
-  z-index: 100;
+  z-index: 10000;
+  pointer-events: auto !important;
+}
+
+/* Fix dialog overlay to prevent click-through */
+.dialog-overlay {
+  z-index: 9998;
+  pointer-events: auto !important;
+}
+
+/* Make the dialog content pointer events auto to ensure clickability */
+[data-state="open"] > * {
+  pointer-events: auto !important;
+}
+
+/* Prevent body from becoming unclickable */
+body[data-state="open"] {
+  overflow: hidden;
+  pointer-events: none;
+}
+
+body[data-state="open"] [role="dialog"] {
+  pointer-events: auto;
 }
 

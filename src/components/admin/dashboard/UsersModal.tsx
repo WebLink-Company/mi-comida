@@ -85,7 +85,8 @@ export const UsersModal: React.FC<UsersModalProps> = ({ onClose }) => {
         title: 'Success',
         description: 'User created successfully.',
       });
-      navigate('/admin/users');
+      
+      setTimeout(() => navigate('/admin/users'), 100);
     } catch (error) {
       console.error('Error creating user:', error);
       toast({
@@ -96,8 +97,31 @@ export const UsersModal: React.FC<UsersModalProps> = ({ onClose }) => {
     }
   };
 
+  const handleClose = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    onClose();
+  };
+
+  const handleNavigation = (path: string) => {
+    onClose();
+    setTimeout(() => navigate(path), 100);
+  };
+
   return (
-    <DialogContent className="sm:max-w-md neo-blur text-white border-white/20">
+    <DialogContent 
+      className="sm:max-w-md modal-glassmorphism"
+      onInteractOutside={(e) => {
+        e.preventDefault();
+        handleClose();
+      }}
+      onEscapeKeyDown={(e) => {
+        e.preventDefault();
+        handleClose();
+      }}
+    >
       <DialogHeader>
         <DialogTitle className="text-gradient">Create New User</DialogTitle>
         <DialogDescription className="text-white/70">
@@ -107,17 +131,17 @@ export const UsersModal: React.FC<UsersModalProps> = ({ onClose }) => {
 
       <UserForm 
         onSubmit={createUser}
-        onCancel={onClose}
+        onCancel={handleClose}
         isAdmin={isAdmin}
       />
 
       <DialogFooter className="flex flex-wrap gap-2 justify-end mt-4 border-t border-white/10 pt-4">
         <Badge 
           variant="secondary"
-          className="py-2 cursor-pointer hover:bg-primary/20"
-          onClick={() => {
-            onClose();
-            navigate('/admin/users');
+          className="py-2 z-50 cursor-pointer hover:bg-primary/20 modal-button"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleNavigation('/admin/users');
           }}
         >
           <Users size={14} className="mr-1" />
@@ -125,10 +149,10 @@ export const UsersModal: React.FC<UsersModalProps> = ({ onClose }) => {
         </Badge>
         <Badge 
           variant="secondary"
-          className="py-2 cursor-pointer hover:bg-primary/20"
-          onClick={() => {
-            onClose();
-            navigate('/admin/settings');
+          className="py-2 z-50 cursor-pointer hover:bg-primary/20 modal-button"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleNavigation('/admin/settings');
           }}
         >
           <FileText size={14} className="mr-1" />

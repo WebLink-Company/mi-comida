@@ -2,11 +2,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { Users, Building, ShoppingBag, FileText, Globe, DollarSign, ChefHat, UserPlus, Plus } from 'lucide-react';
+import { Users, Building, ShoppingBag, FileText, Globe, DollarSign, ChefHat, UserPlus, Plus, LucideIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Dialog,
-  DialogContent
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
 } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogContent } from '@/components/ui/alert-dialog';
 import { UsersModal } from '@/components/admin/dashboard/UsersModal';
@@ -106,7 +110,12 @@ const DashboardPage = () => {
   };
 
   // Quick action badges data
-  const quickActions = [
+  const quickActions: Array<{
+    label: string;
+    icon: LucideIcon;
+    action: () => void;
+    path: string;
+  }> = [
     { label: 'Add User', icon: UserPlus, action: () => openDialog('add-user'), path: '/admin/users' },
     { label: 'Create Company', icon: Building, action: () => openDialog('create-company'), path: '/admin/companies' },
     { label: 'Add Provider', icon: ChefHat, action: () => openDialog('add-provider'), path: '/admin/providers' },
@@ -207,27 +216,37 @@ const DashboardPage = () => {
 
       {/* Dialog for User Management */}
       <Dialog open={activeDialog === 'add-user'} onOpenChange={() => activeDialog === 'add-user' && setActiveDialog(null)}>
-        {activeDialog === 'add-user' && <UsersModal onClose={closeDialog} />}
+        <DialogContent>
+          {activeDialog === 'add-user' && <UsersModal onClose={closeDialog} />}
+        </DialogContent>
       </Dialog>
 
       {/* Dialog for Company Management */}
       <Dialog open={activeDialog === 'create-company'} onOpenChange={() => activeDialog === 'create-company' && setActiveDialog(null)}>
-        {activeDialog === 'create-company' && <CompaniesModal onClose={closeDialog} />}
+        <DialogContent>
+          {activeDialog === 'create-company' && <CompaniesModal onClose={closeDialog} />}
+        </DialogContent>
       </Dialog>
 
       {/* Dialog for Provider Management */}
       <Dialog open={activeDialog === 'add-provider'} onOpenChange={() => activeDialog === 'add-provider' && setActiveDialog(null)}>
-        {activeDialog === 'add-provider' && <ProvidersModal onClose={closeDialog} />}
+        <DialogContent>
+          {activeDialog === 'add-provider' && <ProvidersModal onClose={closeDialog} />}
+        </DialogContent>
       </Dialog>
 
       {/* Dialog for Order Management */}
       <Dialog open={activeDialog === 'view-orders'} onOpenChange={() => activeDialog === 'view-orders' && setActiveDialog(null)}>
-        {activeDialog === 'view-orders' && <OrdersModal onClose={closeDialog} />}
+        <DialogContent>
+          {activeDialog === 'view-orders' && <OrdersModal onClose={closeDialog} />}
+        </DialogContent>
       </Dialog>
 
       {/* Dialog for Invoice Management */}
       <Dialog open={activeDialog === 'review-invoices'} onOpenChange={() => activeDialog === 'review-invoices' && setActiveDialog(null)}>
-        {activeDialog === 'review-invoices' && <InvoicesModal onClose={closeDialog} />}
+        <DialogContent>
+          {activeDialog === 'review-invoices' && <InvoicesModal onClose={closeDialog} />}
+        </DialogContent>
       </Dialog>
     </div>
   );

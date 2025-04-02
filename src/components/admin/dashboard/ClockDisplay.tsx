@@ -2,12 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
+import { LucideIcon } from 'lucide-react';
 
 interface ClockDisplayProps {
   user: { first_name?: string } | null;
   quickActions: Array<{
     label: string;
-    icon: React.ComponentType<{ size?: number }>;
+    icon: LucideIcon;
     action: () => void;
     path: string;
   }>;

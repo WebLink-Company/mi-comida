@@ -51,27 +51,34 @@ serve(async (req) => {
       }
     );
 
-    // First check if user already exists in auth.users
-    const { data: existingUser } = await supabaseAdmin.auth.admin.listUsers({
-      email: email
+    // Check if user already exists in auth.users by listing users with matching email
+    const { data: existingAuthUsers } = await supabaseAdmin.auth.admin.listUsers({
+      filter: `email.eq.${email}`
     });
     
-    if (existingUser && existingUser.users && existingUser.users.length > 0) {
-      const userId = existingUser.users[0].id;
+    let existingUserId = null;
+    
+    // Only consider it an existing user if we get valid data back with users
+    if (existingAuthUsers && existingAuthUsers.users && existingAuthUsers.users.length > 0) {
+      existingUserId = existingAuthUsers.users[0].id;
       
       // Check if a profile exists for this user
-      const { data: existingProfile } = await supabaseAdmin
+      const { data: existingProfile, error: profileCheckError } = await supabaseAdmin
         .from("profiles")
         .select("id")
-        .eq("id", userId)
-        .single();
+        .eq("id", existingUserId)
+        .maybeSingle();
+      
+      if (profileCheckError) {
+        console.error("Error checking existing profile:", profileCheckError);
+      }
       
       if (existingProfile) {
         return new Response(
           JSON.stringify({ 
             error: "User with this email already exists",
             user: {
-              id: userId,
+              id: existingUserId,
               email,
               first_name,
               last_name,
@@ -91,7 +98,7 @@ serve(async (req) => {
       const { error: profileError } = await supabaseAdmin
         .from("profiles")
         .insert({
-          id: userId,
+          id: existingUserId,
           email,
           first_name,
           last_name,
@@ -116,7 +123,7 @@ serve(async (req) => {
           success: true, 
           message: "User profile created successfully for existing auth user",
           user: {
-            id: userId,
+            id: existingUserId,
             email,
             first_name,
             last_name,
@@ -127,6 +134,26 @@ serve(async (req) => {
         }),
         { 
           status: 201, 
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        }
+      );
+    }
+
+    // If no existing user found, double-check in profiles
+    const { data: existingProfileCheck } = await supabaseAdmin
+      .from("profiles")
+      .select("id")
+      .eq("email", email)
+      .maybeSingle();
+      
+    if (existingProfileCheck) {
+      return new Response(
+        JSON.stringify({ 
+          error: "User with this email already exists in profiles but not in auth",
+          user: existingProfileCheck
+        }),
+        { 
+          status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         }
       );

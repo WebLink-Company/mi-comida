@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import AdminSidebar from '@/components/AdminSidebar';
+import GlassSidebar from '@/components/GlassSidebar';
 import NavigationBar from '@/components/NavigationBar';
 
 const AdminLayout = () => {
@@ -27,7 +27,7 @@ const AdminLayout = () => {
       />
       
       <div className="flex flex-1 pt-16">
-        <AdminSidebar collapsed={collapsed} setCollapsed={setCollapsed} />
+        <GlassSidebar collapsed={collapsed} setCollapsed={setCollapsed} />
         
         <main className={`flex-1 transition-all duration-300 p-4 md:p-6 ${collapsed ? 'md:ml-[70px]' : 'md:ml-[240px]'}`}>
           <Outlet />

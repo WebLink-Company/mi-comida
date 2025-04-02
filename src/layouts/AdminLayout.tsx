@@ -28,7 +28,10 @@ const AdminLayout = () => {
   }, []);
 
   return (
-    <div className="min-h-screen blue-gradient-bg flex flex-col">
+    <div className="min-h-screen flex flex-col">
+      {/* This div applies the blue gradient background to the entire screen */}
+      <div className="blue-gradient-bg"></div>
+      
       <NavigationBar 
         userRole={user?.role || "admin"} 
         userName={`${user?.first_name || ''} ${user?.last_name || ''}`} 

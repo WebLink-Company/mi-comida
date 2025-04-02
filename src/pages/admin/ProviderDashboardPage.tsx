@@ -96,6 +96,7 @@ const ProviderDashboardPage = () => {
     enabled: !!user?.id
   });
 
+  // Define a proper interface for the top meal result
   interface TopMealResult {
     name: string;
     count: number;
@@ -270,7 +271,7 @@ const ProviderDashboardPage = () => {
         {/* Top Ordered Meal Today */}
         <StatCard
           title="Top Ordered Meal Today"
-          value={loadingTopMeal ? "Loading..." : `${topOrderedMeal?.name} x${topOrderedMeal?.count}`}
+          value={loadingTopMeal ? "Loading..." : `${topOrderedMeal?.name || 'No data'} x${topOrderedMeal?.count || 0}`}
           icon={<Award className="h-6 w-6" />}
           className="bg-white/10 border-purple-400/20 border text-white backdrop-blur-md"
           loading={loadingTopMeal}

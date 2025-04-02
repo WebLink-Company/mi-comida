@@ -19,6 +19,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [authChecked, setAuthChecked] = useState(false); 
   const { toast } = useToast();
 
+  // Add function to update JWT claims for admin users
+  const updateJwtClaimsIfAdmin = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      
+      // Call the edge function to update JWT claims if the user is an admin
+      const { error } = await supabase.functions.invoke('handle-auth-jwt');
+      if (error) {
+        console.error('Error updating JWT claims:', error);
+      }
+    } catch (error) {
+      console.error('Error in updateJwtClaimsIfAdmin:', error);
+    }
+  };
+
   const refreshUser = async () => {
     try {
       setIsLoading(true);
@@ -50,6 +66,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             provider_id: profile.provider_id,
             created_at: profile.created_at,
           });
+          
+          // If the user is an admin, update their JWT claims
+          if (profile.role === 'admin') {
+            updateJwtClaimsIfAdmin();
+          }
         }
       } else {
         setUser(null);

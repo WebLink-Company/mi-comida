@@ -29,7 +29,6 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 interface Company {
   id: string;
@@ -77,13 +76,15 @@ const AssignMenusPage = () => {
     setLoading(true);
     
     try {
-      // Fetch companies
+      // Fetch companies belonging to the logged-in provider
       const { data: companiesData, error: companiesError } = await supabase
         .from('companies')
         .select('*')
         .eq('provider_id', user?.id);
         
       if (companiesError) throw companiesError;
+      
+      console.log('Companies fetched:', companiesData);
       setCompanies(companiesData || []);
       
       // Fetch menu items with categories
@@ -97,6 +98,8 @@ const AssignMenusPage = () => {
         .eq('available', true);
         
       if (menuError) throw menuError;
+      
+      console.log('Menu items fetched:', menuData);
       
       // Format menu items with category name and proper type for menu_type
       const formattedMenuItems: MenuItem[] = (menuData || []).map(item => ({

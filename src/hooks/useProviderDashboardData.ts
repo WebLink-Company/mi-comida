@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -17,25 +16,63 @@ export interface DashboardStats {
   monthlyRevenue: number;
 }
 
-export const useProviderDashboardData = () => {
+export const useProviderDashboardData = (providerId?: string) => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const providerId = user?.id;
+  // Use the providerId parameter if provided, otherwise fall back to the logged-in user's ID
+  const effectiveProviderId = providerId || user?.id;
   
   const today = new Date();
   const formattedToday = today.toISOString().split('T')[0]; // Format as YYYY-MM-DD
   
   const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
 
-  // Fetch today's orders
-  const { data: ordersToday, isLoading: loadingOrdersToday } = useQuery({
-    queryKey: ['ordersToday', providerId],
+  // Fetch active companies for this provider
+  const { data: activeCompanies, isLoading: loadingActiveCompanies } = useQuery({
+    queryKey: ['activeCompanies', effectiveProviderId],
     queryFn: async () => {
       try {
+        const { count, error } = await supabase
+          .from('companies')
+          .select('*', { count: 'exact', head: true })
+          .eq('provider_id', effectiveProviderId);
+          
+        if (error) throw error;
+        console.log(`Active companies for provider ${effectiveProviderId}:`, count);
+        return count || 0;
+      } catch (error) {
+        console.error('Error fetching active companies:', error);
+        return 0;
+      }
+    },
+    enabled: !!effectiveProviderId,
+  });
+
+  // Fetch today's orders
+  const { data: ordersToday, isLoading: loadingOrdersToday } = useQuery({
+    queryKey: ['ordersToday', effectiveProviderId],
+    queryFn: async () => {
+      try {
+        // First get all companies for this provider
+        const { data: companies, error: companiesError } = await supabase
+          .from('companies')
+          .select('id')
+          .eq('provider_id', effectiveProviderId);
+          
+        if (companiesError) throw companiesError;
+        
+        if (!companies || companies.length === 0) {
+          return 0;
+        }
+        
+        const companyIds = companies.map(c => c.id);
+        
+        // Then get all orders for these companies
         const { count, error } = await supabase
           .from('orders')
           .select('*', { count: 'exact', head: true })
           .eq('date', formattedToday)
+          .in('company_id', companyIds)
           .eq('status', 'pending');
           
         if (error) throw error;
@@ -50,18 +87,33 @@ export const useProviderDashboardData = () => {
         return 0;
       }
     },
-    enabled: !!providerId,
+    enabled: !!effectiveProviderId,
   });
 
-  // Fetch total meals today
   const { data: totalMealsToday, isLoading: loadingMealsToday } = useQuery({
-    queryKey: ['mealsToday', providerId],
+    queryKey: ['mealsToday', effectiveProviderId],
     queryFn: async () => {
       try {
+        // First get all companies for this provider
+        const { data: companies, error: companiesError } = await supabase
+          .from('companies')
+          .select('id')
+          .eq('provider_id', effectiveProviderId);
+          
+        if (companiesError) throw companiesError;
+        
+        if (!companies || companies.length === 0) {
+          return 0;
+        }
+        
+        const companyIds = companies.map(c => c.id);
+        
+        // Then get all orders for these companies
         const { data, error } = await supabase
           .from('orders')
           .select('id')
-          .eq('date', formattedToday);
+          .eq('date', formattedToday)
+          .in('company_id', companyIds);
           
         if (error) throw error;
         return data?.length || 0;
@@ -70,18 +122,34 @@ export const useProviderDashboardData = () => {
         return 0;
       }
     },
-    enabled: !!providerId,
+    enabled: !!effectiveProviderId,
   });
 
   // Fetch companies with orders today
   const { data: companiesWithOrdersToday, isLoading: loadingCompaniesOrders } = useQuery({
-    queryKey: ['companiesWithOrders', providerId],
+    queryKey: ['companiesWithOrders', effectiveProviderId],
     queryFn: async () => {
       try {
+        // First get all companies for this provider
+        const { data: companies, error: companiesError } = await supabase
+          .from('companies')
+          .select('id')
+          .eq('provider_id', effectiveProviderId);
+          
+        if (companiesError) throw companiesError;
+        
+        if (!companies || companies.length === 0) {
+          return 0;
+        }
+        
+        const companyIds = companies.map(c => c.id);
+        
+        // Then get all orders for these companies
         const { data, error } = await supabase
           .from('orders')
           .select('company_id')
           .eq('date', formattedToday)
+          .in('company_id', companyIds)
           .not('company_id', 'is', null);
           
         if (error) throw error;
@@ -94,18 +162,33 @@ export const useProviderDashboardData = () => {
         return 0;
       }
     },
-    enabled: !!providerId,
+    enabled: !!effectiveProviderId,
   });
 
   // Fetch top ordered meal
   const { data: topOrderedMeal, isLoading: loadingTopMeal } = useQuery({
-    queryKey: ['topOrderedMeal', providerId],
+    queryKey: ['topOrderedMeal', effectiveProviderId],
     queryFn: async () => {
       try {
+        // First get all companies for this provider
+        const { data: companies, error: companiesError } = await supabase
+          .from('companies')
+          .select('id')
+          .eq('provider_id', effectiveProviderId);
+          
+        if (companiesError) throw companiesError;
+        
+        if (!companies || companies.length === 0) {
+          return null;
+        }
+        
+        const companyIds = companies.map(c => c.id);
+        
         const { data, error } = await supabase
           .from('orders')
           .select('lunch_option_id')
-          .eq('date', formattedToday);
+          .eq('date', formattedToday)
+          .in('company_id', companyIds);
           
         if (error) throw error;
         
@@ -144,18 +227,33 @@ export const useProviderDashboardData = () => {
         return null;
       }
     },
-    enabled: !!providerId,
+    enabled: !!effectiveProviderId,
   });
 
   // Fetch pending orders
   const { data: pendingOrders, isLoading: loadingPending } = useQuery({
-    queryKey: ['pendingOrders', providerId],
+    queryKey: ['pendingOrders', effectiveProviderId],
     queryFn: async () => {
       try {
+        // First get all companies for this provider
+        const { data: companies, error: companiesError } = await supabase
+          .from('companies')
+          .select('id')
+          .eq('provider_id', effectiveProviderId);
+          
+        if (companiesError) throw companiesError;
+        
+        if (!companies || companies.length === 0) {
+          return 0;
+        }
+        
+        const companyIds = companies.map(c => c.id);
+        
         const { count, error } = await supabase
           .from('orders')
           .select('*', { count: 'exact', head: true })
-          .eq('status', 'pending');
+          .eq('status', 'pending')
+          .in('company_id', companyIds);
           
         if (error) throw error;
         return count || 0;
@@ -164,41 +262,34 @@ export const useProviderDashboardData = () => {
         return 0;
       }
     },
-    enabled: !!providerId,
-  });
-
-  // Fetch active companies
-  const { data: activeCompanies, isLoading: loadingActiveCompanies } = useQuery({
-    queryKey: ['activeCompanies', providerId],
-    queryFn: async () => {
-      try {
-        const { count, error } = await supabase
-          .from('companies')
-          .select('*', { count: 'exact', head: true })
-          .eq('provider_id', providerId);
-          
-        if (error) throw error;
-        return count || 0;
-      } catch (error) {
-        console.error('Error fetching active companies:', error);
-        return 0;
-      }
-    },
-    enabled: !!providerId,
+    enabled: !!effectiveProviderId,
   });
 
   // Fetch new users (last 7 days)
   const { data: newUsers, isLoading: loadingNewUsers } = useQuery({
-    queryKey: ['newUsers', providerId],
+    queryKey: ['newUsers', effectiveProviderId],
     queryFn: async () => {
       try {
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
         
+        const { data: companies, error: companiesError } = await supabase
+          .from('companies')
+          .select('id')
+          .eq('provider_id', effectiveProviderId);
+          
+        if (companiesError) throw companiesError;
+        
+        if (!companies || companies.length === 0) {
+          return 0;
+        }
+        
+        const companyIds = companies.map(c => c.id);
+
         const { count, error } = await supabase
           .from('profiles')
           .select('*', { count: 'exact', head: true })
-          .eq('provider_id', providerId)
+          .in('company_id', companyIds)
           .gte('created_at', sevenDaysAgo.toISOString());
           
         if (error) throw error;
@@ -208,19 +299,33 @@ export const useProviderDashboardData = () => {
         return 0;
       }
     },
-    enabled: !!providerId,
+    enabled: !!effectiveProviderId,
   });
 
   // Fetch monthly orders
   const { data: monthlyOrders, isLoading: loadingMonthlyOrders } = useQuery({
-    queryKey: ['monthlyOrders', providerId],
+    queryKey: ['monthlyOrders', effectiveProviderId],
     queryFn: async () => {
       try {
+        const { data: companies, error: companiesError } = await supabase
+          .from('companies')
+          .select('id')
+          .eq('provider_id', effectiveProviderId);
+          
+        if (companiesError) throw companiesError;
+        
+        if (!companies || companies.length === 0) {
+          return 0;
+        }
+        
+        const companyIds = companies.map(c => c.id);
+
         const { count, error } = await supabase
           .from('orders')
           .select('*', { count: 'exact', head: true })
           .gte('date', firstDayOfMonth)
-          .lte('date', formattedToday);
+          .lte('date', formattedToday)
+          .in('company_id', companyIds);
           
         if (error) throw error;
         return count || 0;
@@ -229,21 +334,34 @@ export const useProviderDashboardData = () => {
         return 0;
       }
     },
-    enabled: !!providerId,
+    enabled: !!effectiveProviderId,
   });
 
   // Fetch monthly revenue (this would require joining orders with lunch options to get prices)
   const { data: monthlyRevenue, isLoading: loadingMonthlyRevenue } = useQuery({
-    queryKey: ['monthlyRevenue', providerId],
+    queryKey: ['monthlyRevenue', effectiveProviderId],
     queryFn: async () => {
       try {
+        const { data: companies, error: companiesError } = await supabase
+          .from('companies')
+          .select('id')
+          .eq('provider_id', effectiveProviderId);
+          
+        if (companiesError) throw companiesError;
+        
+        if (!companies || companies.length === 0) {
+          return 0;
+        }
+        
+        const companyIds = companies.map(c => c.id);
         // This is a simplified example - in a real app, we would join orders with lunch options
         // to calculate the actual revenue based on prices
         const { data, error } = await supabase
           .from('orders')
           .select('lunch_option_id')
           .gte('date', firstDayOfMonth)
-          .lte('date', formattedToday);
+          .lte('date', formattedToday)
+          .in('company_id', companyIds);
           
         if (error) throw error;
         
@@ -258,7 +376,7 @@ export const useProviderDashboardData = () => {
         return 0;
       }
     },
-    enabled: !!providerId,
+    enabled: !!effectiveProviderId,
   });
 
   return {

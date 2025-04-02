@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { NavLink, NavLinkProps } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -27,9 +28,9 @@ const RoleBasedLink: React.FC<RoleBasedLinkProps> = ({
       case 'provider':
         return providerPath || adminPath.replace(/^\/admin/, '/provider');
       case 'supervisor':
-        return supervisorPath || '/supervisor';
+        return supervisorPath || adminPath.replace(/^\/admin/, '/supervisor');
       case 'employee':
-        return employeePath || '/employee';
+        return employeePath || adminPath.replace(/^\/admin/, '/employee');
       default:
         return '/';
     }

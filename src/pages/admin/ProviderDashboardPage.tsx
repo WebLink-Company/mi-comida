@@ -20,8 +20,8 @@ const ProviderDashboardPage = () => {
   const { toast } = useToast();
   const [activeDialog, setActiveDialog] = useState<string | null>(null);
   
-  // Fetch dashboard stats using our new hook
-  const stats = useProviderDashboardData();
+  // Fetch dashboard stats using our hook with the provider ID
+  const stats = useProviderDashboardData(user?.id);
   
   // Quick actions for the provider
   const quickActions = [
@@ -29,25 +29,25 @@ const ProviderDashboardPage = () => {
       label: 'Add Company',
       icon: Building,
       action: () => openDialog('create-company'),
-      path: '/admin/companies'
+      path: '/provider/companies'
     },
     {
       label: 'Add User',
       icon: UserPlus,
       action: () => openDialog('add-user'),
-      path: '/admin/users'
+      path: '/provider/users'
     },
     {
       label: 'View Orders',
       icon: Package,
       action: () => openDialog('view-orders'),
-      path: '/admin/orders'
+      path: '/provider/orders'
     },
     {
       label: 'Review Invoices',
       icon: Receipt,
       action: () => openDialog('review-invoices'),
-      path: '/admin/invoices'
+      path: '/provider/billing'
     }
   ];
 
@@ -111,7 +111,7 @@ const ProviderDashboardPage = () => {
           }
         }}
       >
-        {activeDialog === 'create-company' && <CompaniesModal onClose={closeDialog} />}
+        {activeDialog === 'create-company' && <CompaniesModal onClose={closeDialog} providerId={user?.id} />}
       </Dialog>
 
       <Dialog 

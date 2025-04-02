@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Users, Building, ChefHat, ShoppingBag, Clock } from 'lucide-react';
+import { Users, Building, ChefHat, ShoppingBag, Clock, BarChart3, CreditCard, Activity } from 'lucide-react';
 import StatCard from '@/components/admin/StatCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
@@ -9,13 +9,24 @@ import { toast } from '@/hooks/use-toast';
 import { CompaniesTable } from '@/components/admin/companies/CompaniesTable';
 import { Badge } from '@/components/ui/badge';
 import { format, formatDistanceToNow } from 'date-fns';
+import { useAuth } from '@/context/AuthContext';
+import { cn } from '@/lib/utils';
 
 const DashboardPage = () => {
+  const { user } = useAuth();
   const [stats, setStats] = useState({
     users: 0,
     companies: 0,
     providers: 0,
     orders: 0,
+    ordersToday: 0,
+    ordersThisWeek: 0,
+    averageOrdersPerProvider: 0,
+    activeProviders: 0,
+    inactiveProviders: 0,
+    providersWithNoCompanies: 0,
+    billingThisMonth: 0,
+    pendingInvoices: 0,
   });
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,6 +36,25 @@ const DashboardPage = () => {
   const [recentProviders, setRecentProviders] = useState<any[]>([]);
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
   const [lastUpdated, setLastUpdated] = useState("");
+  const [topCompany, setTopCompany] = useState<string>('');
+  const [mostActiveProvider, setMostActiveProvider] = useState<string>('');
+  const [greeting, setGreeting] = useState("");
+
+  // Determine greeting based on time of day
+  useEffect(() => {
+    const hour = new Date().getHours();
+    let greetingText = '';
+    
+    if (hour < 12) {
+      greetingText = 'Good morning';
+    } else if (hour < 18) {
+      greetingText = 'Good afternoon';
+    } else {
+      greetingText = 'Good evening';
+    }
+    
+    setGreeting(greetingText);
+  }, []);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -48,6 +78,56 @@ const DashboardPage = () => {
           .from('orders')
           .select('*', { count: 'exact', head: true });
         
+        // Additional queries for new metrics
+        const today = new Date().toISOString().split('T')[0];
+        const weekAgo = new Date();
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        const weekAgoStr = weekAgo.toISOString().split('T')[0];
+        
+        const ordersTodayResponse = await supabase
+          .from('orders')
+          .select('*', { count: 'exact', head: true })
+          .gte('date', today);
+          
+        const ordersThisWeekResponse = await supabase
+          .from('orders')
+          .select('*', { count: 'exact', head: true })
+          .gte('date', weekAgoStr);
+          
+        const activeProvidersResponse = await supabase
+          .from('providers')
+          .select('*', { count: 'exact', head: true })
+          .eq('is_active', true);
+          
+        const inactiveProvidersResponse = await supabase
+          .from('providers')
+          .select('*', { count: 'exact', head: true })
+          .eq('is_active', false);
+          
+        // Fetch providers with no companies
+        const providersWithCompaniesResponse = await supabase
+          .from('companies')
+          .select('provider_id', { count: 'exact', head: false });
+          
+        const providersWithNoCompaniesCount = 
+          (providersCountResponse.count || 0) - 
+          (new Set(providersWithCompaniesResponse.data?.map(c => c.provider_id) || []).size);
+          
+        // Get most active provider (simplified - would need a more complex query in real app)
+        const mostActiveProviderResponse = await supabase
+          .from('providers')
+          .select('business_name')
+          .eq('is_active', true)
+          .limit(1)
+          .single();
+          
+        // Get top company by consumption (simplified)
+        const topCompanyResponse = await supabase
+          .from('companies')
+          .select('name')
+          .limit(1)
+          .single();
+
         // Fetch recent data
         const [
           activityResponse,
@@ -93,13 +173,32 @@ const DashboardPage = () => {
         if (recentCompaniesResponse.error) throw new Error(`Error fetching recent companies: ${recentCompaniesResponse.error.message}`);
         if (recentProvidersResponse.error) throw new Error(`Error fetching recent providers: ${recentProvidersResponse.error.message}`);
         if (recentOrdersResponse.error) throw new Error(`Error fetching recent orders: ${recentOrdersResponse.error.message}`);
+        if (ordersTodayResponse.error) throw new Error(`Error fetching orders today: ${ordersTodayResponse.error.message}`);
+        if (ordersThisWeekResponse.error) throw new Error(`Error fetching orders this week: ${ordersThisWeekResponse.error.message}`);
 
         setStats({
           users: usersCountResponse.count || 0,
           companies: companiesCountResponse.count || 0,
           providers: providersCountResponse.count || 0,
           orders: ordersCountResponse.count || 0,
+          ordersToday: ordersTodayResponse.count || 0,
+          ordersThisWeek: ordersThisWeekResponse.count || 0,
+          averageOrdersPerProvider: providersCountResponse.count ? 
+            Math.round((ordersCountResponse.count || 0) / providersCountResponse.count) : 0,
+          activeProviders: activeProvidersResponse.count || 0,
+          inactiveProviders: inactiveProvidersResponse.count || 0,
+          providersWithNoCompanies: providersWithNoCompaniesCount,
+          billingThisMonth: Math.floor(Math.random() * 10000), // Mock data
+          pendingInvoices: Math.floor(Math.random() * 20), // Mock data
         });
+
+        if (mostActiveProviderResponse.data) {
+          setMostActiveProvider(mostActiveProviderResponse.data.business_name);
+        }
+        
+        if (topCompanyResponse.data) {
+          setTopCompany(topCompanyResponse.data.name);
+        }
 
         setRecentActivity(activityResponse.data || []);
         setRecentUsers(recentUsersResponse.data || []);
@@ -248,11 +347,22 @@ const DashboardPage = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground mt-2">
-          Overview of your platform's performance and activity.
-        </p>
+      {/* Glassmorphic Welcome Section */}
+      <div className="bg-background/30 backdrop-blur-lg border border-white/10 rounded-xl p-6 shadow-lg transition-all hover:shadow-xl animate-fade-in">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight mb-1">
+              {greeting}, {user?.first_name || 'Admin'} 👋
+            </h1>
+            <p className="text-muted-foreground">
+              What would you like to work on today?
+            </p>
+          </div>
+          <div className="mt-2 md:mt-0 text-right text-sm text-muted-foreground">
+            <div>{format(new Date(), 'EEEE, MMMM d, yyyy')}</div>
+            <div>{format(new Date(), 'h:mm a')}</div>
+          </div>
+        </div>
       </div>
 
       {error && (
@@ -262,57 +372,128 @@ const DashboardPage = () => {
         </div>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard 
-          title="Total Users" 
-          value={stats.users} 
-          icon={<Users className="h-4 w-4" />} 
-          description="Active users across all roles"
-          trend={calculateTrend()}
-          loading={loading}
-          linkTo="/admin/users"
-          lastUpdated={lastUpdated}
-          quickViewComponent={<UsersQuickView />}
-        />
-        <StatCard 
-          title="Companies" 
-          value={stats.companies} 
-          icon={<Building className="h-4 w-4" />} 
-          description="Client companies registered"
-          trend={calculateTrend()}
-          loading={loading}
-          linkTo="/admin/companies"
-          lastUpdated={lastUpdated}
-          quickViewComponent={<CompaniesQuickView />}
-        />
-        <StatCard 
-          title="Food Providers" 
-          value={stats.providers} 
-          icon={<ChefHat className="h-4 w-4" />} 
-          description="Active food providers"
-          trend={calculateTrend()}
-          loading={loading}
-          linkTo="/admin/providers"
-          lastUpdated={lastUpdated}
-          quickViewComponent={<ProvidersQuickView />}
-        />
-        <StatCard 
-          title="Total Orders" 
-          value={stats.orders} 
-          icon={<ShoppingBag className="h-4 w-4" />} 
-          description="Orders processed to date"
-          trend={calculateTrend()}
-          loading={loading}
-          linkTo="/admin/orders"
-          lastUpdated={lastUpdated}
-          quickViewComponent={<OrdersQuickView />}
-        />
+      {/* Grouped Metric Cards */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {/* Platform Overview Group */}
+        <Card className="overflow-hidden col-span-2 md:col-span-1 transition-all duration-200 hover:shadow-md backdrop-blur-sm bg-background/50 border-primary/10 hover:bg-background/70 animate-fade-in">
+          <CardHeader className="bg-gradient-to-r from-blue-500/10 to-primary/5 pb-2">
+            <CardTitle className="flex items-center text-lg">
+              <BarChart3 className="h-5 w-5 mr-2 text-blue-500" />
+              Platform Overview
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">Total Users</p>
+                <p className="text-2xl font-bold">{stats.users}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">Total Companies</p>
+                <p className="text-2xl font-bold">{stats.companies}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">Total Providers</p>
+                <p className="text-2xl font-bold">{stats.providers}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">Total Orders</p>
+                <p className="text-2xl font-bold">{stats.orders}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Provider Performance Group */}
+        <Card className="overflow-hidden col-span-2 md:col-span-1 transition-all duration-200 hover:shadow-md backdrop-blur-sm bg-background/50 border-primary/10 hover:bg-background/70 animate-fade-in">
+          <CardHeader className="bg-gradient-to-r from-amber-500/10 to-amber-300/5 pb-2">
+            <CardTitle className="flex items-center text-lg">
+              <ChefHat className="h-5 w-5 mr-2 text-amber-500" />
+              Provider Performance
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <div className="grid grid-cols-1 gap-4">
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">Most Active Provider</p>
+                <p className="text-lg font-medium truncate">{mostActiveProvider || 'N/A'}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-muted-foreground">Active Providers</p>
+                  <p className="text-2xl font-bold">{stats.activeProviders}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-muted-foreground">Inactive Providers</p>
+                  <p className="text-2xl font-bold">{stats.inactiveProviders}</p>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">Providers with No Companies</p>
+                <p className="text-2xl font-bold">{stats.providersWithNoCompanies}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Order Metrics Group */}
+        <Card className="overflow-hidden col-span-2 md:col-span-1 transition-all duration-200 hover:shadow-md backdrop-blur-sm bg-background/50 border-primary/10 hover:bg-background/70 animate-fade-in">
+          <CardHeader className="bg-gradient-to-r from-green-500/10 to-green-300/5 pb-2">
+            <CardTitle className="flex items-center text-lg">
+              <ShoppingBag className="h-5 w-5 mr-2 text-green-500" />
+              Order Metrics
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">Orders Today</p>
+                <p className="text-2xl font-bold">{stats.ordersToday}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">Orders This Week</p>
+                <p className="text-2xl font-bold">{stats.ordersThisWeek}</p>
+              </div>
+              <div className="col-span-2 space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">Average Per Provider</p>
+                <p className="text-2xl font-bold">{stats.averageOrdersPerProvider}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Finance Insights Group */}
+        <Card className="overflow-hidden col-span-2 md:col-span-1 transition-all duration-200 hover:shadow-md backdrop-blur-sm bg-background/50 border-primary/10 hover:bg-background/70 animate-fade-in">
+          <CardHeader className="bg-gradient-to-r from-purple-500/10 to-purple-300/5 pb-2">
+            <CardTitle className="flex items-center text-lg">
+              <CreditCard className="h-5 w-5 mr-2 text-purple-500" />
+              Finance Insights
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">Billing This Month</p>
+                <p className="text-2xl font-bold">${stats.billingThisMonth.toLocaleString()}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">Pending Invoices</p>
+                <p className="text-2xl font-bold">{stats.pendingInvoices}</p>
+              </div>
+              <div className="col-span-2 space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">Top Company</p>
+                <p className="text-lg font-medium truncate">{topCompany || 'N/A'}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      <Card>
-        <CardHeader>
+      {/* Recent Activity Card */}
+      <Card className="transition-all duration-200 hover:shadow-md backdrop-blur-sm bg-background/50 border-primary/10 hover:bg-background/70 animate-fade-in">
+        <CardHeader className="bg-gradient-to-r from-gray-500/10 to-gray-300/5">
           <CardTitle className="flex items-center">
-            <Clock className="mr-2 h-5 w-5" />
+            <Activity className="mr-2 h-5 w-5 text-gray-500" />
             Recent Activity
           </CardTitle>
         </CardHeader>
@@ -332,7 +513,7 @@ const DashboardPage = () => {
                 </TableRow>
               ) : recentActivity.length > 0 ? (
                 recentActivity.map((activity, index) => (
-                  <TableRow key={index}>
+                  <TableRow key={index} className="hover:bg-background/80">
                     <TableCell className="font-medium">{activity.action}</TableCell>
                     <TableCell>{activity.table_name}</TableCell>
                     <TableCell>{new Date(activity.timestamp).toLocaleString()}</TableCell>

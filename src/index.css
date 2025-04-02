@@ -99,6 +99,18 @@
   .hover-scale:hover {
     transform: scale(1.02);
   }
+  
+  .glass-morphism {
+    @apply backdrop-blur-xl bg-white/5 border border-white/10 shadow-[0_4px_12px_-2px_rgba(0,0,0,0.15)];
+  }
+  
+  .neo-blur {
+    @apply backdrop-blur-xl bg-background/40 border border-primary/10 shadow-sm;
+  }
+  
+  .text-gradient {
+    @apply bg-gradient-to-br from-foreground via-foreground/90 to-foreground/70 bg-clip-text text-transparent;
+  }
 }
 
 @keyframes fadeIn {
@@ -109,6 +121,17 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }
  

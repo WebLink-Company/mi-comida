@@ -64,7 +64,7 @@ const GlassSidebar = ({ collapsed, setCollapsed }: GlassSidebarProps) => {
   return (
     <aside
       className={cn(
-        "fixed left-0 top-16 bottom-0 z-30 backdrop-blur-md transition-all duration-300 ease-in-out",
+        "fixed left-0 top-16 bottom-0 z-30 transition-all duration-300 ease-in-out",
         collapsed ? "w-[70px]" : "w-[240px]",
         "glass-morphism bg-white/5 border-r border-white/20 shadow-[0_0_15px_rgba(0,0,0,0.1)]"
       )}
@@ -92,12 +92,12 @@ const GlassSidebar = ({ collapsed, setCollapsed }: GlassSidebarProps) => {
         </div>
         
         <div className={cn(
-          "flex-1 py-6 overflow-y-auto flex",
-          collapsed && "justify-center"
+          "flex-1 py-6 overflow-y-auto",
+          collapsed && "flex justify-center"
         )}>
           <nav className={cn(
-            "px-2 space-y-1 flex-1",
-            collapsed && "flex flex-col items-center"
+            "px-2 space-y-1",
+            collapsed ? "flex flex-col items-center" : ""
           )}>
             {sidebarItems.map(item => (
               <NavLink
@@ -105,12 +105,13 @@ const GlassSidebar = ({ collapsed, setCollapsed }: GlassSidebarProps) => {
                 to={item.path}
                 end={item.exact}
                 className={({ isActive }) => cn(
-                  "flex items-center p-2 my-2 rounded-md transition-all duration-200 group hover-scale",
+                  "flex items-center p-2 my-2 rounded-md transition-all duration-200 group hover:scale-105",
                   isActive 
                     ? "bg-white/10 text-white border border-white/20 shadow-[0_0_10px_rgba(255,255,255,0.2)]" 
                     : "text-white/70 hover:bg-white/5 hover:text-white",
                   collapsed ? "justify-center w-10 h-10" : "px-4 w-full"
                 )}
+                title={collapsed ? item.name : ""}
               >
                 <item.icon className={cn(
                   "flex-shrink-0",

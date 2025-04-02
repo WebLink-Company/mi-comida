@@ -1,10 +1,12 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { format } from 'date-fns';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Users, Building, ShoppingBag, FileText, TrendingUp, AlertTriangle, Calendar, DollarSign, Clock, Globe, ChevronRight, ExternalLink, X } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Users, Building, ShoppingBag, FileText, TrendingUp, AlertTriangle, Calendar, DollarSign, Clock, Globe, ChevronRight, ExternalLink, X, ChefHat } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
 
@@ -114,6 +116,15 @@ const DashboardPage = () => {
   const openDialog = (dialogId: string) => {
     setActiveDialog(dialogId);
   };
+
+  // Quick action badges data
+  const quickActions = [
+    { label: 'Add New User', icon: Users, action: () => navigateTo('/admin/users') },
+    { label: 'Create Company', icon: Building, action: () => navigateTo('/admin/companies') },
+    { label: 'Add Provider', icon: ChefHat, action: () => navigateTo('/admin/providers') },
+    { label: 'View Orders', icon: ShoppingBag, action: () => navigateTo('/admin/reports') },
+    { label: 'Review Invoices', icon: DollarSign, action: () => navigateTo('/admin/reports') },
+  ];
 
   const renderDialogContent = () => {
     switch (activeDialog) {
@@ -265,11 +276,26 @@ const DashboardPage = () => {
           <div className="mt-2 text-white/60 text-base font-light fade-up">
             What would you like to work on today?
           </div>
+
+          {/* Quick action badges */}
+          <div className="flex flex-wrap justify-center gap-3 mt-6 fade-up" style={{ animationDelay: "0.5s" }}>
+            {quickActions.map((action, index) => (
+              <Badge 
+                key={index}
+                variant="default"
+                onClick={action.action}
+                className="py-2 px-4 cursor-pointer bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-md transition-all duration-300 flex items-center gap-2 shadow-sm hover:shadow-md"
+              >
+                <action.icon size={16} />
+                {action.label}
+              </Badge>
+            ))}
+          </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-7xl mx-auto mt-auto p-4">
-        <div className="rounded-xl backdrop-blur-md bg-white/10 border border-white/20 p-4 fade-up cursor-pointer" 
+        <div className="rounded-xl backdrop-blur-md border border-white/20 p-4 fade-up hover:shadow-lg transition-all duration-300 cursor-pointer" 
             style={{ animationDelay: "0.1s" }} 
             onClick={() => navigateTo('/admin/users')}>
           <div className="flex justify-between items-center">
@@ -306,7 +332,7 @@ const DashboardPage = () => {
           </div>
         </div>
 
-        <div className="rounded-xl backdrop-blur-md bg-white/10 border border-white/20 p-4 fade-up cursor-pointer" 
+        <div className="rounded-xl backdrop-blur-md border border-white/20 p-4 fade-up hover:shadow-lg transition-all duration-300 cursor-pointer" 
             style={{ animationDelay: "0.2s" }} 
             onClick={() => navigateTo('/admin/providers')}>
           <div className="flex justify-between items-center">
@@ -340,7 +366,7 @@ const DashboardPage = () => {
           </div>
         </div>
 
-        <div className="rounded-xl backdrop-blur-md bg-white/10 border border-white/20 p-4 fade-up cursor-pointer" 
+        <div className="rounded-xl backdrop-blur-md border border-white/20 p-4 fade-up hover:shadow-lg transition-all duration-300 cursor-pointer" 
             style={{ animationDelay: "0.3s" }} 
             onClick={() => navigateTo('/admin/reports')}>
           <div className="flex justify-between items-center">
@@ -374,7 +400,7 @@ const DashboardPage = () => {
           </div>
         </div>
 
-        <div className="rounded-xl backdrop-blur-md bg-white/10 border border-white/20 p-4 fade-up cursor-pointer" 
+        <div className="rounded-xl backdrop-blur-md border border-white/20 p-4 fade-up hover:shadow-lg transition-all duration-300 cursor-pointer" 
             style={{ animationDelay: "0.4s" }} 
             onClick={() => navigateTo('/admin/reports')}>
           <div className="flex justify-between items-center">

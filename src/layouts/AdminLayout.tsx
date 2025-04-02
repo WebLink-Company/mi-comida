@@ -9,7 +9,7 @@ import NavigationBar from '@/components/NavigationBar';
 const AdminLayout = () => {
   const { user } = useAuth();
   const location = useLocation();
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true); // Default to collapsed
   const { toast } = useToast();
 
   // Handle page title based on the current route

@@ -6,15 +6,13 @@ import { format } from 'date-fns';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Users, Building, ShoppingBag, FileText, TrendingUp, AlertTriangle, Calendar, DollarSign, Clock, Globe, ChevronRight, ExternalLink, X, ChefHat } from 'lucide-react';
+import { Users, Building, ShoppingBag, FileText, TrendingUp, AlertTriangle, Calendar, DollarSign, Clock, Globe, ChevronRight, ExternalLink, X, ChefHat, UserPlus, Plus, FileSpreadsheet } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose, DialogFooter } from "@/components/ui/dialog";
 
 const DashboardPage = () => {
   const navigate = useNavigate();
-  const {
-    user
-  } = useAuth();
+  const { user } = useAuth();
   const [time, setTime] = useState(new Date());
   const [activeDialog, setActiveDialog] = useState<string | null>(null);
   const [stats, setStats] = useState({
@@ -119,11 +117,11 @@ const DashboardPage = () => {
 
   // Quick action badges data
   const quickActions = [
-    { label: 'Add New User', icon: Users, action: () => navigateTo('/admin/users') },
-    { label: 'Create Company', icon: Building, action: () => navigateTo('/admin/companies') },
-    { label: 'Add Provider', icon: ChefHat, action: () => navigateTo('/admin/providers') },
-    { label: 'View Orders', icon: ShoppingBag, action: () => navigateTo('/admin/reports') },
-    { label: 'Review Invoices', icon: DollarSign, action: () => navigateTo('/admin/reports') },
+    { label: 'Add User', icon: UserPlus, action: () => openDialog('add-user'), path: '/admin/users' },
+    { label: 'Create Company', icon: Building, action: () => openDialog('create-company'), path: '/admin/companies' },
+    { label: 'Add Provider', icon: ChefHat, action: () => openDialog('add-provider'), path: '/admin/providers' },
+    { label: 'View Orders', icon: ShoppingBag, action: () => openDialog('view-orders'), path: '/admin/reports' },
+    { label: 'Review Invoices', icon: FileSpreadsheet, action: () => openDialog('review-invoices'), path: '/admin/reports' },
   ];
 
   const renderDialogContent = () => {
@@ -157,9 +155,44 @@ const DashboardPage = () => {
                   <p className="text-xs text-muted-foreground">+18% from last month</p>
                 </div>
               </div>
-              <Button className="w-full" onClick={() => navigateTo('/admin/reports')}>View Full Reports</Button>
+              <DialogFooter className="flex flex-wrap gap-2 justify-end mt-4">
+                <Badge 
+                  variant="secondary"
+                  className="py-2 cursor-pointer hover:bg-primary/20"
+                  onClick={() => {
+                    setActiveDialog(null);
+                    navigateTo('/admin/users');
+                  }}
+                >
+                  <Users size={14} className="mr-1" />
+                  Users
+                </Badge>
+                <Badge 
+                  variant="secondary"
+                  className="py-2 cursor-pointer hover:bg-primary/20"
+                  onClick={() => {
+                    setActiveDialog(null);
+                    navigateTo('/admin/companies');
+                  }}
+                >
+                  <Building size={14} className="mr-1" />
+                  Companies
+                </Badge>
+                <Badge 
+                  variant="secondary"
+                  className="py-2 cursor-pointer hover:bg-primary/20"
+                  onClick={() => {
+                    setActiveDialog(null);
+                    navigateTo('/admin/reports');
+                  }}
+                >
+                  <FileText size={14} className="mr-1" />
+                  Reports
+                </Badge>
+              </DialogFooter>
             </div>
           </>;
+      
       case 'provider-performance':
         return <>
             <DialogHeader>
@@ -193,9 +226,33 @@ const DashboardPage = () => {
                   </li>
                 </ul>
               </div>
-              <Button className="w-full" onClick={() => navigateTo('/admin/providers')}>Manage Providers</Button>
+              <DialogFooter className="flex flex-wrap gap-2 justify-end mt-4">
+                <Badge 
+                  variant="secondary"
+                  className="py-2 cursor-pointer hover:bg-primary/20"
+                  onClick={() => {
+                    setActiveDialog(null);
+                    navigateTo('/admin/providers');
+                  }}
+                >
+                  <ChefHat size={14} className="mr-1" />
+                  Providers
+                </Badge>
+                <Badge 
+                  variant="secondary"
+                  className="py-2 cursor-pointer hover:bg-primary/20"
+                  onClick={() => {
+                    setActiveDialog(null);
+                    navigateTo('/admin/reports');
+                  }}
+                >
+                  <TrendingUp size={14} className="mr-1" />
+                  Analytics
+                </Badge>
+              </DialogFooter>
             </div>
           </>;
+      
       case 'order-metrics':
         return <>
             <DialogHeader>
@@ -222,9 +279,33 @@ const DashboardPage = () => {
                   <p className="text-xl font-bold">{stats.avgOrdersPerProvider}</p>
                 </div>
               </div>
-              <Button className="w-full" onClick={() => navigateTo('/admin/reports')}>View Order Reports</Button>
+              <DialogFooter className="flex flex-wrap gap-2 justify-end mt-4">
+                <Badge 
+                  variant="secondary"
+                  className="py-2 cursor-pointer hover:bg-primary/20"
+                  onClick={() => {
+                    setActiveDialog(null);
+                    navigateTo('/admin/reports');
+                  }}
+                >
+                  <ShoppingBag size={14} className="mr-1" />
+                  Orders
+                </Badge>
+                <Badge 
+                  variant="secondary"
+                  className="py-2 cursor-pointer hover:bg-primary/20"
+                  onClick={() => {
+                    setActiveDialog(null);
+                    navigateTo('/admin/providers');
+                  }}
+                >
+                  <ChefHat size={14} className="mr-1" />
+                  Providers
+                </Badge>
+              </DialogFooter>
             </div>
           </>;
+
       case 'finance-insights':
         return <>
             <DialogHeader>
@@ -251,9 +332,204 @@ const DashboardPage = () => {
                   <span className="text-primary">${formatNumber(Math.floor(stats.billingThisMonth * 0.3))}</span>
                 </div>
               </div>
-              <Button className="w-full" onClick={() => navigateTo('/admin/reports')}>Financial Reports</Button>
+              <DialogFooter className="flex flex-wrap gap-2 justify-end mt-4">
+                <Badge 
+                  variant="secondary"
+                  className="py-2 cursor-pointer hover:bg-primary/20"
+                  onClick={() => {
+                    setActiveDialog(null);
+                    navigateTo('/admin/reports');
+                  }}
+                >
+                  <DollarSign size={14} className="mr-1" />
+                  Finance
+                </Badge>
+                <Badge 
+                  variant="secondary"
+                  className="py-2 cursor-pointer hover:bg-primary/20"
+                  onClick={() => {
+                    setActiveDialog(null);
+                    navigateTo('/admin/companies');
+                  }}
+                >
+                  <Building size={14} className="mr-1" />
+                  Companies
+                </Badge>
+              </DialogFooter>
             </div>
           </>;
+
+      // New action modals
+      case 'add-user':
+        return <>
+            <DialogHeader>
+              <DialogTitle>Add New User</DialogTitle>
+              <DialogDescription>Create a new user account</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 mt-4">
+              <p className="text-sm">This will redirect you to the user management page where you can add a new user to the platform.</p>
+              <p className="text-xs text-muted-foreground">Users can have different roles and permissions based on their responsibilities.</p>
+            </div>
+            <DialogFooter className="flex flex-wrap gap-2 justify-end mt-4">
+              <Button variant="outline" onClick={() => setActiveDialog(null)}>
+                Cancel
+              </Button>
+              <Button onClick={() => {
+                setActiveDialog(null);
+                navigateTo('/admin/users');
+              }}>
+                Go to Users
+              </Button>
+              <Badge 
+                variant="secondary"
+                className="py-2 cursor-pointer hover:bg-primary/20"
+                onClick={() => {
+                  setActiveDialog(null);
+                  navigateTo('/admin/settings');
+                }}
+              >
+                <FileText size={14} className="mr-1" />
+                Permissions
+              </Badge>
+            </DialogFooter>
+          </>;
+
+      case 'create-company':
+        return <>
+            <DialogHeader>
+              <DialogTitle>Create Company</DialogTitle>
+              <DialogDescription>Add a new company to the platform</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 mt-4">
+              <p className="text-sm">This will redirect you to the companies page where you can create a new company account.</p>
+              <p className="text-xs text-muted-foreground">Companies can be assigned to providers and have their own employees.</p>
+            </div>
+            <DialogFooter className="flex flex-wrap gap-2 justify-end mt-4">
+              <Button variant="outline" onClick={() => setActiveDialog(null)}>
+                Cancel
+              </Button>
+              <Button onClick={() => {
+                setActiveDialog(null);
+                navigateTo('/admin/companies');
+              }}>
+                Go to Companies
+              </Button>
+              <Badge 
+                variant="secondary"
+                className="py-2 cursor-pointer hover:bg-primary/20"
+                onClick={() => {
+                  setActiveDialog(null);
+                  navigateTo('/admin/providers');
+                }}
+              >
+                <ChefHat size={14} className="mr-1" />
+                Providers
+              </Badge>
+            </DialogFooter>
+          </>;
+
+      case 'add-provider':
+        return <>
+            <DialogHeader>
+              <DialogTitle>Add Provider</DialogTitle>
+              <DialogDescription>Register a new food service provider</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 mt-4">
+              <p className="text-sm">This will redirect you to the providers page where you can register a new food service provider.</p>
+              <p className="text-xs text-muted-foreground">Providers can be linked to companies and create their own menu items.</p>
+            </div>
+            <DialogFooter className="flex flex-wrap gap-2 justify-end mt-4">
+              <Button variant="outline" onClick={() => setActiveDialog(null)}>
+                Cancel
+              </Button>
+              <Button onClick={() => {
+                setActiveDialog(null);
+                navigateTo('/admin/providers');
+              }}>
+                Go to Providers
+              </Button>
+              <Badge 
+                variant="secondary"
+                className="py-2 cursor-pointer hover:bg-primary/20"
+                onClick={() => {
+                  setActiveDialog(null);
+                  navigateTo('/admin/companies');
+                }}
+              >
+                <Building size={14} className="mr-1" />
+                Companies
+              </Badge>
+            </DialogFooter>
+          </>;
+
+      case 'view-orders':
+        return <>
+            <DialogHeader>
+              <DialogTitle>View Orders</DialogTitle>
+              <DialogDescription>Monitor and manage all orders</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 mt-4">
+              <p className="text-sm">This will redirect you to the reports page where you can view all order activity.</p>
+              <p className="text-xs text-muted-foreground">You can filter orders by date, company, provider, and status.</p>
+            </div>
+            <DialogFooter className="flex flex-wrap gap-2 justify-end mt-4">
+              <Button variant="outline" onClick={() => setActiveDialog(null)}>
+                Cancel
+              </Button>
+              <Button onClick={() => {
+                setActiveDialog(null);
+                navigateTo('/admin/reports');
+              }}>
+                Go to Orders
+              </Button>
+              <Badge 
+                variant="secondary"
+                className="py-2 cursor-pointer hover:bg-primary/20"
+                onClick={() => {
+                  setActiveDialog(null);
+                  navigateTo('/admin/providers');
+                }}
+              >
+                <ChefHat size={14} className="mr-1" />
+                Providers
+              </Badge>
+            </DialogFooter>
+          </>;
+
+      case 'review-invoices':
+        return <>
+            <DialogHeader>
+              <DialogTitle>Review Invoices</DialogTitle>
+              <DialogDescription>Manage billing and payments</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 mt-4">
+              <p className="text-sm">This will redirect you to the finance section where you can review and manage invoices.</p>
+              <p className="text-xs text-muted-foreground">You can track payments, generate reports, and manage billing cycles.</p>
+            </div>
+            <DialogFooter className="flex flex-wrap gap-2 justify-end mt-4">
+              <Button variant="outline" onClick={() => setActiveDialog(null)}>
+                Cancel
+              </Button>
+              <Button onClick={() => {
+                setActiveDialog(null);
+                navigateTo('/admin/reports');
+              }}>
+                Go to Invoices
+              </Button>
+              <Badge 
+                variant="secondary"
+                className="py-2 cursor-pointer hover:bg-primary/20"
+                onClick={() => {
+                  setActiveDialog(null);
+                  navigateTo('/admin/companies');
+                }}
+              >
+                <Building size={14} className="mr-1" />
+                Companies
+              </Badge>
+            </DialogFooter>
+          </>;
+    
       default:
         return null;
     }
@@ -313,16 +589,48 @@ const DashboardPage = () => {
           <div className="mt-4">
             <div className="grid grid-cols-2 gap-y-3">
               <div className="text-sm text-white/80">Users</div>
-              <div className="text-sm font-medium text-right text-white">{formatNumber(stats.totalUsers)}</div>
+              <div 
+                className="text-sm font-medium text-right text-white cursor-pointer hover:underline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateTo('/admin/users');
+                }}
+              >
+                {formatNumber(stats.totalUsers)}
+              </div>
               
               <div className="text-sm text-white/80">Companies</div>
-              <div className="text-sm font-medium text-right text-white">{formatNumber(stats.totalCompanies)}</div>
+              <div 
+                className="text-sm font-medium text-right text-white cursor-pointer hover:underline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateTo('/admin/companies');
+                }}
+              >
+                {formatNumber(stats.totalCompanies)}
+              </div>
               
               <div className="text-sm text-white/80">Providers</div>
-              <div className="text-sm font-medium text-right text-white">{formatNumber(stats.totalProviders)}</div>
+              <div 
+                className="text-sm font-medium text-right text-white cursor-pointer hover:underline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateTo('/admin/providers');
+                }}
+              >
+                {formatNumber(stats.totalProviders)}
+              </div>
               
               <div className="text-sm text-white/80">Total Orders</div>
-              <div className="text-sm font-medium text-right text-white">{formatNumber(stats.totalOrders)}</div>
+              <div 
+                className="text-sm font-medium text-right text-white cursor-pointer hover:underline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateTo('/admin/reports');
+                }}
+              >
+                {formatNumber(stats.totalOrders)}
+              </div>
             </div>
             <div className="flex justify-end mt-3">
               <Button variant="link" size="sm" className="text-white p-0 hover:text-white/80">
@@ -350,13 +658,37 @@ const DashboardPage = () => {
           <div className="mt-4">
             <div className="grid grid-cols-2 gap-y-3">
               <div className="text-sm text-white/80">Most Active</div>
-              <div className="text-sm font-medium text-right text-white">{stats.mostActiveProvider}</div>
+              <div 
+                className="text-sm font-medium text-right text-white cursor-pointer hover:underline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateTo('/admin/providers');
+                }}
+              >
+                {stats.mostActiveProvider}
+              </div>
               
               <div className="text-sm text-white/80">Inactive Providers</div>
-              <div className="text-sm font-medium text-right text-white">{stats.inactiveProviders}</div>
+              <div 
+                className="text-sm font-medium text-right text-white cursor-pointer hover:underline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateTo('/admin/providers');
+                }}
+              >
+                {stats.inactiveProviders}
+              </div>
               
               <div className="text-sm text-white/80">Without Companies</div>
-              <div className="text-sm font-medium text-right text-white">{stats.providersWithNoCompanies}</div>
+              <div 
+                className="text-sm font-medium text-right text-white cursor-pointer hover:underline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateTo('/admin/providers');
+                }}
+              >
+                {stats.providersWithNoCompanies}
+              </div>
             </div>
             <div className="flex justify-end mt-3">
               <Button variant="link" size="sm" className="text-white p-0 hover:text-white/80">
@@ -384,13 +716,37 @@ const DashboardPage = () => {
           <div className="mt-4">
             <div className="grid grid-cols-2 gap-y-3">
               <div className="text-sm text-white/80">Orders Today</div>
-              <div className="text-sm font-medium text-right text-white">{stats.ordersToday}</div>
+              <div 
+                className="text-sm font-medium text-right text-white cursor-pointer hover:underline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateTo('/admin/reports');
+                }}
+              >
+                {stats.ordersToday}
+              </div>
               
               <div className="text-sm text-white/80">Orders This Week</div>
-              <div className="text-sm font-medium text-right text-white">{stats.ordersThisWeek}</div>
+              <div 
+                className="text-sm font-medium text-right text-white cursor-pointer hover:underline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateTo('/admin/reports');
+                }}
+              >
+                {stats.ordersThisWeek}
+              </div>
               
               <div className="text-sm text-white/80">Avg per Provider</div>
-              <div className="text-sm font-medium text-right text-white">{stats.avgOrdersPerProvider}</div>
+              <div 
+                className="text-sm font-medium text-right text-white cursor-pointer hover:underline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateTo('/admin/reports');
+                }}
+              >
+                {stats.avgOrdersPerProvider}
+              </div>
             </div>
             <div className="flex justify-end mt-3">
               <Button variant="link" size="sm" className="text-white p-0 hover:text-white/80">
@@ -418,13 +774,37 @@ const DashboardPage = () => {
           <div className="mt-4">
             <div className="grid grid-cols-2 gap-y-3">
               <div className="text-sm text-white/80">Billing This Month</div>
-              <div className="text-sm font-medium text-right text-white">${formatNumber(stats.billingThisMonth)}</div>
+              <div 
+                className="text-sm font-medium text-right text-white cursor-pointer hover:underline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateTo('/admin/reports');
+                }}
+              >
+                ${formatNumber(stats.billingThisMonth)}
+              </div>
               
               <div className="text-sm text-white/80">Pending Invoices</div>
-              <div className="text-sm font-medium text-right text-white">{stats.pendingInvoices}</div>
+              <div 
+                className="text-sm font-medium text-right text-white cursor-pointer hover:underline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateTo('/admin/reports');
+                }}
+              >
+                {stats.pendingInvoices}
+              </div>
               
               <div className="text-sm text-white/80">Top Consumer</div>
-              <div className="text-sm font-medium text-right text-white">{stats.topCompanyByConsumption}</div>
+              <div 
+                className="text-sm font-medium text-right text-white cursor-pointer hover:underline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateTo('/admin/companies');
+                }}
+              >
+                {stats.topCompanyByConsumption}
+              </div>
             </div>
             <div className="flex justify-end mt-3">
               <Button variant="link" size="sm" className="text-white p-0 hover:text-white/80">

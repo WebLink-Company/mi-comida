@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Eye } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 
@@ -110,6 +110,9 @@ const StatCard = ({
           <DialogContent className="max-w-3xl">
             <DialogHeader>
               <DialogTitle>{title} Preview</DialogTitle>
+              <DialogDescription>
+                Recent {title.toLowerCase()} on the platform
+              </DialogDescription>
             </DialogHeader>
             {quickViewComponent}
             {linkTo && (

@@ -40,8 +40,7 @@ const DashboardPage = () => {
           activityResponse,
           recentUsersResponse,
           recentCompaniesResponse,
-          recentProvidersResponse,
-          recentOrdersResponse
+          recentProvidersResponse
         ] = await Promise.all([
           supabase.from('profiles').select('count'),
           supabase.from('companies').select('count'),
@@ -63,11 +62,17 @@ const DashboardPage = () => {
             .select('*')
             .order('created_at', { ascending: false })
             .limit(5),
-          supabase.from('orders')
-            .select('*, profiles(first_name, last_name)')
-            .order('created_at', { ascending: false })
-            .limit(5)
         ]);
+
+        // Need to handle the orders query separately due to the relationship issue
+        const recentOrdersResponse = await supabase
+          .from('orders')
+          .select(`
+            *,
+            user:profiles!orders_user_id_fkey(first_name, last_name)
+          `)
+          .order('created_at', { ascending: false })
+          .limit(5);
 
         // Check for errors
         if (usersResponse.error) throw new Error(`Error fetching users: ${usersResponse.error.message}`);
@@ -212,7 +217,7 @@ const DashboardPage = () => {
         {recentOrders.map((order) => (
           <TableRow key={order.id}>
             <TableCell className="font-medium">
-              {order.profiles ? `${order.profiles.first_name} ${order.profiles.last_name}` : 'Unknown'}
+              {order.user ? `${order.user.first_name} ${order.user.last_name}` : 'Unknown'}
             </TableCell>
             <TableCell>{order.date ? format(new Date(order.date), 'MMM d, yyyy') : 'N/A'}</TableCell>
             <TableCell>

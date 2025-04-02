@@ -11,6 +11,7 @@ const AdminLayout = () => {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(true); // Default to collapsed
   const { toast } = useToast();
+  const userRole = user?.role || "admin";
 
   // Handle page title based on the current route
   useEffect(() => {
@@ -33,12 +34,12 @@ const AdminLayout = () => {
       <div className="blue-gradient-bg"></div>
       
       <NavigationBar 
-        userRole={user?.role || "admin"} 
+        userRole={userRole} 
         userName={`${user?.first_name || ''} ${user?.last_name || ''}`} 
       />
       
       <div className="flex flex-1 pt-16">
-        <GlassSidebar collapsed={collapsed} setCollapsed={setCollapsed} />
+        <GlassSidebar collapsed={collapsed} setCollapsed={setCollapsed} userRole={userRole} />
         
         <main className={`flex-1 transition-all duration-300 ease-in-out p-4 md:p-6 ${collapsed ? 'ml-[70px]' : 'ml-[240px]'}`}>
           <Outlet />

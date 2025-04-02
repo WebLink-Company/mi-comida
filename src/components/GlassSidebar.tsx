@@ -6,54 +6,115 @@ import {
   LayoutDashboard, 
   Users, 
   Building, 
-  ChefHat, 
-  BarChart3,
-  Settings
+  Package, 
+  Receipt,
+  Settings,
+  BarChart3
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-const sidebarItems = [
-  { 
-    name: 'Dashboard', 
-    icon: LayoutDashboard, 
-    path: '/admin',
-    exact: true 
-  },
-  { 
-    name: 'Users', 
-    icon: Users, 
-    path: '/admin/users' 
-  },
-  { 
-    name: 'Companies', 
-    icon: Building, 
-    path: '/admin/companies' 
-  },
-  { 
-    name: 'Providers', 
-    icon: ChefHat, 
-    path: '/admin/providers' 
-  },
-  { 
-    name: 'Reports', 
-    icon: BarChart3, 
-    path: '/admin/reports' 
-  },
-  { 
-    name: 'Settings', 
-    icon: Settings, 
-    path: '/admin/settings' 
-  }
-];
 
 interface GlassSidebarProps {
   collapsed: boolean;
   setCollapsed: (collapsed: boolean) => void;
+  userRole?: string;
 }
 
-const GlassSidebar = ({ collapsed, setCollapsed }: GlassSidebarProps) => {
+const GlassSidebar = ({ collapsed, setCollapsed, userRole = 'admin' }: GlassSidebarProps) => {
   const location = useLocation();
   const [mounted, setMounted] = useState(false);
+  
+  // Define sidebar items based on user role
+  const getSidebarItems = () => {
+    const commonItems = [
+      { 
+        name: 'Dashboard', 
+        icon: LayoutDashboard, 
+        path: '/admin',
+        exact: true,
+        roles: ['admin', 'provider'] 
+      }
+    ];
+
+    const adminOnlyItems = [
+      { 
+        name: 'Users', 
+        icon: Users, 
+        path: '/admin/users',
+        roles: ['admin'] 
+      },
+      { 
+        name: 'Companies', 
+        icon: Building, 
+        path: '/admin/companies',
+        roles: ['admin'] 
+      },
+      { 
+        name: 'Providers', 
+        icon: Package, 
+        path: '/admin/providers',
+        roles: ['admin'] 
+      },
+      { 
+        name: 'Reports', 
+        icon: BarChart3, 
+        path: '/admin/reports',
+        roles: ['admin'] 
+      },
+      { 
+        name: 'Settings', 
+        icon: Settings, 
+        path: '/admin/settings',
+        roles: ['admin'] 
+      }
+    ];
+
+    const providerItems = [
+      { 
+        name: 'Menu', 
+        icon: Package, 
+        path: '/admin/menu',
+        roles: ['provider'] 
+      },
+      { 
+        name: 'Orders', 
+        icon: Package, 
+        path: '/admin/orders',
+        roles: ['provider'] 
+      },
+      { 
+        name: 'Companies', 
+        icon: Building, 
+        path: '/admin/companies',
+        roles: ['provider'] 
+      },
+      { 
+        name: 'Users', 
+        icon: Users, 
+        path: '/admin/users',
+        roles: ['provider'] 
+      },
+      { 
+        name: 'Invoices', 
+        icon: Receipt, 
+        path: '/admin/invoices',
+        roles: ['provider'] 
+      }
+    ];
+
+    // Combine items
+    let allItems = [...commonItems];
+    
+    if (userRole === 'admin') {
+      allItems = [...allItems, ...adminOnlyItems];
+    } else if (userRole === 'provider') {
+      allItems = [...allItems, ...providerItems];
+    }
+
+    // Filter items by role
+    return allItems.filter(item => item.roles.includes(userRole));
+  };
+
+  const sidebarItems = getSidebarItems();
   
   // Update localStorage when sidebar state changes
   useEffect(() => {
@@ -75,7 +136,7 @@ const GlassSidebar = ({ collapsed, setCollapsed }: GlassSidebarProps) => {
             "font-semibold text-xl transition-opacity text-white", 
             collapsed ? "opacity-0 w-0" : "opacity-100"
           )}>
-            Admin
+            {userRole === 'admin' ? 'Admin' : 'Provider'}
           </h2>
           <button
             onClick={() => setCollapsed(!collapsed)}
@@ -134,13 +195,13 @@ const GlassSidebar = ({ collapsed, setCollapsed }: GlassSidebarProps) => {
         )}>
           <div className="flex items-center">
             <div className="h-8 w-8 rounded-full bg-white/10 flex items-center justify-center text-white">
-              A
+              {userRole === 'admin' ? 'A' : 'P'}
             </div>
             <div className={cn(
               "ml-3 transition-all duration-300",
               collapsed ? "opacity-0 w-0" : "opacity-100"
             )}>
-              <p className="text-sm font-medium text-white">Admin Panel</p>
+              <p className="text-sm font-medium text-white">{userRole === 'admin' ? 'Admin' : 'Provider'} Panel</p>
               <p className="text-xs text-white/70">v1.0</p>
             </div>
           </div>

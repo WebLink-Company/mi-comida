@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 
-// Define a simple interface for the top meal result
+// Define interfaces for query results
 export interface TopMealResult {
   name: string;
   count: number;
@@ -17,7 +17,7 @@ export const useProviderDashboardStats = () => {
   const sevenDaysAgo = format(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd');
   
   // Orders Today
-  const ordersQuery = useQuery({
+  const { data: ordersToday, isLoading: loadingOrdersToday } = useQuery({
     queryKey: ['ordersToday', today, user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -33,7 +33,7 @@ export const useProviderDashboardStats = () => {
   });
 
   // Total Meals Today
-  const mealsQuery = useQuery({
+  const { data: totalMealsToday, isLoading: loadingMealsToday } = useQuery({
     queryKey: ['mealsToday', today, user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -49,7 +49,7 @@ export const useProviderDashboardStats = () => {
   });
 
   // Companies with Orders Today
-  const companiesQuery = useQuery({
+  const { data: companiesWithOrdersToday, isLoading: loadingCompaniesOrders } = useQuery({
     queryKey: ['companiesOrdersToday', today, user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -66,10 +66,10 @@ export const useProviderDashboardStats = () => {
     enabled: !!user?.id
   });
 
-  // Top Ordered Meal Today - Explicitly typed to avoid deep instantiation issues
-  const topMealQuery = useQuery({
+  // Top Ordered Meal Today
+  const { data: topOrderedMeal, isLoading: loadingTopMeal } = useQuery<TopMealResult, Error>({
     queryKey: ['topMeal', today, user?.id],
-    queryFn: async (): Promise<TopMealResult> => {
+    queryFn: async () => {
       const { data, error } = await supabase
         .from('orders')
         .select('lunch_option_id')
@@ -113,7 +113,7 @@ export const useProviderDashboardStats = () => {
   });
 
   // Pending Orders
-  const pendingQuery = useQuery({
+  const { data: pendingOrders, isLoading: loadingPending } = useQuery({
     queryKey: ['pendingOrders', user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -129,7 +129,7 @@ export const useProviderDashboardStats = () => {
   });
 
   // Active Companies
-  const activeCompaniesQuery = useQuery({
+  const { data: activeCompanies, isLoading: loadingActiveCompanies } = useQuery({
     queryKey: ['activeCompanies', user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -144,7 +144,7 @@ export const useProviderDashboardStats = () => {
   });
 
   // New Users This Week
-  const newUsersQuery = useQuery({
+  const { data: newUsers, isLoading: loadingNewUsers } = useQuery({
     queryKey: ['newUsers', sevenDaysAgo, user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -160,7 +160,7 @@ export const useProviderDashboardStats = () => {
   });
 
   // Monthly Orders
-  const monthlyOrdersQuery = useQuery({
+  const { data: monthlyOrders, isLoading: loadingMonthlyOrders } = useQuery({
     queryKey: ['monthlyOrders', firstDayOfMonth, user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -176,7 +176,7 @@ export const useProviderDashboardStats = () => {
   });
 
   // Monthly Revenue
-  const monthlyRevenueQuery = useQuery({
+  const { data: monthlyRevenue, isLoading: loadingMonthlyRevenue } = useQuery({
     queryKey: ['monthlyRevenue', firstDayOfMonth, user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -195,27 +195,27 @@ export const useProviderDashboardStats = () => {
 
   return {
     // Daily stats
-    ordersToday: ordersQuery.data,
-    loadingOrdersToday: ordersQuery.isLoading,
-    totalMealsToday: mealsQuery.data,
-    loadingMealsToday: mealsQuery.isLoading,
-    companiesWithOrdersToday: companiesQuery.data,
-    loadingCompaniesOrders: companiesQuery.isLoading,
-    topOrderedMeal: topMealQuery.data,
-    loadingTopMeal: topMealQuery.isLoading,
+    ordersToday,
+    loadingOrdersToday,
+    totalMealsToday,
+    loadingMealsToday,
+    companiesWithOrdersToday,
+    loadingCompaniesOrders,
+    topOrderedMeal,
+    loadingTopMeal,
     
     // General stats
-    pendingOrders: pendingQuery.data,
-    loadingPending: pendingQuery.isLoading,
-    activeCompanies: activeCompaniesQuery.data,
-    loadingActiveCompanies: activeCompaniesQuery.isLoading,
-    newUsers: newUsersQuery.data,
-    loadingNewUsers: newUsersQuery.isLoading,
+    pendingOrders,
+    loadingPending,
+    activeCompanies,
+    loadingActiveCompanies,
+    newUsers,
+    loadingNewUsers,
     
     // Monthly stats
-    monthlyOrders: monthlyOrdersQuery.data,
-    loadingMonthlyOrders: monthlyOrdersQuery.isLoading,
-    monthlyRevenue: monthlyRevenueQuery.data,
-    loadingMonthlyRevenue: monthlyRevenueQuery.isLoading
+    monthlyOrders,
+    loadingMonthlyOrders,
+    monthlyRevenue,
+    loadingMonthlyRevenue
   };
 };

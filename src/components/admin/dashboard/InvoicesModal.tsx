@@ -29,14 +29,8 @@ export const InvoicesModal: React.FC<InvoicesModalProps> = ({ onClose }) => {
   return (
     <DialogContent 
       className="sm:max-w-md modal-glassmorphism"
-      onInteractOutside={(e) => {
-        e.preventDefault();
-        handleClose();
-      }}
-      onEscapeKeyDown={(e) => {
-        e.preventDefault();
-        handleClose();
-      }}
+      onInteractOutside={handleClose}
+      onEscapeKeyDown={handleClose}
     >
       <DialogHeader>
         <DialogTitle className="text-gradient">Review Invoices</DialogTitle>

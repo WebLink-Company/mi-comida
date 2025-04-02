@@ -1,17 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Users, Building, ShoppingBag, FileText, Globe, DollarSign, ChefHat, UserPlus, Plus, LucideIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { 
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter
-} from "@/components/ui/dialog";
+import { Dialog } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogContent } from '@/components/ui/alert-dialog';
 import { UsersModal } from '@/components/admin/dashboard/UsersModal';
 import { CompaniesModal } from '@/components/admin/dashboard/CompaniesModal';
@@ -106,13 +98,11 @@ const DashboardPage = () => {
   };
 
   const closeDialog = () => {
-    // Use setTimeout to prevent event propagation issues
     setTimeout(() => {
       setActiveDialog(null);
     }, 50);
   };
-  
-  // Quick action badges data
+
   const quickActions: Array<{
     label: string;
     icon: LucideIcon;
@@ -125,30 +115,26 @@ const DashboardPage = () => {
     { label: 'View Orders', icon: ShoppingBag, action: () => openDialog('view-orders'), path: '/admin/reports' },
     { label: 'Review Invoices', icon: Plus, action: () => openDialog('review-invoices'), path: '/admin/reports' },
   ];
-  
-  // Platform overview card data
+
   const platformOverviewData = [
     { label: 'Users', value: stats.totalUsers, path: '/admin/users' },
     { label: 'Companies', value: stats.totalCompanies, path: '/admin/companies' },
     { label: 'Providers', value: stats.totalProviders, path: '/admin/providers' },
     { label: 'Total Orders', value: stats.totalOrders, path: '/admin/reports' }
   ];
-  
-  // Provider performance card data
+
   const providerPerformanceData = [
     { label: 'Most Active', value: stats.mostActiveProvider, path: '/admin/providers' },
     { label: 'Inactive Providers', value: stats.inactiveProviders, path: '/admin/providers' },
     { label: 'Without Companies', value: stats.providersWithNoCompanies, path: '/admin/providers' }
   ];
-  
-  // Order metrics card data
+
   const orderMetricsData = [
     { label: 'Orders Today', value: stats.ordersToday, path: '/admin/reports' },
     { label: 'Orders This Week', value: stats.ordersThisWeek, path: '/admin/reports' },
     { label: 'Avg per Provider', value: stats.avgOrdersPerProvider, path: '/admin/reports' }
   ];
-  
-  // Finance insights card data
+
   const financeInsightsData = [
     { label: 'Billing This Month', value: `$${new Intl.NumberFormat().format(stats.billingThisMonth)}`, path: '/admin/reports' },
     { label: 'Pending Invoices', value: stats.pendingInvoices, path: '/admin/reports' },
@@ -164,7 +150,6 @@ const DashboardPage = () => {
       <ClockDisplay user={user} quickActions={quickActions} />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-7xl mx-auto mt-auto p-4">
-        {/* Platform Overview Card */}
         <DashboardCard
           title="Platform Overview"
           icon={<Globe size={16} className="text-white/80" />}
@@ -174,7 +159,6 @@ const DashboardPage = () => {
           onOpenDialog={() => openDialog('platform-overview')}
         />
 
-        {/* Provider Performance Card */}
         <DashboardCard
           title="Provider Performance"
           icon={<Building size={16} className="text-white/80" />}
@@ -184,7 +168,6 @@ const DashboardPage = () => {
           onOpenDialog={() => openDialog('provider-performance')}
         />
 
-        {/* Order Metrics Card */}
         <DashboardCard
           title="Order Metrics"
           icon={<ShoppingBag size={16} className="text-white/80" />}
@@ -194,7 +177,6 @@ const DashboardPage = () => {
           onOpenDialog={() => openDialog('order-metrics')}
         />
 
-        {/* Finance Insights Card */}
         <DashboardCard
           title="Finance Insights"
           icon={<DollarSign size={16} className="text-white/80" />}
@@ -205,9 +187,8 @@ const DashboardPage = () => {
         />
       </div>
 
-      {/* Alert Dialog for Dashboard Stats */}
       <AlertDialog 
-        open={['platform-overview', 'provider-performance', 'order-metrics', 'finance-insights', 'add-user', 'create-company', 'add-provider', 'view-orders', 'review-invoices'].includes(activeDialog || '')} 
+        open={['platform-overview', 'provider-performance', 'order-metrics', 'finance-insights'].includes(activeDialog || '')} 
         onOpenChange={() => closeDialog()}
       >
         <AlertDialogContent className="neo-blur modal-glassmorphism text-white border-white/20">
@@ -220,39 +201,59 @@ const DashboardPage = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Dialog for User Management */}
-      <Dialog open={activeDialog === 'add-user'} onOpenChange={closeDialog}>
-        <DialogContent className="modal-glassmorphism">
-          {activeDialog === 'add-user' && <UsersModal onClose={closeDialog} />}
-        </DialogContent>
+      <Dialog 
+        open={activeDialog === 'add-user'} 
+        onOpenChange={() => {
+          if (activeDialog === 'add-user') {
+            closeDialog();
+          }
+        }}
+      >
+        {activeDialog === 'add-user' && <UsersModal onClose={closeDialog} />}
       </Dialog>
 
-      {/* Dialog for Company Management */}
-      <Dialog open={activeDialog === 'create-company'} onOpenChange={closeDialog}>
-        <DialogContent className="modal-glassmorphism">
-          {activeDialog === 'create-company' && <CompaniesModal onClose={closeDialog} />}
-        </DialogContent>
+      <Dialog 
+        open={activeDialog === 'create-company'} 
+        onOpenChange={() => {
+          if (activeDialog === 'create-company') {
+            closeDialog();
+          }
+        }}
+      >
+        {activeDialog === 'create-company' && <CompaniesModal onClose={closeDialog} />}
       </Dialog>
 
-      {/* Dialog for Provider Management */}
-      <Dialog open={activeDialog === 'add-provider'} onOpenChange={closeDialog}>
-        <DialogContent className="modal-glassmorphism">
-          {activeDialog === 'add-provider' && <ProvidersModal onClose={closeDialog} />}
-        </DialogContent>
+      <Dialog 
+        open={activeDialog === 'add-provider'} 
+        onOpenChange={() => {
+          if (activeDialog === 'add-provider') {
+            closeDialog();
+          }
+        }}
+      >
+        {activeDialog === 'add-provider' && <ProvidersModal onClose={closeDialog} />}
       </Dialog>
 
-      {/* Dialog for Order Management */}
-      <Dialog open={activeDialog === 'view-orders'} onOpenChange={closeDialog}>
-        <DialogContent className="modal-glassmorphism">
-          {activeDialog === 'view-orders' && <OrdersModal onClose={closeDialog} />}
-        </DialogContent>
+      <Dialog 
+        open={activeDialog === 'view-orders'} 
+        onOpenChange={() => {
+          if (activeDialog === 'view-orders') {
+            closeDialog();
+          }
+        }}
+      >
+        {activeDialog === 'view-orders' && <OrdersModal onClose={closeDialog} />}
       </Dialog>
 
-      {/* Dialog for Invoice Management */}
-      <Dialog open={activeDialog === 'review-invoices'} onOpenChange={closeDialog}>
-        <DialogContent className="modal-glassmorphism">
-          {activeDialog === 'review-invoices' && <InvoicesModal onClose={closeDialog} />}
-        </DialogContent>
+      <Dialog 
+        open={activeDialog === 'review-invoices'} 
+        onOpenChange={() => {
+          if (activeDialog === 'review-invoices') {
+            closeDialog();
+          }
+        }}
+      >
+        {activeDialog === 'review-invoices' && <InvoicesModal onClose={closeDialog} />}
       </Dialog>
     </div>
   );

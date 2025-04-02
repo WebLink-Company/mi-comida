@@ -31,14 +31,8 @@ export const OrdersModal: React.FC<OrdersModalProps> = ({ onClose }) => {
   return (
     <DialogContent 
       className="sm:max-w-md modal-glassmorphism"
-      onInteractOutside={(e) => {
-        e.preventDefault();
-        handleClose();
-      }}
-      onEscapeKeyDown={(e) => {
-        e.preventDefault();
-        handleClose();
-      }}
+      onInteractOutside={handleClose}
+      onEscapeKeyDown={handleClose}
     >
       <DialogHeader>
         <DialogTitle className="text-gradient">View Orders</DialogTitle>

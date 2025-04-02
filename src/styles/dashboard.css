@@ -96,4 +96,3 @@ body[data-state="open"] {
 body[data-state="open"] [role="dialog"] {
   pointer-events: auto;
 }
-

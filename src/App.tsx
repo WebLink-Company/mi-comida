@@ -62,6 +62,23 @@ const App = () => (
               <Route path="settings" element={<SettingsPage />} />
             </Route>
             
+            {/* Provider Routes with the same AdminLayout */}
+            <Route path="/provider" element={
+              <ProtectedRoute allowedRoles={['provider']}>
+                <AdminLayout />
+              </ProtectedRoute>
+            }>
+              <Route index element={<ProviderDashboardPage />} />
+              <Route path="dashboard" element={<ProviderDashboardPage />} />
+              <Route path="menu" element={<MenuManagementPage />} />
+              <Route path="orders" element={<OrdersPage />} />
+              <Route path="companies" element={<CompaniesPage />} />
+              <Route path="users" element={<UsersPage />} />
+              <Route path="assign-menus" element={<AssignMenusPage />} />
+              <Route path="delivery-settings" element={<DeliverySettingsPage />} />
+              <Route path="billing" element={<DashboardPage />} />
+            </Route>
+            
             {/* Company Routes */}
             <Route path="/company" element={
               <ProtectedRoute allowedRoles={['company']}>
@@ -112,23 +129,6 @@ const App = () => (
                 <SupervisorDashboard activeTab="subsidies" />
               </ProtectedRoute>
             } />
-            
-            {/* Provider Routes */}
-            <Route path="/provider" element={
-              <ProtectedRoute allowedRoles={['provider']}>
-                <AdminLayout />
-              </ProtectedRoute>
-            }>
-              <Route index element={<ProviderDashboardPage />} />
-              <Route path="dashboard" element={<ProviderDashboardPage />} />
-              <Route path="menu" element={<MenuManagementPage />} />
-              <Route path="orders" element={<OrdersPage />} />
-              <Route path="companies" element={<CompaniesPage />} />
-              <Route path="users" element={<UsersPage />} />
-              <Route path="assign-menus" element={<AssignMenusPage />} />
-              <Route path="delivery-settings" element={<DeliverySettingsPage />} />
-              <Route path="billing" element={<DashboardPage />} />
-            </Route>
             
             {/* Catch-all for non-existent routes */}
             <Route path="*" element={<NotFound />} />

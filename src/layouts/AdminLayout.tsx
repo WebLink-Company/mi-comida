@@ -24,13 +24,36 @@ const AdminLayout = () => {
   // Redirect to correct section based on user role
   useEffect(() => {
     if (user) {
-      const isInAdminSection = location.pathname.startsWith('/admin');
-      const isInProviderSection = location.pathname.startsWith('/provider');
+      const currentPath = location.pathname;
+      const isInAdminSection = currentPath.startsWith('/admin');
+      const isInProviderSection = currentPath.startsWith('/provider');
+      const isInEmployeeSection = currentPath.startsWith('/employee');
+      const isInSupervisorSection = currentPath.startsWith('/supervisor');
       
-      if (user.role === 'admin' && isInProviderSection) {
-        navigate('/admin');
-      } else if (user.role === 'provider' && isInAdminSection) {
-        navigate('/provider');
+      // Redirect based on role if user is in the wrong section
+      switch (user.role) {
+        case 'admin':
+          if (!isInAdminSection) navigate('/admin');
+          break;
+        case 'provider':
+          if (!isInProviderSection) {
+            // If they're in admin/something, map to the equivalent provider route
+            if (isInAdminSection) {
+              const path = currentPath.replace('/admin', '/provider');
+              navigate(path);
+            } else {
+              navigate('/provider');
+            }
+          }
+          break;
+        case 'supervisor':
+          if (!isInSupervisorSection) navigate('/supervisor');
+          break;
+        case 'employee':
+          if (!isInEmployeeSection) navigate('/employee');
+          break;
+        default:
+          break;
       }
     }
   }, [user, location.pathname, navigate]);

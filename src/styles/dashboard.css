@@ -50,6 +50,9 @@
   background: linear-gradient(135deg, #1877F2 0%, #1158D1 50%, #7B3FE4 100%);
   background-size: cover;
   background-position: center;
+  background-attachment: fixed; /* This ensures the background covers the entire viewport */
+  width: 100%;
+  min-height: 100vh;
 }
 
 /* Animation classes */

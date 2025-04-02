@@ -55,10 +55,10 @@ const ProviderDashboardPage = () => {
         .from('orders')
         .select('*', { count: 'exact' })
         .eq('date', today)
-        .eq('provider_id', user?.id);
+        .eq('provider_id', user?.id || '');
         
       if (error) throw error;
-      return data.length;
+      return data?.length || 0;
     },
     enabled: !!user?.id
   });
@@ -70,10 +70,10 @@ const ProviderDashboardPage = () => {
         .from('orders')
         .select('*')
         .eq('date', today)
-        .eq('provider_id', user?.id);
+        .eq('provider_id', user?.id || '');
         
       if (error) throw error;
-      return data.length; // In a real app, this would count the quantity in each order
+      return data?.length || 0; // In a real app, this would count the quantity in each order
     },
     enabled: !!user?.id
   });
@@ -85,18 +85,23 @@ const ProviderDashboardPage = () => {
         .from('orders')
         .select('company_id')
         .eq('date', today)
-        .eq('provider_id', user?.id);
+        .eq('provider_id', user?.id || '');
         
       if (error) throw error;
       
       // Count unique companies
-      const uniqueCompanies = new Set(data.map(order => order.company_id));
+      const uniqueCompanies = new Set(data?.map(order => order.company_id) || []);
       return uniqueCompanies.size;
     },
     enabled: !!user?.id
   });
 
-  const { data: topOrderedMeal, isLoading: loadingTopMeal } = useQuery({
+  interface TopMealResult {
+    name: string;
+    count: number;
+  }
+
+  const { data: topOrderedMeal, isLoading: loadingTopMeal } = useQuery<TopMealResult, Error>({
     queryKey: ['topMeal', today, user?.id],
     queryFn: async () => {
       // This is a simplified query - in a real app you'd use a more complex query with joins and group by
@@ -104,11 +109,11 @@ const ProviderDashboardPage = () => {
         .from('orders')
         .select('lunch_option_id')
         .eq('date', today)
-        .eq('provider_id', user?.id);
+        .eq('provider_id', user?.id || '');
         
       if (error) throw error;
       
-      if (data.length === 0) return { name: 'No orders', count: 0 };
+      if (!data || data.length === 0) return { name: 'No orders', count: 0 };
       
       // Count occurrences of each lunch option
       const counts: Record<string, number> = {};
@@ -132,7 +137,7 @@ const ProviderDashboardPage = () => {
           .from('lunch_options')
           .select('name')
           .eq('id', maxId)
-          .single();
+          .maybeSingle();
           
         return { name: lunchData?.name || 'Unknown', count: maxCount };
       }
@@ -149,10 +154,10 @@ const ProviderDashboardPage = () => {
         .from('orders')
         .select('*', { count: 'exact' })
         .eq('status', 'pending')
-        .eq('provider_id', user?.id);
+        .eq('provider_id', user?.id || '');
         
       if (error) throw error;
-      return data.length;
+      return data?.length || 0;
     },
     enabled: !!user?.id
   });
@@ -163,10 +168,10 @@ const ProviderDashboardPage = () => {
       const { data, error } = await supabase
         .from('companies')
         .select('*', { count: 'exact' })
-        .eq('provider_id', user?.id);
+        .eq('provider_id', user?.id || '');
         
       if (error) throw error;
-      return data.length;
+      return data?.length || 0;
     },
     enabled: !!user?.id
   });
@@ -178,10 +183,10 @@ const ProviderDashboardPage = () => {
         .from('profiles')
         .select('*', { count: 'exact' })
         .gte('created_at', sevenDaysAgo)
-        .eq('provider_id', user?.id);
+        .eq('provider_id', user?.id || '');
         
       if (error) throw error;
-      return data.length;
+      return data?.length || 0;
     },
     enabled: !!user?.id
   });
@@ -193,10 +198,10 @@ const ProviderDashboardPage = () => {
         .from('orders')
         .select('*', { count: 'exact' })
         .gte('date', firstDayOfMonth)
-        .eq('provider_id', user?.id);
+        .eq('provider_id', user?.id || '');
         
       if (error) throw error;
-      return data.length;
+      return data?.length || 0;
     },
     enabled: !!user?.id
   });
@@ -209,12 +214,12 @@ const ProviderDashboardPage = () => {
         .from('orders')
         .select('lunch_option_id')
         .gte('date', firstDayOfMonth)
-        .eq('provider_id', user?.id);
+        .eq('provider_id', user?.id || '');
         
       if (error) throw error;
       
       // For demo purposes, let's assume each order is worth $10
-      return data.length * 10;
+      return (data?.length || 0) * 10;
     },
     enabled: !!user?.id
   });

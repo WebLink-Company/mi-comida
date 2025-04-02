@@ -1,38 +1,17 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { format } from 'date-fns';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { 
-  Users, 
-  Building, 
-  ShoppingBag, 
-  FileText, 
-  TrendingUp, 
-  AlertTriangle, 
-  Calendar, 
-  DollarSign, 
-  Clock, 
-  Globe, 
-  ChevronRight,
-  ExternalLink,
-  X
-} from 'lucide-react';
+import { Users, Building, ShoppingBag, FileText, TrendingUp, AlertTriangle, Calendar, DollarSign, Clock, Globe, ChevronRight, ExternalLink, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogClose
-} from "@/components/ui/dialog";
-
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
 const DashboardPage = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const {
+    user
+  } = useAuth();
   const [time, setTime] = useState(new Date());
   const [activeDialog, setActiveDialog] = useState<string | null>(null);
   const [stats, setStats] = useState({
@@ -58,29 +37,40 @@ const DashboardPage = () => {
     }, 60000);
     return () => clearInterval(timer);
   }, []);
-
   const fetchDashboardData = async () => {
     try {
       // Fetch user count
-      const { count: userCount } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true });
-      
+      const {
+        count: userCount
+      } = await supabase.from('profiles').select('*', {
+        count: 'exact',
+        head: true
+      });
+
       // Fetch company count
-      const { count: companyCount } = await supabase
-        .from('companies')
-        .select('*', { count: 'exact', head: true });
-      
+      const {
+        count: companyCount
+      } = await supabase.from('companies').select('*', {
+        count: 'exact',
+        head: true
+      });
+
       // Fetch provider count
-      const { count: providerCount } = await supabase
-        .from('providers')
-        .select('*', { count: 'exact', head: true });
-      
+      const {
+        count: providerCount
+      } = await supabase.from('providers').select('*', {
+        count: 'exact',
+        head: true
+      });
+
       // Fetch order count
-      const { count: orderCount } = await supabase
-        .from('orders')
-        .select('*', { count: 'exact', head: true });
-      
+      const {
+        count: orderCount
+      } = await supabase.from('orders').select('*', {
+        count: 'exact',
+        head: true
+      });
+
       // This is mock data - in a real app, you would calculate these properly
       setStats({
         totalUsers: userCount || 0,
@@ -101,30 +91,24 @@ const DashboardPage = () => {
       console.error('Error fetching dashboard data:', error);
     }
   };
-
   useEffect(() => {
     fetchDashboardData();
   }, []);
-
   const getGreeting = () => {
     const hour = time.getHours();
     if (hour < 12) return 'Good morning';
     if (hour < 18) return 'Good afternoon';
     return 'Good evening';
   };
-
   const getFirstName = () => {
     return user?.first_name || 'Admin';
   };
-
   const formatNumber = (num: number) => {
     return new Intl.NumberFormat().format(num);
   };
-
   const navigateTo = (path: string) => {
     navigate(path);
   };
-
   const openDialog = (dialogId: string) => {
     setActiveDialog(dialogId);
   };
@@ -133,8 +117,7 @@ const DashboardPage = () => {
   const renderDialogContent = () => {
     switch (activeDialog) {
       case 'platform-overview':
-        return (
-          <>
+        return <>
             <DialogHeader>
               <DialogTitle>Platform Overview</DialogTitle>
               <DialogDescription>Detailed statistics about platform usage</DialogDescription>
@@ -164,11 +147,9 @@ const DashboardPage = () => {
               </div>
               <Button className="w-full" onClick={() => navigateTo('/admin/reports')}>View Full Reports</Button>
             </div>
-          </>
-        );
+          </>;
       case 'provider-performance':
-        return (
-          <>
+        return <>
             <DialogHeader>
               <DialogTitle>Provider Performance</DialogTitle>
               <DialogDescription>Analytics for service providers</DialogDescription>
@@ -202,11 +183,9 @@ const DashboardPage = () => {
               </div>
               <Button className="w-full" onClick={() => navigateTo('/admin/providers')}>Manage Providers</Button>
             </div>
-          </>
-        );
+          </>;
       case 'order-metrics':
-        return (
-          <>
+        return <>
             <DialogHeader>
               <DialogTitle>Order Metrics</DialogTitle>
               <DialogDescription>Detailed order statistics</DialogDescription>
@@ -233,11 +212,9 @@ const DashboardPage = () => {
               </div>
               <Button className="w-full" onClick={() => navigateTo('/admin/reports')}>View Order Reports</Button>
             </div>
-          </>
-        );
+          </>;
       case 'finance-insights':
-        return (
-          <>
+        return <>
             <DialogHeader>
               <DialogTitle>Finance Insights</DialogTitle>
               <DialogDescription>Financial statistics and metrics</DialogDescription>
@@ -264,20 +241,16 @@ const DashboardPage = () => {
               </div>
               <Button className="w-full" onClick={() => navigateTo('/admin/reports')}>Financial Reports</Button>
             </div>
-          </>
-        );
+          </>;
       default:
         return null;
     }
   };
-
-  return (
-    <div className="min-h-[calc(100vh-60px)] flex flex-col pb-8" 
-         style={{
-           backgroundImage: `url('/win11-background.svg')`,
-           backgroundSize: 'cover',
-           backgroundPosition: 'center'
-         }}>
+  return <div style={{
+    backgroundImage: `url('/win11-background.svg')`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center'
+  }} className="">
       {/* Windows 11 style clock and date */}
       <div className="win11-clock-container flex-grow flex flex-col items-center justify-center">
         <div className="text-center">
@@ -298,18 +271,16 @@ const DashboardPage = () => {
       {/* Windows 11 style widgets at bottom */}
       <div className="win11-widget-container p-4">
         {/* Platform Overview Widget */}
-        <div className="win11-widget fade-up cursor-pointer" style={{ animationDelay: "0.1s" }}
-             onClick={() => navigateTo('/admin/users')}>
+        <div className="win11-widget fade-up cursor-pointer" style={{
+        animationDelay: "0.1s"
+      }} onClick={() => navigateTo('/admin/users')}>
           <div className="win11-widget-header">
             <div className="win11-widget-title">Platform Overview</div>
             <div className="flex gap-2">
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  openDialog('platform-overview');
-                }}
-                className="text-white/70 hover:text-white"
-              >
+              <button onClick={e => {
+              e.stopPropagation();
+              openDialog('platform-overview');
+            }} className="text-white/70 hover:text-white">
                 <ExternalLink size={16} />
               </button>
               <Globe size={16} className="text-white/80" />
@@ -336,18 +307,16 @@ const DashboardPage = () => {
         </div>
 
         {/* Provider Performance Widget */}
-        <div className="win11-widget fade-up cursor-pointer" style={{ animationDelay: "0.2s" }}
-             onClick={() => navigateTo('/admin/providers')}>
+        <div className="win11-widget fade-up cursor-pointer" style={{
+        animationDelay: "0.2s"
+      }} onClick={() => navigateTo('/admin/providers')}>
           <div className="win11-widget-header">
             <div className="win11-widget-title">Provider Performance</div>
             <div className="flex gap-2">
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  openDialog('provider-performance');
-                }}
-                className="text-white/70 hover:text-white"
-              >
+              <button onClick={e => {
+              e.stopPropagation();
+              openDialog('provider-performance');
+            }} className="text-white/70 hover:text-white">
                 <ExternalLink size={16} />
               </button>
               <Building size={16} className="text-white/80" />
@@ -371,18 +340,16 @@ const DashboardPage = () => {
         </div>
 
         {/* Order Metrics Widget */}
-        <div className="win11-widget fade-up cursor-pointer" style={{ animationDelay: "0.3s" }}
-             onClick={() => navigateTo('/admin/reports')}>
+        <div className="win11-widget fade-up cursor-pointer" style={{
+        animationDelay: "0.3s"
+      }} onClick={() => navigateTo('/admin/reports')}>
           <div className="win11-widget-header">
             <div className="win11-widget-title">Order Metrics</div>
             <div className="flex gap-2">
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  openDialog('order-metrics');
-                }}
-                className="text-white/70 hover:text-white"
-              >
+              <button onClick={e => {
+              e.stopPropagation();
+              openDialog('order-metrics');
+            }} className="text-white/70 hover:text-white">
                 <ExternalLink size={16} />
               </button>
               <ShoppingBag size={16} className="text-white/80" />
@@ -406,18 +373,16 @@ const DashboardPage = () => {
         </div>
 
         {/* Finance Insights Widget */}
-        <div className="win11-widget fade-up cursor-pointer" style={{ animationDelay: "0.4s" }}
-             onClick={() => navigateTo('/admin/reports')}>
+        <div className="win11-widget fade-up cursor-pointer" style={{
+        animationDelay: "0.4s"
+      }} onClick={() => navigateTo('/admin/reports')}>
           <div className="win11-widget-header">
             <div className="win11-widget-title">Finance Insights</div>
             <div className="flex gap-2">
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  openDialog('finance-insights');
-                }}
-                className="text-white/70 hover:text-white"
-              >
+              <button onClick={e => {
+              e.stopPropagation();
+              openDialog('finance-insights');
+            }} className="text-white/70 hover:text-white">
                 <ExternalLink size={16} />
               </button>
               <DollarSign size={16} className="text-white/80" />
@@ -442,7 +407,7 @@ const DashboardPage = () => {
       </div>
 
       {/* Modal Dialog for Widget Details */}
-      <Dialog open={!!activeDialog} onOpenChange={(open) => !open && setActiveDialog(null)}>
+      <Dialog open={!!activeDialog} onOpenChange={open => !open && setActiveDialog(null)}>
         <DialogContent className="sm:max-w-[600px] neo-blur text-white border-white/20">
           <DialogClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
             <X className="h-4 w-4" />
@@ -451,8 +416,6 @@ const DashboardPage = () => {
           {renderDialogContent()}
         </DialogContent>
       </Dialog>
-    </div>
-  );
+    </div>;
 };
-
 export default DashboardPage;

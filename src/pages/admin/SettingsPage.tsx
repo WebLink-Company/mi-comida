@@ -1,12 +1,13 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Settings, 
   Bell, 
   Globe, 
   Shield,
   Mail,
-  Database
+  Database,
+  Save
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -15,9 +16,17 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ChangePasswordForm } from '@/components/account/ChangePasswordForm';
 import { useAuth } from '@/context/AuthContext';
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from '@/hooks/use-toast';
+import { Form, FormField, FormItem, FormLabel, FormControl, FormDescription } from '@/components/ui/form';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 
 const SettingsPage = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(true);
   const [generalSettings, setGeneralSettings] = useState({
     systemName: 'LunchWise Admin',
     languageDefault: 'English',
@@ -37,6 +46,178 @@ const SettingsPage = () => {
     sessionTimeout: 60,
     passwordPolicyStrength: 'strong',
   });
+
+  // Fetch settings from Supabase on component mount
+  useEffect(() => {
+    const fetchSettings = async () => {
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('platform_settings')
+          .select('*')
+          .maybeSingle();
+
+        if (error) {
+          console.error('Error fetching settings:', error);
+          toast({
+            title: 'Error',
+            description: 'Failed to load settings. Please try again.',
+            variant: 'destructive',
+          });
+          return;
+        }
+
+        if (data) {
+          setGeneralSettings({
+            systemName: data.system_name || 'LunchWise Admin',
+            languageDefault: data.default_language || 'English',
+            enableDarkMode: data.dark_mode || true,
+            enableBetaFeatures: data.beta_features || false,
+          });
+          
+          setNotificationSettings({
+            emailNotifications: data.email_notifications || true,
+            orderUpdates: data.order_updates || true,
+            userRegistrations: data.user_registration_alerts || true,
+            securityAlerts: data.security_alerts || true,
+          });
+          
+          setSecuritySettings({
+            requireMFA: data.multi_factor_auth || false,
+            sessionTimeout: data.session_timeout || 60,
+            passwordPolicyStrength: data.password_policy || 'strong',
+          });
+        }
+      } catch (err) {
+        console.error('Error in fetchSettings:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSettings();
+  }, [toast]);
+
+  // Save settings to Supabase
+  const saveSettings = async () => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from('platform_settings')
+        .update({
+          system_name: generalSettings.systemName,
+          default_language: generalSettings.languageDefault,
+          dark_mode: generalSettings.enableDarkMode,
+          beta_features: generalSettings.enableBetaFeatures,
+          email_notifications: notificationSettings.emailNotifications,
+          order_updates: notificationSettings.orderUpdates,
+          user_registration_alerts: notificationSettings.userRegistrations,
+          security_alerts: notificationSettings.securityAlerts,
+          multi_factor_auth: securitySettings.requireMFA,
+          session_timeout: securitySettings.sessionTimeout,
+          password_policy: securitySettings.passwordPolicyStrength,
+          updated_at: new Date().toISOString()
+        })
+        .eq('provider_id', null);
+
+      if (error) {
+        console.error('Error saving settings:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to save settings. Please try again.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      toast({
+        title: 'Success',
+        description: 'Settings saved successfully.',
+        variant: 'default',
+      });
+    } catch (err) {
+      console.error('Error in saveSettings:', err);
+      toast({
+        title: 'Error',
+        description: 'An unexpected error occurred. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle reset to defaults
+  const resetDefaults = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('platform_settings')
+        .update({
+          system_name: 'LunchWise Admin',
+          default_language: 'English',
+          dark_mode: true,
+          beta_features: false,
+          email_notifications: true,
+          order_updates: true,
+          user_registration_alerts: true,
+          security_alerts: true,
+          multi_factor_auth: false,
+          session_timeout: 60,
+          password_policy: 'strong',
+          updated_at: new Date().toISOString()
+        })
+        .eq('provider_id', null)
+        .select();
+
+      if (error) {
+        console.error('Error resetting settings:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to reset settings. Please try again.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      if (data && data[0]) {
+        setGeneralSettings({
+          systemName: 'LunchWise Admin',
+          languageDefault: 'English',
+          enableDarkMode: true,
+          enableBetaFeatures: false,
+        });
+        
+        setNotificationSettings({
+          emailNotifications: true,
+          orderUpdates: true,
+          userRegistrations: true,
+          securityAlerts: true,
+        });
+        
+        setSecuritySettings({
+          requireMFA: false,
+          sessionTimeout: 60,
+          passwordPolicyStrength: 'strong',
+        });
+      }
+
+      toast({
+        title: 'Success',
+        description: 'Settings reset to defaults.',
+        variant: 'default',
+      });
+    } catch (err) {
+      console.error('Error in resetDefaults:', err);
+      toast({
+        title: 'Error',
+        description: 'An unexpected error occurred. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -296,8 +477,24 @@ const SettingsPage = () => {
         </Card>
 
         <div className="flex justify-end gap-3 mt-6">
-          <Button variant="outline">Reset Defaults</Button>
-          <Button>Save Settings</Button>
+          <Button 
+            variant="outline" 
+            onClick={resetDefaults} 
+            disabled={isLoading}
+          >
+            Reset Defaults
+          </Button>
+          <Button 
+            onClick={saveSettings} 
+            disabled={isLoading}
+          >
+            {isLoading ? 'Saving...' : (
+              <>
+                <Save className="h-4 w-4 mr-2" />
+                Save Settings
+              </>
+            )}
+          </Button>
         </div>
       </div>
     </div>

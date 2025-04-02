@@ -339,6 +339,68 @@ export type Database = {
           },
         ]
       }
+      platform_settings: {
+        Row: {
+          beta_features: boolean
+          created_at: string | null
+          dark_mode: boolean
+          default_language: string
+          email_notifications: boolean
+          id: string
+          multi_factor_auth: boolean
+          order_updates: boolean
+          password_policy: string
+          provider_id: string | null
+          security_alerts: boolean
+          session_timeout: number
+          system_name: string
+          updated_at: string | null
+          user_registration_alerts: boolean
+        }
+        Insert: {
+          beta_features?: boolean
+          created_at?: string | null
+          dark_mode?: boolean
+          default_language?: string
+          email_notifications?: boolean
+          id?: string
+          multi_factor_auth?: boolean
+          order_updates?: boolean
+          password_policy?: string
+          provider_id?: string | null
+          security_alerts?: boolean
+          session_timeout?: number
+          system_name?: string
+          updated_at?: string | null
+          user_registration_alerts?: boolean
+        }
+        Update: {
+          beta_features?: boolean
+          created_at?: string | null
+          dark_mode?: boolean
+          default_language?: string
+          email_notifications?: boolean
+          id?: string
+          multi_factor_auth?: boolean
+          order_updates?: boolean
+          password_policy?: string
+          provider_id?: string | null
+          security_alerts?: boolean
+          session_timeout?: number
+          system_name?: string
+          updated_at?: string | null
+          user_registration_alerts?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_settings_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: true
+            referencedRelation: "providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           company_id: string | null

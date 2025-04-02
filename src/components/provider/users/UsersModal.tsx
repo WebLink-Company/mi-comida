@@ -122,7 +122,10 @@ const UsersModal: React.FC<UsersModalProps> = ({
             <Button 
               size="sm" 
               className="bg-white/20 hover:bg-white/30 text-white border-white/30"
-              onClick={() => setIsCreateUserOpen(true)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsCreateUserOpen(true);
+              }}
             >
               <Plus className="mr-1 h-4 w-4" /> Add User
             </Button>

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   AlertDialogContent, 
@@ -43,7 +42,6 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    // Clear error when field is edited
     if (errors[name]) {
       setErrors(prev => {
         const newErrors = { ...prev };
@@ -86,6 +84,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     
     if (!validateForm()) {
       return;
@@ -104,7 +103,6 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
         throw new Error('No authenticated session');
       }
       
-      // Create user payload
       const payload = {
         email: formData.email.trim().toLowerCase(),
         first_name: formData.first_name.trim(),
@@ -157,7 +155,9 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
   return (
     <AlertDialogContent 
       className="blue-glass-modal max-w-md overflow-y-auto max-h-[90vh]"
-      onClick={(e) => e.stopPropagation()}
+      onClick={(e) => {
+        e.stopPropagation();
+      }}
     >
       <AlertDialogHeader className="pb-4 border-b border-white/20">
         <div className="flex items-center">
@@ -165,7 +165,10 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
             variant="ghost"
             size="sm"
             className="mr-2 rounded-full p-0 h-8 w-8 text-white hover:bg-white/10"
-            onClick={onClose}
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }}
           >
             <ArrowLeft size={16} />
           </Button>
@@ -180,9 +183,16 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
         </div>
       </AlertDialogHeader>
 
-      <form onSubmit={handleSubmit} className="py-4 space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
+      <form 
+        onSubmit={(e) => {
+          e.stopPropagation();
+          handleSubmit(e);
+        }} 
+        className="py-4 space-y-4"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="grid grid-cols-2 gap-4" onClick={(e) => e.stopPropagation()}>
+          <div onClick={(e) => e.stopPropagation()}>
             <label className="block text-sm font-medium text-white mb-1">
               First Name
             </label>
@@ -192,13 +202,14 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
               onChange={handleInputChange}
               className={`bg-white/10 border-white/20 text-white ${errors.first_name ? 'border-red-500' : ''}`}
               placeholder="First name"
+              onClick={(e) => e.stopPropagation()}
             />
             {errors.first_name && (
               <p className="mt-1 text-sm text-red-400">{errors.first_name}</p>
             )}
           </div>
           
-          <div>
+          <div onClick={(e) => e.stopPropagation()}>
             <label className="block text-sm font-medium text-white mb-1">
               Last Name
             </label>
@@ -208,6 +219,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
               onChange={handleInputChange}
               className={`bg-white/10 border-white/20 text-white ${errors.last_name ? 'border-red-500' : ''}`}
               placeholder="Last name"
+              onClick={(e) => e.stopPropagation()}
             />
             {errors.last_name && (
               <p className="mt-1 text-sm text-red-400">{errors.last_name}</p>
@@ -215,7 +227,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
           </div>
         </div>
         
-        <div>
+        <div onClick={(e) => e.stopPropagation()}>
           <label className="block text-sm font-medium text-white mb-1">
             Email
           </label>
@@ -226,13 +238,14 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
             type="email"
             className={`bg-white/10 border-white/20 text-white ${errors.email ? 'border-red-500' : ''}`}
             placeholder="Email address"
+            onClick={(e) => e.stopPropagation()}
           />
           {errors.email && (
             <p className="mt-1 text-sm text-red-400">{errors.email}</p>
           )}
         </div>
         
-        <div>
+        <div onClick={(e) => e.stopPropagation()}>
           <label className="block text-sm font-medium text-white mb-1">
             Role
           </label>
@@ -241,6 +254,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
             value={formData.role}
             onChange={handleInputChange}
             className="w-full bg-white/10 border border-white/20 text-white rounded-md px-3 py-2"
+            onClick={(e) => e.stopPropagation()}
           >
             <option value="supervisor">Supervisor</option>
             <option value="employee">Employee</option>
@@ -250,11 +264,11 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
           )}
         </div>
         
-        <div>
+        <div onClick={(e) => e.stopPropagation()}>
           <label className="block text-sm font-medium text-white mb-1">
             Password
           </label>
-          <div className="relative">
+          <div className="relative" onClick={(e) => e.stopPropagation()}>
             <Input 
               name="password"
               value={formData.password}
@@ -262,13 +276,17 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
               type={showPassword ? 'text' : 'password'}
               className={`bg-white/10 border-white/20 text-white pr-10 ${errors.password ? 'border-red-500' : ''}`}
               placeholder="Create password"
+              onClick={(e) => e.stopPropagation()}
             />
             <Button 
               type="button"
               variant="ghost" 
               size="sm"
               className="absolute right-1 top-1/2 -translate-y-1/2 p-1 h-auto text-white/70 hover:text-white hover:bg-transparent"
-              onClick={() => setShowPassword(!showPassword)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowPassword(!showPassword);
+              }}
             >
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </Button>
@@ -278,11 +296,11 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
           )}
         </div>
         
-        <div>
+        <div onClick={(e) => e.stopPropagation()}>
           <label className="block text-sm font-medium text-white mb-1">
             Confirm Password
           </label>
-          <div className="relative">
+          <div className="relative" onClick={(e) => e.stopPropagation()}>
             <Input 
               name="confirm_password"
               value={formData.confirm_password}
@@ -290,13 +308,17 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
               type={showPassword ? 'text' : 'password'}
               className={`bg-white/10 border-white/20 text-white pr-10 ${errors.confirm_password ? 'border-red-500' : ''}`}
               placeholder="Confirm password"
+              onClick={(e) => e.stopPropagation()}
             />
             <Button 
               type="button"
               variant="ghost" 
               size="sm"
               className="absolute right-1 top-1/2 -translate-y-1/2 p-1 h-auto text-white/70 hover:text-white hover:bg-transparent"
-              onClick={() => setShowPassword(!showPassword)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowPassword(!showPassword);
+              }}
             >
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </Button>
@@ -306,11 +328,14 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
           )}
         </div>
         
-        <AlertDialogFooter className="pt-4">
+        <AlertDialogFooter className="pt-4" onClick={(e) => e.stopPropagation()}>
           <Button 
             type="button" 
             variant="outline" 
-            onClick={onClose}
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }}
             className="text-white bg-white/10 border-white/20 hover:bg-white/20"
           >
             Cancel
@@ -319,6 +344,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
             type="submit" 
             disabled={isLoading}
             className="bg-white/20 hover:bg-white/30 text-white"
+            onClick={(e) => e.stopPropagation()}
           >
             {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin mr-2" />

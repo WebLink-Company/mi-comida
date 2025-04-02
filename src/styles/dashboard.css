@@ -1,65 +1,28 @@
 
-/* Dashboard Styles */
+/* Dashboard animations */
 .win11-clock-container {
-  min-height: 30vh;
-  overflow: hidden;
-  position: relative;
+  min-height: 40vh;
 }
 
 .win11-clock {
-  font-size: 4rem;
-  font-weight: 200;
-  margin-bottom: 0.25rem;
-  color: rgba(255, 255, 255, 0.9);
+  font-size: 6rem;
+  font-weight: 100;
+  margin-bottom: 0;
   line-height: 1;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .win11-date {
-  font-size: 1.25rem;
+  font-size: 1rem;
   font-weight: 300;
-  color: rgba(255, 255, 255, 0.8);
-  margin-top: 0.25rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: 0.5rem;
 }
 
-/* Shared glassmorphism styles */
-.glass-morphism {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.3);
-}
-
-.neo-blur {
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.modal-glassmorphism {
-  background: rgba(21, 21, 38, 0.6);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-}
-
-/* Define blue gradient background */
-.blue-gradient-bg {
-  background: linear-gradient(135deg, #1877F2 0%, #1158D1 50%, #7B3FE4 100%);
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed; /* This ensures the background covers the entire viewport */
-  width: 100%;
-  min-height: 100vh;
-}
-
-/* Animation classes */
 .fade-up {
   opacity: 0;
   transform: translateY(20px);
-  animation: fadeUp 0.8s ease forwards;
+  animation: fadeUp 0.6s forwards;
 }
 
 @keyframes fadeUp {
@@ -69,41 +32,103 @@
   }
 }
 
-/* Dashboard card hover effects */
+/* Add some delay to each item */
+.fade-up:nth-child(2) { animation-delay: 0.1s; }
+.fade-up:nth-child(3) { animation-delay: 0.2s; }
+.fade-up:nth-child(4) { animation-delay: 0.3s; }
+.fade-up:nth-child(5) { animation-delay: 0.4s; }
+
+.neo-blur {
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.text-gradient {
+  background: linear-gradient(to right, white, rgba(255,255,255,0.7));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
 .dashboard-card {
   transition: all 0.3s ease;
-  cursor: pointer;
 }
 
 .dashboard-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
 }
 
-/* Gradient backgrounds for different card types */
-.gradient-purple {
-  background: linear-gradient(135deg, rgba(123, 97, 255, 0.3), rgba(156, 39, 176, 0.3));
+/* Fix for modals */
+.modal-glassmorphism {
+  background-color: rgba(13, 17, 38, 0.9) !important;
+  backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: white !important;
+  z-index: 9999 !important;
 }
 
-.gradient-blue {
-  background: linear-gradient(135deg, rgba(33, 150, 243, 0.3), rgba(3, 169, 244, 0.3));
+/* Modal form inputs */
+.modal-input {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 6px !important;
+  color: #333 !important;
 }
 
-.gradient-green {
-  background: linear-gradient(135deg, rgba(76, 175, 80, 0.3), rgba(0, 150, 136, 0.3));
+.modal-select {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 6px !important;
+  color: #333 !important;
 }
 
-.gradient-orange {
-  background: linear-gradient(135deg, rgba(255, 152, 0, 0.3), rgba(255, 87, 34, 0.3));
+.modal-button-primary {
+  background: linear-gradient(to right, #106af7, #2c8ff3) !important;
+  color: white !important;
+  border: none !important;
+  font-weight: 500 !important;
+  border-radius: 6px !important;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .win11-clock {
-    font-size: 3rem;
-  }
-  
-  .win11-date {
-    font-size: 1rem;
-  }
+.modal-button-cancel {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+  border-radius: 6px !important;
+}
+
+/* Ensure buttons and badges remain clickable */
+.modal-button {
+  position: relative;
+  z-index: 10000 !important;
+  pointer-events: auto !important;
+}
+
+/* Fix dialog overlay to prevent click-through */
+.dialog-overlay {
+  z-index: 9998 !important;
+  pointer-events: auto !important;
+}
+
+/* Make the dialog content pointer events auto to ensure clickability */
+[data-state="open"] > * {
+  pointer-events: auto !important;
+}
+
+/* Prevent body from becoming unclickable */
+body[data-state="open"] {
+  overflow: hidden;
+  pointer-events: none;
+}
+
+body[data-state="open"] [role="dialog"] {
+  pointer-events: auto !important;
+}
+
+/* Ensure DialogContent is properly styled and clickable */
+[role="dialog"] {
+  z-index: 10000 !important;
+  pointer-events: auto !important;
 }

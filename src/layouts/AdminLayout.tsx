@@ -28,7 +28,7 @@ const AdminLayout = () => {
   }, []);
 
   return (
-    <div className="blue-gradient-bg min-h-screen flex flex-col w-full">
+    <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700 flex flex-col">
       <NavigationBar 
         userRole="admin" 
         userName={`${user?.first_name || ''} ${user?.last_name || ''}`} 

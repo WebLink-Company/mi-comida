@@ -19,10 +19,10 @@ export const ProvidersModal: React.FC<ProvidersModalProps> = ({ onClose }) => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [provider, setProvider] = useState({
-    businessName: '',
-    contactName: '',
-    email: '',
-    phone: ''
+    business_name: '',
+    contact_email: '',
+    contact_phone: '',
+    description: ''
   });
 
   const handleNavigation = (path: string) => {
@@ -34,7 +34,7 @@ export const ProvidersModal: React.FC<ProvidersModalProps> = ({ onClose }) => {
     onClose();
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
     setProvider(prev => ({
       ...prev,
@@ -45,7 +45,7 @@ export const ProvidersModal: React.FC<ProvidersModalProps> = ({ onClose }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!provider.businessName || !provider.email) {
+    if (!provider.business_name || !provider.contact_email) {
       toast({
         title: "Missing information",
         description: "Business name and email are required",
@@ -58,10 +58,10 @@ export const ProvidersModal: React.FC<ProvidersModalProps> = ({ onClose }) => {
     
     try {
       const { error } = await supabase.from('providers').insert({
-        business_name: provider.businessName,
-        contact_name: provider.contactName,
-        email: provider.email,
-        phone: provider.phone
+        business_name: provider.business_name,
+        contact_email: provider.contact_email,
+        contact_phone: provider.contact_phone,
+        description: provider.description
       });
 
       if (error) throw error;
@@ -99,49 +99,49 @@ export const ProvidersModal: React.FC<ProvidersModalProps> = ({ onClose }) => {
 
       <form onSubmit={handleSubmit} className="space-y-4 my-4">
         <div className="space-y-2">
-          <Label htmlFor="businessName" className="text-white">Business Name</Label>
+          <Label htmlFor="business_name" className="text-white">Business Name</Label>
           <Input 
-            id="businessName"
-            value={provider.businessName}
+            id="business_name"
+            value={provider.business_name}
             onChange={handleChange}
             placeholder="Enter business name"
-            className="modal-input"
+            className="modal-input bg-white/10 border-white/20 text-white"
             required
           />
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="contactName" className="text-white">Contact Name</Label>
+          <Label htmlFor="contact_email" className="text-white">Contact Email</Label>
           <Input 
-            id="contactName"
-            value={provider.contactName}
-            onChange={handleChange}
-            placeholder="Enter contact person name"
-            className="modal-input"
-          />
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="email" className="text-white">Email</Label>
-          <Input 
-            id="email"
+            id="contact_email"
             type="email"
-            value={provider.email}
+            value={provider.contact_email}
             onChange={handleChange}
             placeholder="Enter email address"
-            className="modal-input"
+            className="modal-input bg-white/10 border-white/20 text-white"
             required
           />
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="phone" className="text-white">Phone Number</Label>
+          <Label htmlFor="contact_phone" className="text-white">Phone Number</Label>
           <Input 
-            id="phone"
-            value={provider.phone}
+            id="contact_phone"
+            value={provider.contact_phone}
             onChange={handleChange}
             placeholder="Enter phone number"
-            className="modal-input"
+            className="modal-input bg-white/10 border-white/20 text-white"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="description" className="text-white">Description</Label>
+          <textarea
+            id="description"
+            value={provider.description}
+            onChange={handleChange}
+            placeholder="Brief description of the provider"
+            className="w-full h-20 px-3 py-2 modal-input bg-white/10 border-white/20 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
         
@@ -160,7 +160,7 @@ export const ProvidersModal: React.FC<ProvidersModalProps> = ({ onClose }) => {
           <Button 
             type="submit"
             disabled={isSubmitting}
-            className="modal-button modal-button-primary"
+            className="modal-button modal-button-primary bg-gradient-to-r from-blue-500 to-purple-600 text-white"
           >
             {isSubmitting ? 'Creating...' : 'Create Provider'}
           </Button>

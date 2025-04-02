@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { format } from 'date-fns';
@@ -8,16 +7,21 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Users, Building, ShoppingBag, FileText, TrendingUp, Calendar, DollarSign, Globe, ChevronRight, ExternalLink, UserPlus, Plus, FileSpreadsheet, ChefHat } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { Dialog } from "@/components/ui/dialog";
+import { 
+  Dialog,
+  DialogContent, 
+  DialogDescription, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogFooter 
+} from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter } from '@/components/ui/alert-dialog';
 import { UsersModal } from '@/components/admin/dashboard/UsersModal';
 import { CompaniesModal } from '@/components/admin/dashboard/CompaniesModal';
 import { ProvidersModal } from '@/components/admin/dashboard/ProvidersModal';
 import { OrdersModal } from '@/components/admin/dashboard/OrdersModal';
 import { InvoicesModal } from '@/components/admin/dashboard/InvoicesModal';
 import '../styles/dashboard.css';
-
-// Import our existing modal dialogs for other dashboard data
-import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter } from '@/components/ui/alert-dialog';
 
 const DashboardPage = () => {
   const navigate = useNavigate();
@@ -169,11 +173,12 @@ const DashboardPage = () => {
   const renderAlertContent = () => {
     switch (activeDialog) {
       case 'platform-overview':
-        return <>
-            <DialogHeader>
-              <DialogTitle>Platform Overview</DialogTitle>
-              <DialogDescription>Detailed statistics about platform usage</DialogDescription>
-            </DialogHeader>
+        return (
+          <>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Platform Overview</AlertDialogTitle>
+              <AlertDialogDescription>Detailed statistics about platform usage</AlertDialogDescription>
+            </AlertDialogHeader>
             <div className="space-y-4 mt-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-white/10 p-4 rounded-lg">
@@ -197,7 +202,7 @@ const DashboardPage = () => {
                   <p className="text-xs text-muted-foreground">+18% from last month</p>
                 </div>
               </div>
-              <DialogFooter className="flex flex-wrap gap-2 justify-end mt-4">
+              <AlertDialogFooter className="flex flex-wrap gap-2 justify-end mt-4">
                 <Badge 
                   variant="secondary"
                   className="py-2 cursor-pointer hover:bg-primary/20"
@@ -231,16 +236,17 @@ const DashboardPage = () => {
                   <FileText size={14} className="mr-1" />
                   Reports
                 </Badge>
-              </DialogFooter>
+              </AlertDialogFooter>
             </div>
-          </>;
+          </>
+        );
       
       case 'provider-performance':
         return <>
-            <DialogHeader>
-              <DialogTitle>Provider Performance</DialogTitle>
-              <DialogDescription>Analytics for service providers</DialogDescription>
-            </DialogHeader>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Provider Performance</AlertDialogTitle>
+              <AlertDialogDescription>Analytics for service providers</AlertDialogDescription>
+            </AlertDialogHeader>
             <div className="space-y-4 mt-4">
               <div>
                 <h3 className="text-sm font-medium mb-2">Top Performers</h3>
@@ -268,7 +274,7 @@ const DashboardPage = () => {
                   </li>
                 </ul>
               </div>
-              <DialogFooter className="flex flex-wrap gap-2 justify-end mt-4">
+              <AlertDialogFooter className="flex flex-wrap gap-2 justify-end mt-4">
                 <Badge 
                   variant="secondary"
                   className="py-2 cursor-pointer hover:bg-primary/20"
@@ -291,16 +297,16 @@ const DashboardPage = () => {
                   <TrendingUp size={14} className="mr-1" />
                   Analytics
                 </Badge>
-              </DialogFooter>
+              </AlertDialogFooter>
             </div>
           </>;
       
       case 'order-metrics':
         return <>
-            <DialogHeader>
-              <DialogTitle>Order Metrics</DialogTitle>
-              <DialogDescription>Detailed order statistics</DialogDescription>
-            </DialogHeader>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Order Metrics</AlertDialogTitle>
+              <AlertDialogDescription>Detailed order statistics</AlertDialogDescription>
+            </AlertDialogHeader>
             <div className="space-y-4 mt-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-white/10 p-4 rounded-lg">
@@ -321,7 +327,7 @@ const DashboardPage = () => {
                   <p className="text-xl font-bold">{stats.avgOrdersPerProvider}</p>
                 </div>
               </div>
-              <DialogFooter className="flex flex-wrap gap-2 justify-end mt-4">
+              <AlertDialogFooter className="flex flex-wrap gap-2 justify-end mt-4">
                 <Badge 
                   variant="secondary"
                   className="py-2 cursor-pointer hover:bg-primary/20"
@@ -344,16 +350,16 @@ const DashboardPage = () => {
                   <ChefHat size={14} className="mr-1" />
                   Providers
                 </Badge>
-              </DialogFooter>
+              </AlertDialogFooter>
             </div>
           </>;
 
       case 'finance-insights':
         return <>
-            <DialogHeader>
-              <DialogTitle>Finance Insights</DialogTitle>
-              <DialogDescription>Financial statistics and metrics</DialogDescription>
-            </DialogHeader>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Finance Insights</AlertDialogTitle>
+              <AlertDialogDescription>Financial statistics and metrics</AlertDialogDescription>
+            </AlertDialogHeader>
             <div className="space-y-4 mt-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-white/10 p-4 rounded-lg">
@@ -374,7 +380,7 @@ const DashboardPage = () => {
                   <span className="text-primary">${formatNumber(Math.floor(stats.billingThisMonth * 0.3))}</span>
                 </div>
               </div>
-              <DialogFooter className="flex flex-wrap gap-2 justify-end mt-4">
+              <AlertDialogFooter className="flex flex-wrap gap-2 justify-end mt-4">
                 <Badge 
                   variant="secondary"
                   className="py-2 cursor-pointer hover:bg-primary/20"
@@ -397,22 +403,22 @@ const DashboardPage = () => {
                   <Building size={14} className="mr-1" />
                   Companies
                 </Badge>
-              </DialogFooter>
+              </AlertDialogFooter>
             </div>
           </>;
 
       // New action modals
       case 'add-user':
         return <>
-            <DialogHeader>
-              <DialogTitle>Add New User</DialogTitle>
-              <DialogDescription>Create a new user account</DialogDescription>
-            </DialogHeader>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Add New User</AlertDialogTitle>
+              <AlertDialogDescription>Create a new user account</AlertDialogDescription>
+            </AlertDialogHeader>
             <div className="space-y-4 mt-4">
               <p className="text-sm">This will redirect you to the user management page where you can add a new user to the platform.</p>
               <p className="text-xs text-muted-foreground">Users can have different roles and permissions based on their responsibilities.</p>
             </div>
-            <DialogFooter className="flex flex-wrap gap-2 justify-end mt-4">
+            <AlertDialogFooter className="flex flex-wrap gap-2 justify-end mt-4">
               <Button variant="outline" onClick={() => setActiveDialog(null)}>
                 Cancel
               </Button>
@@ -433,20 +439,20 @@ const DashboardPage = () => {
                 <FileText size={14} className="mr-1" />
                 Permissions
               </Badge>
-            </DialogFooter>
+            </AlertDialogFooter>
           </>;
 
       case 'create-company':
         return <>
-            <DialogHeader>
-              <DialogTitle>Create Company</DialogTitle>
-              <DialogDescription>Add a new company to the platform</DialogDescription>
-            </DialogHeader>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Create Company</AlertDialogTitle>
+              <AlertDialogDescription>Add a new company to the platform</AlertDialogDescription>
+            </AlertDialogHeader>
             <div className="space-y-4 mt-4">
               <p className="text-sm">This will redirect you to the companies page where you can create a new company account.</p>
               <p className="text-xs text-muted-foreground">Companies can be assigned to providers and have their own employees.</p>
             </div>
-            <DialogFooter className="flex flex-wrap gap-2 justify-end mt-4">
+            <AlertDialogFooter className="flex flex-wrap gap-2 justify-end mt-4">
               <Button variant="outline" onClick={() => setActiveDialog(null)}>
                 Cancel
               </Button>
@@ -467,20 +473,20 @@ const DashboardPage = () => {
                 <ChefHat size={14} className="mr-1" />
                 Providers
               </Badge>
-            </DialogFooter>
+            </AlertDialogFooter>
           </>;
 
       case 'add-provider':
         return <>
-            <DialogHeader>
-              <DialogTitle>Add Provider</DialogTitle>
-              <DialogDescription>Register a new food service provider</DialogDescription>
-            </DialogHeader>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Add Provider</AlertDialogTitle>
+              <AlertDialogDescription>Register a new food service provider</AlertDialogDescription>
+            </AlertDialogHeader>
             <div className="space-y-4 mt-4">
               <p className="text-sm">This will redirect you to the providers page where you can register a new food service provider.</p>
               <p className="text-xs text-muted-foreground">Providers can be linked to companies and create their own menu items.</p>
             </div>
-            <DialogFooter className="flex flex-wrap gap-2 justify-end mt-4">
+            <AlertDialogFooter className="flex flex-wrap gap-2 justify-end mt-4">
               <Button variant="outline" onClick={() => setActiveDialog(null)}>
                 Cancel
               </Button>
@@ -501,20 +507,20 @@ const DashboardPage = () => {
                 <Building size={14} className="mr-1" />
                 Companies
               </Badge>
-            </DialogFooter>
+            </AlertDialogFooter>
           </>;
 
       case 'view-orders':
         return <>
-            <DialogHeader>
-              <DialogTitle>View Orders</DialogTitle>
-              <DialogDescription>Monitor and manage all orders</DialogDescription>
-            </DialogHeader>
+            <AlertDialogHeader>
+              <AlertDialogTitle>View Orders</AlertDialogTitle>
+              <AlertDialogDescription>Monitor and manage all orders</AlertDialogDescription>
+            </AlertDialogHeader>
             <div className="space-y-4 mt-4">
               <p className="text-sm">This will redirect you to the reports page where you can view all order activity.</p>
               <p className="text-xs text-muted-foreground">You can filter orders by date, company, provider, and status.</p>
             </div>
-            <DialogFooter className="flex flex-wrap gap-2 justify-end mt-4">
+            <AlertDialogFooter className="flex flex-wrap gap-2 justify-end mt-4">
               <Button variant="outline" onClick={() => setActiveDialog(null)}>
                 Cancel
               </Button>
@@ -535,20 +541,20 @@ const DashboardPage = () => {
                 <ChefHat size={14} className="mr-1" />
                 Providers
               </Badge>
-            </DialogFooter>
+            </AlertDialogFooter>
           </>;
 
       case 'review-invoices':
         return <>
-            <DialogHeader>
-              <DialogTitle>Review Invoices</DialogTitle>
-              <DialogDescription>Manage billing and payments</DialogDescription>
-            </DialogHeader>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Review Invoices</AlertDialogTitle>
+              <AlertDialogDescription>Manage billing and payments</AlertDialogDescription>
+            </AlertDialogHeader>
             <div className="space-y-4 mt-4">
               <p className="text-sm">This will redirect you to the finance section where you can review and manage invoices.</p>
               <p className="text-xs text-muted-foreground">You can track payments, generate reports, and manage billing cycles.</p>
             </div>
-            <DialogFooter className="flex flex-wrap gap-2 justify-end mt-4">
+            <AlertDialogFooter className="flex flex-wrap gap-2 justify-end mt-4">
               <Button variant="outline" onClick={() => setActiveDialog(null)}>
                 Cancel
               </Button>
@@ -569,7 +575,7 @@ const DashboardPage = () => {
                 <Building size={14} className="mr-1" />
                 Companies
               </Badge>
-            </DialogFooter>
+            </AlertDialogFooter>
           </>;
     
       default:
@@ -577,11 +583,12 @@ const DashboardPage = () => {
     }
   };
 
-  return <div style={{
-    backgroundImage: `url('/win11-background.svg')`,
-    backgroundSize: 'cover',
-    backgroundPosition: 'center'
-  }} className="">
+  return (
+    <div style={{
+      backgroundImage: `url('/win11-background.svg')`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center'
+    }} className="">
       <div className="win11-clock-container flex-grow flex flex-col items-center justify-center">
         <div className="text-center">
           <h1 className="text-white/90 text-2xl font-light mb-1 fade-up">{getFirstName()}</h1>
@@ -801,15 +808,4 @@ const DashboardPage = () => {
       </Dialog>
 
       {/* Dialog for Order Management */}
-      <Dialog open={activeDialog === 'view-orders'} onOpenChange={() => activeDialog === 'view-orders' && setActiveDialog(null)}>
-        {activeDialog === 'view-orders' && <OrdersModal onClose={closeDialog} />}
-      </Dialog>
-
-      {/* Dialog for Invoice Management */}
-      <Dialog open={activeDialog === 'review-invoices'} onOpenChange={() => activeDialog === 'review-invoices' && setActiveDialog(null)}>
-        {activeDialog === 'review-invoices' && <InvoicesModal onClose={closeDialog} />}
-      </Dialog>
-    </div>
-};
-
-export default DashboardPage;
+      <Dialog open={activeDialog === 'view-orders'} onOpenChange={() => activeDialog === '

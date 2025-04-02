@@ -48,12 +48,17 @@ const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
   monthlyRevenue,
   loadingMonthlyRevenue
 }) => {
+  const formatTopMeal = (meal: TopMealResult | undefined): string => {
+    if (!meal) return 'No data';
+    return `${meal.name}${meal.count > 0 ? ` x${meal.count}` : ''}`;
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       {/* Orders Today */}
       <StatCard
         title="Orders Today"
-        value={loadingOrdersToday ? "Loading..." : ordersToday}
+        value={ordersToday}
         icon={<Calendar className="h-6 w-6" />}
         className="bg-white/10 border-blue-400/20 border text-white backdrop-blur-md"
         loading={loadingOrdersToday}
@@ -64,7 +69,7 @@ const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
       {/* Total Meals Today */}
       <StatCard
         title="Total Meals Today"
-        value={loadingMealsToday ? "Loading..." : totalMealsToday}
+        value={totalMealsToday}
         icon={<ShoppingBag className="h-6 w-6" />}
         className="bg-white/10 border-green-400/20 border text-white backdrop-blur-md"
         loading={loadingMealsToday}
@@ -75,7 +80,7 @@ const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
       {/* Companies with Orders Today */}
       <StatCard
         title="Companies Ordering Today"
-        value={loadingCompaniesOrders ? "Loading..." : companiesWithOrdersToday}
+        value={companiesWithOrdersToday}
         icon={<Building className="h-6 w-6" />}
         className="bg-white/10 border-yellow-400/20 border text-white backdrop-blur-md"
         loading={loadingCompaniesOrders}
@@ -86,7 +91,7 @@ const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
       {/* Top Ordered Meal Today */}
       <StatCard
         title="Top Ordered Meal Today"
-        value={loadingTopMeal ? "Loading..." : `${topOrderedMeal?.name || 'No data'} x${topOrderedMeal?.count || 0}`}
+        value={loadingTopMeal ? "Loading..." : formatTopMeal(topOrderedMeal)}
         icon={<Award className="h-6 w-6" />}
         className="bg-white/10 border-purple-400/20 border text-white backdrop-blur-md"
         loading={loadingTopMeal}
@@ -97,7 +102,7 @@ const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
       {/* Pending Orders */}
       <StatCard
         title="Pending Orders"
-        value={loadingPending ? "Loading..." : pendingOrders}
+        value={pendingOrders}
         icon={<Clock className="h-6 w-6" />}
         className="bg-white/10 border-red-400/20 border text-white backdrop-blur-md"
         loading={loadingPending}
@@ -108,7 +113,7 @@ const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
       {/* Active Companies Total */}
       <StatCard
         title="Active Companies"
-        value={loadingActiveCompanies ? "Loading..." : activeCompanies}
+        value={activeCompanies}
         icon={<Briefcase className="h-6 w-6" />}
         className="bg-white/10 border-orange-400/20 border text-white backdrop-blur-md"
         loading={loadingActiveCompanies}
@@ -119,7 +124,7 @@ const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
       {/* New Users This Week */}
       <StatCard
         title="New Users This Week"
-        value={loadingNewUsers ? "Loading..." : newUsers}
+        value={newUsers}
         icon={<UserPlus className="h-6 w-6" />}
         className="bg-white/10 border-amber-400/20 border text-white backdrop-blur-md"
         loading={loadingNewUsers}
@@ -130,7 +135,7 @@ const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
       {/* Monthly Orders Total */}
       <StatCard
         title="Monthly Orders Total"
-        value={loadingMonthlyOrders ? "Loading..." : monthlyOrders}
+        value={monthlyOrders}
         icon={<ListOrdered className="h-6 w-6" />}
         className="bg-white/10 border-blue-400/20 border text-white backdrop-blur-md"
         loading={loadingMonthlyOrders}
@@ -141,7 +146,7 @@ const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
       {/* Total Revenue This Month */}
       <StatCard
         title="Total Revenue This Month"
-        value={loadingMonthlyRevenue ? "Loading..." : `$${monthlyRevenue}`}
+        value={monthlyRevenue}
         icon={<DollarSign className="h-6 w-6" />}
         className="bg-white/10 border-green-400/20 border text-white backdrop-blur-md"
         loading={loadingMonthlyRevenue}

@@ -66,8 +66,8 @@ export const useProviderDashboardStats = () => {
     enabled: !!user?.id
   });
 
-  // Top Ordered Meal Today
-  const { data: topOrderedMeal, isLoading: loadingTopMeal } = useQuery<TopMealResult, Error>({
+  // Top Ordered Meal Today - Fix type issues
+  const { data: topOrderedMeal, isLoading: loadingTopMeal } = useQuery<TopMealResult | undefined, Error>({
     queryKey: ['topMeal', today, user?.id],
     queryFn: async () => {
       const { data, error } = await supabase

@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 
 interface StatCardProps {
   title: string;
-  value: string | number;
+  value: string | number | undefined;
   icon: ReactNode;
   description?: string;
   trend?: {
@@ -50,12 +50,36 @@ const StatCard = ({
     setIsQuickViewOpen(true);
   };
 
+  const formatValue = (val: string | number | undefined): string => {
+    if (val === undefined || val === null) return "No data";
+    
+    if (typeof val === 'number') {
+      if (title.toLowerCase().includes('revenue') || title.toLowerCase().includes('billing')) {
+        return `$${val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      }
+      return val.toLocaleString();
+    }
+    
+    // If value already has formatting (like "$X" or "X x Y")
+    if (typeof val === 'string') {
+      if (val === "Loading...") return val;
+      if (val.startsWith('$')) {
+        const numericPart = parseFloat(val.substring(1));
+        if (!isNaN(numericPart)) {
+          return `$${numericPart.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        }
+      }
+    }
+    
+    return String(val);
+  };
+
   return (
     <>
       <Card 
         className={cn(
           "overflow-hidden transition-all duration-200", 
-          linkTo && "hover:shadow-md hover:border-primary/30 cursor-pointer", 
+          linkTo && "hover:shadow-md hover:border-primary/30 cursor-pointer backdrop-blur-md bg-white/10 border-white/20", 
           className
         )}
         onClick={handleCardClick}
@@ -74,31 +98,31 @@ const StatCard = ({
           
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-muted-foreground mb-1">{title}</p>
+              <p className="text-sm font-medium text-white/80 mb-1">{title}</p>
               <div className="flex items-baseline">
                 {loading ? (
-                  <Skeleton className="h-8 w-16" />
+                  <Skeleton className="h-8 w-16 bg-white/20" />
                 ) : (
-                  <h3 className="text-2xl font-bold">{value}</h3>
+                  <h3 className="text-2xl font-bold text-white">{formatValue(value)}</h3>
                 )}
                 {!loading && trend && (
                   <span className={cn(
                     "ml-2 text-xs font-medium",
-                    trend.isPositive ? "text-green-500" : "text-red-500"
+                    trend.isPositive ? "text-green-400" : "text-red-400"
                   )}>
                     {trend.isPositive ? '↑' : '↓'} {Math.abs(trend.value)}%
                   </span>
                 )}
               </div>
               {description && (
-                <p className="mt-1 text-xs text-muted-foreground">{description}</p>
+                <p className="mt-1 text-xs text-white/70">{description}</p>
               )}
               {lastUpdated && (
-                <p className="mt-2 text-xs text-muted-foreground/70">Updated {lastUpdated}</p>
+                <p className="mt-2 text-xs text-white/50">Updated {lastUpdated}</p>
               )}
             </div>
             
-            <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+            <div className="h-12 w-12 rounded-lg bg-white/10 flex items-center justify-center text-white/90">
               {icon}
             </div>
           </div>
@@ -107,7 +131,7 @@ const StatCard = ({
 
       {quickViewComponent && (
         <Dialog open={isQuickViewOpen} onOpenChange={setIsQuickViewOpen}>
-          <DialogContent className="max-w-3xl">
+          <DialogContent className="max-w-3xl modal-glassmorphism">
             <DialogHeader>
               <DialogTitle>{title} Preview</DialogTitle>
               <DialogDescription>
@@ -120,7 +144,9 @@ const StatCard = ({
                 <Button onClick={() => {
                   setIsQuickViewOpen(false);
                   navigate(linkTo);
-                }}>
+                }}
+                className="modal-button-primary"
+                >
                   View All
                 </Button>
               </div>

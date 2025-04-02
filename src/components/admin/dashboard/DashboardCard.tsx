@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 interface DashboardCardProps {
   title: string;
   icon: React.ReactNode;
-  data: Array<{ label: string; value: string | number; path: string }>;
+  data: Array<{ label: string; value: string | number | null | undefined; path: string }>;
   animationDelay: string;
   path: string;
   onOpenDialog: () => void;
@@ -24,8 +24,19 @@ export const DashboardCard: React.FC<DashboardCardProps> = ({
 }) => {
   const navigate = useNavigate();
 
-  const formatNumber = (num: number) => {
-    return new Intl.NumberFormat().format(num);
+  const formatValue = (value: string | number | null | undefined): string => {
+    if (value === undefined || value === null) return "No data";
+    
+    if (typeof value === 'number') {
+      // Handle currency values (assume values with $ prefix should be formatted as currency)
+      if (String(value).startsWith('$') || title.toLowerCase().includes('revenue') || 
+          title.toLowerCase().includes('billing')) {
+        return `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      }
+      return value.toLocaleString();
+    }
+    
+    return value.toString();
   };
 
   return (
@@ -34,26 +45,26 @@ export const DashboardCard: React.FC<DashboardCardProps> = ({
       style={{ animationDelay }}
       onClick={() => navigate(path)}
     >
-      <div className="flex justify-between items-center">
-        <div className="text-white font-medium">{title}</div>
+      <div className="flex justify-between items-center mb-3">
+        <div className="text-white font-semibold text-base">{title}</div>
         <div className="flex gap-2">
           <button
             onClick={(e) => {
               e.stopPropagation();
               onOpenDialog();
             }}
-            className="text-white/70 hover:text-white"
+            className="text-white/70 hover:text-white transition-colors"
           >
             <ExternalLink size={16} />
           </button>
-          {icon}
+          <div className="text-white/90">{icon}</div>
         </div>
       </div>
-      <div className="mt-4">
+      <div>
         <div className="grid grid-cols-2 gap-y-3">
           {data.map((item, index) => (
             <React.Fragment key={index}>
-              <div className="text-sm text-white/80">{item.label}</div>
+              <div className="text-sm text-white/70">{item.label}</div>
               <div
                 className="text-sm font-medium text-right text-white cursor-pointer hover:underline"
                 onClick={(e) => {
@@ -61,13 +72,13 @@ export const DashboardCard: React.FC<DashboardCardProps> = ({
                   navigate(item.path);
                 }}
               >
-                {typeof item.value === 'number' ? formatNumber(item.value) : item.value}
+                {formatValue(item.value)}
               </div>
             </React.Fragment>
           ))}
         </div>
         <div className="flex justify-end mt-3">
-          <Button variant="link" size="sm" className="text-white p-0 hover:text-white/80">
+          <Button variant="link" size="sm" className="text-white p-0 hover:text-white/80 font-medium">
             View Details <ChevronRight size={14} className="ml-1" />
           </Button>
         </div>

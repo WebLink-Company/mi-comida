@@ -45,6 +45,9 @@ const ProviderDashboardPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
+      {/* Blue gradient background */}
+      <div className="blue-gradient-bg"></div>
+      
       {/* Glass effect notification */}
       <div className="mb-8 p-6 rounded-xl backdrop-blur-md bg-white/10 border border-white/20 text-white">
         <ClockDisplay user={user} quickActions={quickActions} />

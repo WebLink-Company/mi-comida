@@ -105,10 +105,11 @@ const CompaniesPage = () => {
     try {
       const isNew = !currentCompany.id;
       
-      // Important: Use the logged-in user's provider_id - do not allow overriding
+      // For provider users, we'll ALWAYS use their own provider_id
+      // This is crucial to satisfy the RLS policy
       const companyData = {
         ...currentCompany,
-        provider_id: user.provider_id, // Always use the authenticated user's provider_id
+        provider_id: user.provider_id, // Always use the authenticated provider's ID
         name: currentCompany.name,
         subsidy_percentage: currentCompany.subsidy_percentage || 0,
         fixed_subsidy_amount: currentCompany.fixed_subsidy_amount || 0,
@@ -118,17 +119,17 @@ const CompaniesPage = () => {
 
       let operation;
       if (isNew) {
+        // For new companies, insert with the provider's ID
         operation = supabase
           .from('companies')
-          .insert(companyData)
-          .select();
+          .insert(companyData);
       } else {
-        // For updates, make sure we don't change the provider_id
+        // For updates, we still ensure provider_id is set correctly
+        // and we're only updating the company if it belongs to this provider (RLS will enforce this)
         operation = supabase
           .from('companies')
           .update(companyData)
-          .eq('id', currentCompany.id)
-          .select();
+          .eq('id', currentCompany.id);
       }
 
       const { data, error } = await operation;
@@ -395,4 +396,3 @@ const CompaniesPage = () => {
 };
 
 export default CompaniesPage;
-

@@ -44,11 +44,15 @@ export const CompaniesModal: React.FC<CompaniesModalProps> = ({ onClose, provide
     if (providerId) {
       console.log(`Setting provider_id in CompaniesModal to: ${providerId}`);
       setCurrentCompany(prev => ({ ...prev, provider_id: providerId }));
+    } else if (user?.role === 'provider' && user?.provider_id) {
+      // For provider users, set their own provider_id automatically
+      console.log(`Setting provider's own provider_id: ${user.provider_id}`);
+      setCurrentCompany(prev => ({ ...prev, provider_id: user.provider_id }));
     }
-  }, [providerId]);
+  }, [providerId, user]);
 
   const handleUpdateCompany = (key: string, value: any) => {
-    // Don't allow manual overriding of provider_id from the form
+    // Don't allow manual overriding of provider_id from the form if user is a provider
     if (key === 'provider_id' && user?.role === 'provider') {
       // If the user is a provider, we ignore attempts to change provider_id
       console.log('Provider users cannot change provider_id');

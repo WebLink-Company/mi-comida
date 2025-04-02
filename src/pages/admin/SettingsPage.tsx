@@ -16,7 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ChangePasswordForm } from '@/components/account/ChangePasswordForm';
 import { useAuth } from '@/context/AuthContext';
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, PlatformSettings } from "@/integrations/supabase/client";
 import { useToast } from '@/hooks/use-toast';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormDescription } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
@@ -52,10 +52,11 @@ const SettingsPage = () => {
     const fetchSettings = async () => {
       setIsLoading(true);
       try {
+        // Use type assertion for platform_settings table
         const { data, error } = await supabase
           .from('platform_settings')
           .select('*')
-          .maybeSingle();
+          .maybeSingle() as { data: PlatformSettings | null, error: any };
 
         if (error) {
           console.error('Error fetching settings:', error);
@@ -117,7 +118,7 @@ const SettingsPage = () => {
           session_timeout: securitySettings.sessionTimeout,
           password_policy: securitySettings.passwordPolicyStrength,
           updated_at: new Date().toISOString()
-        })
+        } as any)
         .eq('provider_id', null);
 
       if (error) {
@@ -166,9 +167,9 @@ const SettingsPage = () => {
           session_timeout: 60,
           password_policy: 'strong',
           updated_at: new Date().toISOString()
-        })
+        } as any)
         .eq('provider_id', null)
-        .select();
+        .select() as { data: PlatformSettings[] | null, error: any };
 
       if (error) {
         console.error('Error resetting settings:', error);

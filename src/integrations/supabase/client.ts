@@ -9,6 +9,25 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
+// Define custom types to handle platform_settings
+export type PlatformSettings = {
+  id: string;
+  provider_id: string | null;
+  system_name: string;
+  default_language: string;
+  dark_mode: boolean;
+  beta_features: boolean;
+  email_notifications: boolean;
+  order_updates: boolean;
+  user_registration_alerts: boolean;
+  security_alerts: boolean;
+  multi_factor_auth: boolean;
+  session_timeout: number;
+  password_policy: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
     persistSession: true,

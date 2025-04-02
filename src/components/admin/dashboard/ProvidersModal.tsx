@@ -18,11 +18,7 @@ export const ProvidersModal: React.FC<ProvidersModalProps> = ({ onClose }) => {
     setTimeout(() => navigate(path), 100);
   };
 
-  const handleClose = (e?: React.MouseEvent) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
+  const handleClose = () => {
     onClose();
   };
 
@@ -46,7 +42,10 @@ export const ProvidersModal: React.FC<ProvidersModalProps> = ({ onClose }) => {
         <div className="flex justify-end gap-2">
           <Button 
             variant="outline" 
-            onClick={handleClose}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleClose();
+            }}
             className="modal-button z-50 border-white/20 text-white hover:bg-white/10"
           >
             Cancel

@@ -72,13 +72,13 @@
 /* Ensure buttons and badges remain clickable */
 .modal-button {
   position: relative;
-  z-index: 10000;
+  z-index: 10000 !important;
   pointer-events: auto !important;
 }
 
 /* Fix dialog overlay to prevent click-through */
 .dialog-overlay {
-  z-index: 9998;
+  z-index: 9998 !important;
   pointer-events: auto !important;
 }
 
@@ -94,5 +94,11 @@ body[data-state="open"] {
 }
 
 body[data-state="open"] [role="dialog"] {
-  pointer-events: auto;
+  pointer-events: auto !important;
+}
+
+/* Ensure DialogContent is properly styled and clickable */
+[role="dialog"] {
+  z-index: 10000 !important;
+  pointer-events: auto !important;
 }

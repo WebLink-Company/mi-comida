@@ -21,7 +21,7 @@ import { InvoicesModal } from '@/components/admin/dashboard/InvoicesModal';
 import { ClockDisplay } from '@/components/admin/dashboard/ClockDisplay';
 import { DashboardCard } from '@/components/admin/dashboard/DashboardCard';
 import { DialogContent as DashboardDialogContent } from '@/components/admin/dashboard/DialogContents';
-import '../styles/dashboard.css';
+import "@/styles/dashboard.css";
 
 const DashboardPage = () => {
   const navigate = useNavigate();

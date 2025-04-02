@@ -88,16 +88,55 @@ body {
   backdrop-filter: blur(12px) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   color: white !important;
-  z-index: 50 !important; /* Base z-index for modals */
 }
 
-/* Z-index layering for nested modals */
-[role="dialog"] + [role="alertdialog"] {
+/* Z-index layering for nested modals - FIXED */
+[role="dialog"] {
+  position: fixed;
+  z-index: 50;
+  pointer-events: auto !important;
+  transition: opacity 0.2s ease-in-out;
+}
+
+[role="alertdialog"] {
+  position: fixed;
+  z-index: 100 !important;
+  pointer-events: auto !important;
+}
+
+/* Ensure DialogContent elements are properly layered */
+[role="dialog"] [role="dialog"] {
+  z-index: 60 !important;
+}
+
+[role="dialog"] [role="alertdialog"] {
   z-index: 100 !important;
 }
 
-[role="alertdialog"] .modal-glassmorphism {
-  z-index: 100 !important;
+/* Fix dialog overlay to prevent click-through */
+.dialog-overlay {
+  z-index: 40 !important;
+  pointer-events: auto !important;
+}
+
+/* Proper z-index stacking for nested dialogs */
+[role="alertdialog"] .dialog-overlay {
+  z-index: 60 !important;
+}
+
+/* Make the dialog content pointer events auto to ensure clickability */
+[data-state="open"] > * {
+  pointer-events: auto !important;
+}
+
+/* Prevent body from becoming unclickable by setting pointer-events to auto on specific dialog elements */
+body[data-state="open"] {
+  overflow: hidden;
+}
+
+body[data-state="open"] [role="dialog"],
+body[data-state="open"] [role="alertdialog"] {
+  pointer-events: auto !important;
 }
 
 /* Modal form inputs */
@@ -137,44 +176,6 @@ body {
   pointer-events: auto !important;
 }
 
-/* Fix dialog overlay to prevent click-through */
-.dialog-overlay {
-  z-index: 40 !important;
-  pointer-events: auto !important;
-}
-
-/* Proper z-index stacking for nested dialogs */
-[role="alertdialog"] .dialog-overlay {
-  z-index: 60 !important;
-}
-
-/* Make the dialog content pointer events auto to ensure clickability */
-[data-state="open"] > * {
-  pointer-events: auto !important;
-}
-
-/* Prevent body from becoming unclickable */
-body[data-state="open"] {
-  overflow: hidden;
-  pointer-events: none;
-}
-
-body[data-state="open"] [role="dialog"] {
-  pointer-events: auto !important;
-}
-
-/* Ensure DialogContent is properly styled and clickable */
-[role="dialog"] {
-  z-index: 50 !important;
-  pointer-events: auto !important;
-}
-
-/* Higher z-index for alert dialogs */
-[role="alertdialog"] {
-  z-index: 60 !important;
-  pointer-events: auto !important;
-}
-
 /* Card styling for dashboard cards */
 .dashboard-metric-card {
   background-color: rgba(255, 255, 255, 0.08);
@@ -209,4 +210,3 @@ body[data-state="open"] [role="dialog"] {
   font-family: 'SF Mono', monospace;
   letter-spacing: -0.5px;
 }
-

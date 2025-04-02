@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -152,26 +151,30 @@ const ProviderUsersPage = () => {
   };
 
   const handleCloseUserModal = () => {
-    setIsUserModalOpen(false);
-    setTimeout(() => {
-      setSelectedCompany(null);
-      setCompanyUsers([]);
-    }, 300); // Wait for animation to complete
+    if (!isDetailsModalOpen) {
+      setIsUserModalOpen(false);
+      // Use a small timeout to ensure state is cleaned up after animation
+      setTimeout(() => {
+        setSelectedCompany(null);
+        setCompanyUsers([]);
+      }, 300); 
+    }
   };
 
   const handleCloseDetailsModal = () => {
     setIsDetailsModalOpen(false);
+    // Use a small timeout to ensure state is cleaned up after animation
     setTimeout(() => {
       setSelectedUser(null);
       setUserOrders([]);
-    }, 300); // Wait for animation to complete
+    }, 300);
   };
 
   return (
     <div className="container mx-auto py-6 px-4 sm:px-6 lg:px-8 animate-fade-in">
       <div className="flex flex-col space-y-4">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-semibold text-gray-100">Companies & Users</h1>
+          <h1 className="text-2xl font-semibold text-white">Companies & Users</h1>
         </div>
         
         {loading ? (
@@ -203,6 +206,7 @@ const ProviderUsersPage = () => {
         open={isUserModalOpen} 
         onOpenChange={(open) => {
           if (!open) handleCloseUserModal();
+          else if (isDetailsModalOpen) setIsDetailsModalOpen(false);
         }}
       >
         {selectedCompany && (

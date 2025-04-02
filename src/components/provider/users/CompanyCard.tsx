@@ -14,20 +14,20 @@ interface CompanyCardProps {
 const CompanyCard: React.FC<CompanyCardProps> = ({ company, onClick }) => {
   return (
     <Card 
-      className="bg-white hover:shadow-lg transition-all duration-200 cursor-pointer border border-transparent"
+      className="neo-blur backdrop-blur-md bg-white/10 hover:bg-white/20 border border-white/20 transition-all duration-200 cursor-pointer"
       onClick={onClick}
     >
       <CardContent className="p-6 flex items-center justify-between">
         <div className="flex flex-col">
-          <h3 className="font-medium text-lg text-gray-900">
+          <h3 className="font-medium text-lg text-white">
             {company.name || `Company ${company.id.substring(0, 6)}`}
           </h3>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-white/70 mt-1">
             Click to view users
           </p>
         </div>
         
-        <div className="flex items-center justify-center min-w-[2.5rem] h-10 w-10 rounded-full bg-blue-50 text-blue-600 font-medium">
+        <div className="flex items-center justify-center min-w-[2.5rem] h-10 w-10 rounded-full bg-white/20 text-white font-medium backdrop-blur-sm border border-white/30">
           {company.userCount}
         </div>
       </CardContent>

@@ -30,7 +30,6 @@ serve(async (req) => {
 
     // Create a Supabase client using the project URL and service role key
     const supabaseAdmin = createClient(
-      // These must be set as secrets in your Supabase project
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
       {
@@ -71,14 +70,14 @@ serve(async (req) => {
     if (profile && profile.role === 'admin') {
       console.log(`User ${user.id} is an admin, updating JWT claims`);
       
-      // Create a custom JWT with the role claim
-      const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.admin.updateUserById(
+      // Update the user's app_metadata with the role claim
+      const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
         user.id,
         { app_metadata: { role: 'admin' } }
       );
 
-      if (sessionError) {
-        console.error("Error updating user JWT:", sessionError);
+      if (updateError) {
+        console.error("Error updating user JWT:", updateError);
         return new Response(
           JSON.stringify({ error: 'Failed to update JWT claims' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

@@ -52,9 +52,12 @@ export const useEmployeeDashboard = (userId: string | undefined) => {
               .eq('available', true);
               
             if (lunchError) throw lunchError;
-            setLunchOptions(lunchData || []);
-            setFilteredOptions(lunchData || []);
-            setDisplayedOptions((lunchData || []).slice(0, 3));
+            
+            // Ensure we always have arrays, even if data is undefined
+            const safeData = lunchData || [];
+            setLunchOptions(safeData);
+            setFilteredOptions(safeData);
+            setDisplayedOptions(safeData.slice(0, 3));
           }
         }
       } catch (error) {
@@ -65,6 +68,7 @@ export const useEmployeeDashboard = (userId: string | undefined) => {
           variant: 'destructive',
         });
         
+        // Load mock data as fallback
         import('@/lib/mockData').then(({ mockLunchOptions, mockCompanies }) => {
           setLunchOptions(mockLunchOptions);
           setFilteredOptions(mockLunchOptions);
@@ -80,13 +84,16 @@ export const useEmployeeDashboard = (userId: string | undefined) => {
   }, [userId, toast]);
 
   useEffect(() => {
+    // Ensure we're working with arrays even if they're undefined
+    const currentOptions = Array.isArray(lunchOptions) ? lunchOptions : [];
+    
     if (searchQuery.trim() === '') {
-      setFilteredOptions(lunchOptions);
-      setDisplayedOptions(lunchOptions.slice(0, showMore ? lunchOptions.length : 3));
+      setFilteredOptions(currentOptions);
+      setDisplayedOptions(currentOptions.slice(0, showMore ? currentOptions.length : 3));
       return;
     }
     
-    const filtered = lunchOptions.filter(option => 
+    const filtered = currentOptions.filter(option => 
       option.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       option.description.toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -99,30 +106,33 @@ export const useEmployeeDashboard = (userId: string | undefined) => {
     setActiveFilter(filter);
     setShowMore(false);
     
+    // Ensure we're working with arrays
+    const currentOptions = Array.isArray(lunchOptions) ? lunchOptions : [];
+    
     if (filter === 'all') {
-      setFilteredOptions(lunchOptions);
-      setDisplayedOptions(lunchOptions.slice(0, 3));
+      setFilteredOptions(currentOptions);
+      setDisplayedOptions(currentOptions.slice(0, 3));
       return;
     }
     
     let filtered;
     switch (filter) {
       case 'popular':
-        filtered = [...lunchOptions].sort(() => Math.random() - 0.5).slice(0, 3);
+        filtered = [...currentOptions].sort(() => Math.random() - 0.5).slice(0, 3);
         break;
       case 'special':
-        filtered = lunchOptions.filter(option => 
+        filtered = currentOptions.filter(option => 
           option.tags?.some(tag => tag.toLowerCase().includes('special'))
         );
         if (filtered.length === 0) {
-          filtered = [...lunchOptions].sort(() => Math.random() - 0.5).slice(0, 2);
+          filtered = [...currentOptions].sort(() => Math.random() - 0.5).slice(0, 2);
         }
         break;
       case 'recommended':
-        filtered = [...lunchOptions].sort(() => Math.random() - 0.5).slice(0, 4);
+        filtered = [...currentOptions].sort(() => Math.random() - 0.5).slice(0, 4);
         break;
       default:
-        filtered = lunchOptions;
+        filtered = currentOptions;
     }
     
     setFilteredOptions(filtered);
@@ -131,20 +141,31 @@ export const useEmployeeDashboard = (userId: string | undefined) => {
 
   const handleCategoryChange = (category: string) => {
     setActiveCategory(category);
+    
+    // Ensure we're working with arrays
+    const currentOptions = Array.isArray(lunchOptions) ? lunchOptions : [];
+    
     if (category === 'daily') {
-      setFilteredOptions(lunchOptions.slice(0, Math.min(6, lunchOptions.length)));
+      setFilteredOptions(currentOptions.slice(0, Math.min(6, currentOptions.length)));
     } else {
-      setFilteredOptions(lunchOptions);
+      setFilteredOptions(currentOptions);
     }
-    setDisplayedOptions(filteredOptions.slice(0, showMore ? filteredOptions.length : 3));
+    
+    // Ensure filteredOptions is an array
+    const safeFilteredOptions = Array.isArray(filteredOptions) ? filteredOptions : [];
+    setDisplayedOptions(safeFilteredOptions.slice(0, showMore ? safeFilteredOptions.length : 3));
   };
 
   const toggleShowMore = () => {
     setShowMore(prev => !prev);
+    
+    // Ensure filteredOptions is an array
+    const safeFilteredOptions = Array.isArray(filteredOptions) ? filteredOptions : [];
+    
     if (!showMore) {
-      setDisplayedOptions(filteredOptions);
+      setDisplayedOptions(safeFilteredOptions);
     } else {
-      setDisplayedOptions(filteredOptions.slice(0, 3));
+      setDisplayedOptions(safeFilteredOptions.slice(0, 3));
     }
   };
 

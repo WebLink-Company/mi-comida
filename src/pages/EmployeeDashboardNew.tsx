@@ -51,6 +51,10 @@ const EmployeeDashboardNew: React.FC = () => {
     }
   }, [company, toast]);
   
+  // Make sure the arrays are defined before passing them to components
+  const safeFilteredOptions = Array.isArray(filteredOptions) ? filteredOptions : [];
+  const safeDisplayedOptions = Array.isArray(displayedOptions) ? displayedOptions : [];
+  
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-600 to-blue-800 relative overflow-hidden pb-24">
       <motion.div 
@@ -90,8 +94,8 @@ const EmployeeDashboardNew: React.FC = () => {
         
         <DishListing
           isLoading={isLoading}
-          displayedOptions={displayedOptions}
-          filteredOptions={filteredOptions}
+          displayedOptions={safeDisplayedOptions}
+          filteredOptions={safeFilteredOptions}
           showMore={showMore}
           toggleShowMore={toggleShowMore}
           calculateSubsidizedPrice={calculateSubsidizedPrice}

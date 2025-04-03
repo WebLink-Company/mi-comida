@@ -24,6 +24,10 @@ const DishListing: React.FC<DishListingProps> = ({
   calculateSubsidizedPrice,
   handleSelectDish
 }) => {
+  // Make sure displayedOptions and filteredOptions are always arrays even if undefined
+  const safeDisplayedOptions = Array.isArray(displayedOptions) ? displayedOptions : [];
+  const safeFilteredOptions = Array.isArray(filteredOptions) ? filteredOptions : [];
+
   return (
     <>
       {isLoading ? (
@@ -35,14 +39,14 @@ const DishListing: React.FC<DishListingProps> = ({
             />
           ))}
         </div>
-      ) : displayedOptions.length > 0 ? (
+      ) : safeDisplayedOptions.length > 0 ? (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.4, delay: 0.3 }}
           className="grid grid-cols-3 gap-3"
         >
-          {displayedOptions.map((option) => (
+          {safeDisplayedOptions.map((option) => (
             <DishCard
               key={option.id}
               dish={option}
@@ -67,7 +71,7 @@ const DishListing: React.FC<DishListingProps> = ({
         </motion.div>
       )}
 
-      {filteredOptions.length > 3 && (
+      {safeFilteredOptions.length > 3 && (
         <motion.div 
           initial={{ opacity: 0 }} 
           animate={{ opacity: 1 }}

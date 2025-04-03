@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { LunchOption, Company } from '@/lib/types';
 import { useNavigate } from 'react-router-dom';
-import { Search, ChevronRight, Star, Award, ChevronDown, TrendingUp, Clock } from 'lucide-react';
+import { Search, ChevronRight, Star, Award, ChevronDown, TrendingUp, Clock, ChevronUp } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,6 +25,7 @@ const EmployeeDashboardNew: React.FC = () => {
   const [company, setCompany] = useState<Company | null>(null);
   const [activeFilter, setActiveFilter] = useState('all');
   const [showMore, setShowMore] = useState(false);
+  const [isMenuHovered, setIsMenuHovered] = useState(false);
   
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -224,18 +225,30 @@ const EmployeeDashboardNew: React.FC = () => {
   };
   
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-600 to-blue-800 pb-20">
+    <div className="min-h-screen bg-gradient-to-b from-blue-600 to-blue-800 relative overflow-hidden pb-20">
+      <motion.div 
+        className="absolute inset-0 opacity-20 pointer-events-none z-0"
+        animate={{
+          background: [
+            'linear-gradient(to right, rgba(59,130,246,0.5), rgba(37,99,235,0.5))',
+            'linear-gradient(to right, rgba(37,99,235,0.5), rgba(29,78,216,0.5))',
+            'linear-gradient(to right, rgba(29,78,216,0.5), rgba(59,130,246,0.5))'
+          ]
+        }}
+        transition={{ duration: 15, repeat: Infinity, repeatType: "reverse" }}
+      />
+      
       <MobileNavbar />
       
-      <div className="container px-4 pt-8 pb-20">
+      <div className="container px-4 pt-12 pb-20 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="mb-10 flex flex-col items-center text-center"
+          className="mb-12 flex flex-col items-center text-center"
         >
-          <h1 className="text-4xl font-bold text-white mb-1">
-            {user?.first_name || 'Usuario'}
+          <h1 className="text-4xl font-bold mb-1 bg-gradient-to-r from-blue-300 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+            {`Hola ${user?.first_name || 'Usuario'}.`}
           </h1>
           <p className="text-sm text-white/80 mb-1">
             {format(new Date(), 'EEEE, MMMM d')}
@@ -276,7 +289,7 @@ const EmployeeDashboardNew: React.FC = () => {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.2 }}
-          className="mb-6 flex justify-center gap-2 overflow-x-auto pb-2 scrollbar-hide"
+          className="mb-8 flex justify-center gap-2 overflow-x-auto pb-2 scrollbar-hide"
         >
           <Badge
             onClick={() => handleFilterChange('all')}
@@ -353,14 +366,25 @@ const EmployeeDashboardNew: React.FC = () => {
             transition={{ delay: 0.5 }}
             className="flex justify-center mt-6"
           >
-            <Button 
-              variant="ghost" 
-              className="text-white flex items-center gap-1 hover:bg-white/10"
-              onClick={toggleShowMore}
+            <motion.div
+              onMouseEnter={() => setIsMenuHovered(true)}
+              onMouseLeave={() => setIsMenuHovered(false)}
+              className="relative"
             >
-              {showMore ? 'Ver menos' : 'Ver más'} 
-              <ChevronDown className={`h-4 w-4 transition-transform ${showMore ? 'rotate-180' : ''}`} />
-            </Button>
+              <Button 
+                variant="ghost" 
+                onClick={toggleShowMore}
+                className="text-white flex items-center gap-1 px-4 py-2 bg-white/20 backdrop-blur-sm border border-white/30 hover:bg-white/30 rounded-md transition-all duration-300"
+              >
+                {showMore ? 'Ver menos' : 'Ver más'} 
+                <motion.div
+                  animate={{ rotate: showMore || isMenuHovered ? 180 : 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <ChevronDown className="h-4 w-4" />
+                </motion.div>
+              </Button>
+            </motion.div>
           </motion.div>
         )}
       </div>

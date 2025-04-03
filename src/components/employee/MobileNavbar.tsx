@@ -1,14 +1,16 @@
 
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingBag, Clock, User, Menu } from 'lucide-react';
+import { ShoppingBag, Clock, User, Menu, ChevronUp } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
+import { motion } from 'framer-motion';
 
 const MobileNavbar: React.FC = () => {
   const location = useLocation();
   const { user, signOut } = useAuth();
   const [open, setOpen] = useState(false);
+  const [menuHovered, setMenuHovered] = useState(false);
   
   const isActive = (path: string) => {
     return location.pathname === path;
@@ -49,14 +51,30 @@ const MobileNavbar: React.FC = () => {
           
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
-              <button 
-                className="flex flex-col items-center justify-center w-16 pt-1 text-muted-foreground hover:text-foreground transition-colors"
+              <motion.button 
+                className="flex flex-col items-center justify-center w-16 pt-1 text-muted-foreground hover:text-foreground transition-colors relative"
+                onMouseEnter={() => setMenuHovered(true)}
+                onMouseLeave={() => setMenuHovered(false)}
+                whileHover={{ scale: 1.05 }}
               >
-                <Menu className="h-5 w-5" />
+                <div className="relative">
+                  <Menu className="h-5 w-5" />
+                  <motion.div 
+                    className="absolute -top-3 left-1/2 transform -translate-x-1/2"
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ 
+                      opacity: menuHovered || open ? 1 : 0,
+                      y: menuHovered || open ? 0 : 5
+                    }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <ChevronUp className="h-4 w-4 text-primary" />
+                  </motion.div>
+                </div>
                 <span className="text-xs mt-1">Más</span>
-              </button>
+              </motion.button>
             </SheetTrigger>
-            <SheetContent side="bottom" className="h-auto pb-8 rounded-t-xl">
+            <SheetContent side="bottom" className="h-auto pb-8 rounded-t-xl bg-white/90 backdrop-blur-md border-white/30">
               <div className="pt-6">
                 <div className="flex items-center mb-6">
                   <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">

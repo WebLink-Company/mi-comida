@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
@@ -40,12 +39,7 @@ const EmployeeDashboardNew: React.FC = () => {
         : `${company.subsidy_percentage || company.subsidyPercentage || 0}%`;
       
       toast({
-        title: (
-          <div className="flex items-center gap-2">
-            <Building className="h-4 w-4" />
-            <span>{company.name}</span>
-          </div>
-        ),
+        title: `🏢 ${company.name}`,
         description: `Subsidio activo: ${subsidyText}`,
         className: "backdrop-blur-md bg-white/10 border border-white/20 text-white",
         duration: 4000,

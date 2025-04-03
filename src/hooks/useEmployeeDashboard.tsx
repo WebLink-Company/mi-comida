@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -52,9 +51,11 @@ export const useEmployeeDashboard = (userId: string | undefined) => {
               .eq('available', true);
               
             if (lunchError) throw lunchError;
-            setLunchOptions(lunchData || []);
-            setFilteredOptions(lunchData || []);
-            setDisplayedOptions((lunchData || []).slice(0, 3));
+            
+            const options = lunchData || [];
+            setLunchOptions(options);
+            setFilteredOptions(options);
+            setDisplayedOptions(options.slice(0, 3));
           }
         }
       } catch (error) {

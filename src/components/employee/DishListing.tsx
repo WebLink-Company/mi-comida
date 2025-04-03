@@ -120,7 +120,7 @@ const DishListing: React.FC<DishListingProps> = ({
             <PopoverContent className="w-[200px] p-0 backdrop-blur-xl bg-white/10 border border-white/10 shadow-lg text-white">
               <Command className="rounded-lg bg-transparent">
                 <CommandGroup>
-                  {filterItems.map((item) => (
+                  {filterItems && filterItems.map((item) => (
                     <CommandItem
                       key={item.value}
                       onSelect={() => {

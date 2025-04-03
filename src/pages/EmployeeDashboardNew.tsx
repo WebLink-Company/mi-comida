@@ -5,7 +5,6 @@ import { useAuth } from '@/context/AuthContext';
 import { useEmployeeDashboard } from '@/hooks/useEmployeeDashboard';
 import { useToast } from '@/hooks/use-toast';
 import MobileNavbar from '@/components/employee/MobileNavbar';
-import FilterFAB from '@/components/employee/FilterFAB';
 import CategoryButtons from '@/components/employee/CategoryButtons';
 import DashboardHeader from '@/components/employee/DashboardHeader';
 import SearchBar from '@/components/employee/SearchBar';
@@ -66,7 +65,6 @@ const EmployeeDashboardNew: React.FC = () => {
       />
       
       <MobileNavbar />
-      <FilterFAB activeFilter={activeFilter} onFilterChange={handleFilterChange} />
       
       <div className="container px-4 pt-20 pb-24 relative z-10">
         <DashboardHeader userName={user?.first_name} />
@@ -96,6 +94,8 @@ const EmployeeDashboardNew: React.FC = () => {
           toggleShowMore={toggleShowMore}
           calculateSubsidizedPrice={calculateSubsidizedPrice}
           handleSelectDish={handleSelectDish}
+          activeFilter={activeFilter}
+          handleFilterChange={handleFilterChange}
         />
       </div>
     </div>

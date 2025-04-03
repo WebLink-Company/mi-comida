@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
@@ -6,12 +5,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { LunchOption, Company } from '@/lib/types';
 import { useNavigate } from 'react-router-dom';
-import { Search, Star, Award, TrendingUp, Clock, ChevronDown } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Search, ChevronDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import DishCard from '@/components/employee/DishCard';
 import MobileNavbar from '@/components/employee/MobileNavbar';
+import FilterFAB from '@/components/employee/FilterFAB';
+import CategoryButtons from '@/components/employee/CategoryButtons';
 
 const EmployeeDashboardNew: React.FC = () => {
   const { user } = useAuth();
@@ -25,6 +24,7 @@ const EmployeeDashboardNew: React.FC = () => {
   const [displayedOptions, setDisplayedOptions] = useState<LunchOption[]>([]);
   const [company, setCompany] = useState<Company | null>(null);
   const [activeFilter, setActiveFilter] = useState('all');
+  const [activeCategory, setActiveCategory] = useState('daily');
   const [showMore, setShowMore] = useState(false);
   const [isMenuHovered, setIsMenuHovered] = useState(false);
   
@@ -145,6 +145,16 @@ const EmployeeDashboardNew: React.FC = () => {
     setDisplayedOptions(filtered.slice(0, 3));
   };
 
+  const handleCategoryChange = (category: string) => {
+    setActiveCategory(category);
+    if (category === 'daily') {
+      setFilteredOptions(lunchOptions.slice(0, Math.min(6, lunchOptions.length)));
+    } else {
+      setFilteredOptions(lunchOptions);
+    }
+    setDisplayedOptions(filteredOptions.slice(0, showMore ? filteredOptions.length : 3));
+  };
+
   const toggleShowMore = () => {
     setShowMore(prev => !prev);
     if (!showMore) {
@@ -240,6 +250,7 @@ const EmployeeDashboardNew: React.FC = () => {
       />
       
       <MobileNavbar />
+      <FilterFAB activeFilter={activeFilter} onFilterChange={handleFilterChange} />
       
       <div className="container px-4 pt-20 pb-20 relative z-10">
         <motion.div
@@ -290,48 +301,12 @@ const EmployeeDashboardNew: React.FC = () => {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.2 }}
-          className="mb-8 flex justify-center gap-2 overflow-x-auto pb-2 scrollbar-hide"
+          className="mb-8"
         >
-          <Badge
-            onClick={() => handleFilterChange('all')}
-            className={`cursor-pointer px-3 py-1 text-xs ${
-              activeFilter === 'all' 
-                ? 'bg-white/40 hover:bg-white/50' 
-                : 'bg-white/20 hover:bg-white/30'
-            } border-white/30 text-white`}
-          >
-            <Clock className="h-3 w-3 mr-1" /> Todos
-          </Badge>
-          <Badge
-            onClick={() => handleFilterChange('popular')}
-            className={`cursor-pointer px-3 py-1 text-xs ${
-              activeFilter === 'popular' 
-                ? 'bg-white/40 hover:bg-white/50' 
-                : 'bg-white/20 hover:bg-white/30'
-            } border-white/30 text-white`}
-          >
-            <TrendingUp className="h-3 w-3 mr-1" /> Más pedidos
-          </Badge>
-          <Badge
-            onClick={() => handleFilterChange('special')}
-            className={`cursor-pointer px-3 py-1 text-xs ${
-              activeFilter === 'special' 
-                ? 'bg-white/40 hover:bg-white/50' 
-                : 'bg-white/20 hover:bg-white/30'
-            } border-white/30 text-white`}
-          >
-            <Award className="h-3 w-3 mr-1" /> Especial
-          </Badge>
-          <Badge
-            onClick={() => handleFilterChange('recommended')}
-            className={`cursor-pointer px-3 py-1 text-xs ${
-              activeFilter === 'recommended' 
-                ? 'bg-white/40 hover:bg-white/50' 
-                : 'bg-white/20 hover:bg-white/30'
-            } border-white/30 text-white`}
-          >
-            <Star className="h-3 w-3 mr-1" /> Recomendados
-          </Badge>
+          <CategoryButtons 
+            activeCategory={activeCategory}
+            onCategoryChange={handleCategoryChange}
+          />
         </motion.div>
         
         {isLoading ? (
@@ -366,13 +341,12 @@ const EmployeeDashboardNew: React.FC = () => {
             className="text-center py-12"
           >
             <p className="text-white/80">No se encontraron opciones de almuerzo.</p>
-            <Button 
-              variant="outline" 
-              className="mt-4 bg-white/20 hover:bg-white/30 border-white/30 text-white"
+            <button 
+              className="mt-4 px-4 py-2 bg-white/20 hover:bg-white/30 border border-white/30 rounded-md text-white transition-colors"
               onClick={() => setSearchQuery('')}
             >
               Mostrar todas las opciones
-            </Button>
+            </button>
           </motion.div>
         )}
 

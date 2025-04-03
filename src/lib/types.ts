@@ -51,7 +51,7 @@ export interface Order {
   lunch_option_id: string;
   lunchOptionId?: string; // Added for compatibility
   date: string;
-  status: 'pending' | 'approved' | 'rejected' | 'delivered';
+  status: 'pending' | 'approved' | 'rejected' | 'prepared' | 'delivered';
   approved_by?: string;
   approvedBy?: string; // Added for compatibility
   company_id?: string;

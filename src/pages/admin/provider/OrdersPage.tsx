@@ -4,7 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
-import { CalendarIcon, ClipboardCheck, CheckCircle2, Package, TruckIcon } from 'lucide-react';
+import { Calendar, Filter, Package, CheckCircle2, Clock, TruckIcon, Users } from 'lucide-react';
 import { 
   Card,
   CardContent,
@@ -12,16 +12,8 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { DatePicker } from '@/components/ui/date-picker';
 import {
   Select,
   SelectContent,
@@ -29,13 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import { DatePicker } from '@/components/ui/date-picker';
+import { Badge } from '@/components/ui/badge';
 
 // Define the Order type with a specific status type that matches the database
 interface Order {
@@ -90,7 +76,7 @@ const OrdersPage = () => {
         const { data: providerCompanies } = await supabase
           .from('companies')
           .select('id')
-          .eq('provider_id', user.id);
+          .eq('provider_id', user.provider_id);
 
         if (providerCompanies && providerCompanies.length > 0) {
           const companyIds = providerCompanies.map(company => company.id);
@@ -206,7 +192,7 @@ const OrdersPage = () => {
             </SelectContent>
           </Select>
           <Button onClick={fetchOrders} variant="outline">
-            <ClipboardCheck className="mr-2 h-4 w-4" />
+            <Filter className="mr-2 h-4 w-4" />
             Refresh
           </Button>
         </div>
@@ -225,67 +211,71 @@ const OrdersPage = () => {
               <p>Loading orders...</p>
             </div>
           ) : orders.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Meal</TableHead>
-                  <TableHead>Company</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {orders.map((order) => (
-                  <TableRow key={order.id}>
-                    <TableCell>{order.user_name}</TableCell>
-                    <TableCell>{order.meal_name}</TableCell>
-                    <TableCell>{order.company_name}</TableCell>
-                    <TableCell>{getStatusBadge(order.status)}</TableCell>
-                    <TableCell>
-                      {order.status === 'approved' && (
-                        <Button 
-                          size="sm" 
-                          onClick={() => handleStatusChange(order.id, 'prepared')}
-                          className="mr-2"
-                        >
-                          <CheckCircle2 className="mr-1 h-4 w-4" />
-                          Mark Prepared
-                        </Button>
-                      )}
-                      {order.status === 'prepared' && (
-                        <Button 
-                          size="sm" 
-                          onClick={() => handleStatusChange(order.id, 'delivered')}
-                          className="bg-green-600 hover:bg-green-700"
-                        >
-                          <TruckIcon className="mr-1 h-4 w-4" />
-                          Mark Delivered
-                        </Button>
-                      )}
-                      {(order.status === 'pending' || !['pending', 'approved', 'prepared', 'delivered'].includes(order.status)) && (
-                        <>
-                          <Button 
-                            size="sm" 
-                            onClick={() => handleStatusChange(order.id, 'approved')}
-                            className="mr-2"
-                          >
-                            Approve
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="destructive"
-                            onClick={() => handleStatusChange(order.id, 'rejected')}
-                          >
-                            Reject
-                          </Button>
-                        </>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <div className="rounded-md border">
+              <div className="relative w-full overflow-auto">
+                <table className="w-full caption-bottom text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">User</th>
+                      <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Meal</th>
+                      <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Company</th>
+                      <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Status</th>
+                      <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {orders.map((order) => (
+                      <tr key={order.id} className="border-b">
+                        <td className="p-4 align-middle font-medium">{order.user_name}</td>
+                        <td className="p-4 align-middle">{order.meal_name}</td>
+                        <td className="p-4 align-middle">{order.company_name}</td>
+                        <td className="p-4 align-middle">{getStatusBadge(order.status)}</td>
+                        <td className="p-4 align-middle">
+                          {order.status === 'approved' && (
+                            <Button 
+                              size="sm" 
+                              onClick={() => handleStatusChange(order.id, 'prepared')}
+                              className="mr-2"
+                            >
+                              <CheckCircle2 className="mr-1 h-4 w-4" />
+                              Mark Prepared
+                            </Button>
+                          )}
+                          {order.status === 'prepared' && (
+                            <Button 
+                              size="sm" 
+                              onClick={() => handleStatusChange(order.id, 'delivered')}
+                              className="bg-green-600 hover:bg-green-700"
+                            >
+                              <TruckIcon className="mr-1 h-4 w-4" />
+                              Mark Delivered
+                            </Button>
+                          )}
+                          {(order.status === 'pending' || !['pending', 'approved', 'prepared', 'delivered'].includes(order.status)) && (
+                            <>
+                              <Button 
+                                size="sm" 
+                                onClick={() => handleStatusChange(order.id, 'approved')}
+                                className="mr-2"
+                              >
+                                Approve
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="destructive"
+                                onClick={() => handleStatusChange(order.id, 'rejected')}
+                              >
+                                Reject
+                              </Button>
+                            </>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               <Package className="mx-auto h-12 w-12 opacity-30 mb-2" />

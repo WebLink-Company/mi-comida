@@ -1,5 +1,4 @@
-
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
@@ -8,6 +7,7 @@ import { LunchOption, Company } from '@/lib/types';
 export const useEmployeeDashboard = (userId: string | undefined) => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const dataFetchedRef = useRef(false);
 
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -21,10 +21,12 @@ export const useEmployeeDashboard = (userId: string | undefined) => {
 
   // Memoize the fetchData function to prevent unnecessary recreations
   const fetchData = useCallback(async () => {
-    if (!userId) return;
+    // Only fetch once per component lifecycle
+    if (!userId || dataFetchedRef.current) return;
     
     try {
       setIsLoading(true);
+      dataFetchedRef.current = true;
       
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
@@ -85,6 +87,11 @@ export const useEmployeeDashboard = (userId: string | undefined) => {
   // Only run fetchData when userId changes
   useEffect(() => {
     fetchData();
+    
+    // Reset the dataFetchedRef when userId changes
+    return () => {
+      dataFetchedRef.current = false;
+    };
   }, [fetchData]);
 
   // Handle search and filtering with stable references

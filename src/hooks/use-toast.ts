@@ -1,4 +1,3 @@
-
 import * as React from "react"
 
 import type {
@@ -6,8 +5,8 @@ import type {
   ToastProps,
 } from "@/components/ui/toast"
 
-// Changed from 1000000 to 5000 (5 seconds)
-const TOAST_LIMIT = 1
+// Increased toast limit to 5 to ensure multiple toasts can be displayed if needed
+const TOAST_LIMIT = 5
 const TOAST_REMOVE_DELAY = 5000
 
 type ToasterToast = ToastProps & {
@@ -55,15 +54,21 @@ interface State {
   toasts: ToasterToast[]
 }
 
+// Create a Set to track toast IDs that are being removed to avoid race conditions
+const toastsBeingRemoved = new Set<string>();
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
 
 const addToRemoveQueue = (toastId: string) => {
-  if (toastTimeouts.has(toastId)) {
+  if (toastTimeouts.has(toastId) || toastsBeingRemoved.has(toastId)) {
     return
   }
 
+  // Mark this toast as being removed to prevent re-adding it
+  toastsBeingRemoved.add(toastId);
+
   const timeout = setTimeout(() => {
     toastTimeouts.delete(toastId)
+    toastsBeingRemoved.delete(toastId);
     dispatch({
       type: "REMOVE_TOAST",
       toastId: toastId,
@@ -76,6 +81,18 @@ const addToRemoveQueue = (toastId: string) => {
 export const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case "ADD_TOAST":
+      // Check if we already have a toast with the same content to avoid duplicates
+      // This helps prevent flickering due to multiple identical toasts
+      const existingToastIndex = state.toasts.findIndex(
+        t => t.title === action.toast.title && 
+             t.description === action.toast.description
+      );
+      
+      // If a similar toast already exists, don't add another one
+      if (existingToastIndex >= 0) {
+        return state;
+      }
+      
       return {
         ...state,
         toasts: [action.toast, ...state.toasts].slice(0, TOAST_LIMIT),
@@ -92,20 +109,22 @@ export const reducer = (state: State, action: Action): State => {
     case "DISMISS_TOAST": {
       const { toastId } = action
 
-      // ! Side effects ! - This could be extracted into a dismissToast() action,
-      // but I'll keep it here for simplicity
-      if (toastId) {
+      // Only add to remove queue if not already being removed
+      if (toastId && !toastsBeingRemoved.has(toastId)) {
         addToRemoveQueue(toastId)
-      } else {
+      } else if (!toastId) {
+        // For dismissing all toasts
         state.toasts.forEach((toast) => {
-          addToRemoveQueue(toast.id)
+          if (!toastsBeingRemoved.has(toast.id)) {
+            addToRemoveQueue(toast.id)
+          }
         })
       }
 
       return {
         ...state,
         toasts: state.toasts.map((t) =>
-          t.id === toastId || toastId === undefined
+          (t.id === toastId || toastId === undefined) && !toastsBeingRemoved.has(t.id)
             ? {
                 ...t,
                 open: false,
@@ -141,8 +160,37 @@ function dispatch(action: Action) {
 
 type Toast = Omit<ToasterToast, "id">
 
+// Keep track of recently shown toasts to prevent duplicates
+const recentToasts = new Map<string, number>();
+const TOAST_DEBOUNCE_MS = 3000; // 3 seconds
+
 function toast({ ...props }: Toast) {
   const id = genId()
+  
+  // Create a hash key based on toast content to identify duplicates
+  const contentKey = `${props.title}-${props.description}`;
+  const now = Date.now();
+  
+  // Check if this toast was recently shown (debounce)
+  if (recentToasts.has(contentKey)) {
+    const lastShown = recentToasts.get(contentKey) || 0;
+    if (now - lastShown < TOAST_DEBOUNCE_MS) {
+      // Don't show duplicate toast within debounce period
+      return {
+        id,
+        dismiss: () => {},
+        update: () => {},
+      };
+    }
+  }
+  
+  // Record this toast as recently shown
+  recentToasts.set(contentKey, now);
+  
+  // Clean up old entries from recentToasts map
+  setTimeout(() => {
+    recentToasts.delete(contentKey);
+  }, TOAST_DEBOUNCE_MS);
 
   const update = (props: ToasterToast) =>
     dispatch({
@@ -151,10 +199,17 @@ function toast({ ...props }: Toast) {
     })
   const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id })
 
+  // Ensure duration is set
+  const finalProps = { 
+    ...props,
+    // Default to 5s duration if none provided
+    duration: props.duration || 5000,
+  };
+
   dispatch({
     type: "ADD_TOAST",
     toast: {
-      ...props,
+      ...finalProps,
       id,
       open: true,
       onOpenChange: (open) => {

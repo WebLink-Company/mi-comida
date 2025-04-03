@@ -37,7 +37,7 @@ const EmployeeDashboardNew: React.FC = () => {
   // Show company and subsidy info in toast notification only once when the page loads
   useEffect(() => {
     // Only show the toast if we have company data and haven't shown it yet
-    if (company && !toastShownRef.current) {
+    if (company && !toastShownRef.current && !isLoading) {
       // Set the ref to true BEFORE showing the toast to prevent loop
       toastShownRef.current = true;
       
@@ -45,15 +45,15 @@ const EmployeeDashboardNew: React.FC = () => {
         ? `$${company.fixed_subsidy_amount.toFixed(2)}` 
         : `${company.subsidy_percentage || company.subsidyPercentage || 0}%`;
       
-      // Add duration to ensure it automatically dismisses
+      // Fixed duration to ensure it stays visible long enough and dismisses automatically
       toast({
         title: `🏢 ${company.name}`,
         description: `Subsidio activo: ${subsidyText}`,
         className: "backdrop-blur-md bg-white/10 border border-white/20 text-white",
-        duration: 4000,
+        duration: 5000, // Ensure toast stays visible for 5 seconds
       });
     }
-  }, [company]);
+  }, [company, isLoading]);
   
   // Reset toast ref when component unmounts (for when user navigates away and comes back)
   useEffect(() => {

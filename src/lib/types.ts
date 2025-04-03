@@ -103,3 +103,12 @@ export interface CompanyWithProvider extends Company {
   provider_name?: string;
   provider?: Provider | null;
 }
+
+export interface CompanyOrderSummary {
+  id: string;
+  name: string;
+  orders: number;
+  users: number;
+  dispatched: number;
+  pending: number;
+}

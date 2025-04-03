@@ -29,7 +29,7 @@ import ReportsPage from "./pages/admin/ReportsPage";
 import SettingsPage from "./pages/admin/SettingsPage";
 
 // Provider Pages
-import OrdersPage from "./pages/admin/provider/OrdersPage";
+import ProviderOrderDashboard from "./pages/admin/provider/ProviderOrderDashboard"; // Import the new dashboard component
 import MenuManagementPage from "./pages/admin/provider/MenuManagementPage";
 import AssignMenusPage from "./pages/admin/provider/AssignMenusPage";
 import DeliverySettingsPage from "./pages/admin/provider/DeliverySettingsPage";
@@ -73,7 +73,7 @@ const App = () => (
               <Route index element={<ProviderDashboardPage />} />
               <Route path="dashboard" element={<ProviderDashboardPage />} />
               <Route path="menu" element={<MenuManagementPage />} />
-              <Route path="orders" element={<OrdersPage />} />
+              <Route path="orders" element={<ProviderOrderDashboard />} /> {/* Updated to use the new dashboard */}
               <Route path="assign-menus" element={<AssignMenusPage />} />
               <Route path="companies" element={<ProviderCompaniesPage />} />
               <Route path="delivery-settings" element={<DeliverySettingsPage />} />

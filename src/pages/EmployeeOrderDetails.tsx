@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -415,8 +414,3 @@ const EmployeeOrderDetails: React.FC = () => {
           </motion.div>
         </motion.div>
       </div>
-    </div>
-  );
-};
-
-export default EmployeeOrderDetails;

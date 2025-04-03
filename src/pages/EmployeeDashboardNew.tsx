@@ -67,57 +67,41 @@ const EmployeeDashboardNew: React.FC = () => {
   const safeDisplayedOptions = Array.isArray(displayedOptions) ? displayedOptions : [];
   
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-600 to-blue-800 relative overflow-hidden pb-24">
-      <motion.div 
-        className="absolute inset-0 opacity-20 pointer-events-none z-0"
-        animate={{
-          background: [
-            'linear-gradient(to right, rgba(59,130,246,0.5), rgba(37,99,235,0.5))',
-            'linear-gradient(to right, rgba(37,99,235,0.5), rgba(29,78,216,0.5))',
-            'linear-gradient(to right, rgba(29,78,216,0.5), rgba(59,130,246,0.5))'
-          ]
-        }}
-        transition={{ duration: 15, repeat: Infinity, repeatType: "reverse" }}
+    <div className="container px-4 pt-20 pb-24">
+      <DashboardHeader userName={user?.first_name} />
+      
+      <SearchBar 
+        searchQuery={searchQuery} 
+        setSearchQuery={setSearchQuery} 
       />
       
-      <MobileNavbar />
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.2 }}
+        className="mb-8 relative"
+      >
+        <div className="flex justify-between items-center">
+          <CategoryButtons 
+            activeCategory={activeCategory}
+            onCategoryChange={handleCategoryChange}
+          />
+          <FilterFAB 
+            activeFilter={activeFilter} 
+            onFilterChange={handleFilterChange} 
+          />
+        </div>
+      </motion.div>
       
-      <div className="container px-4 pt-20 pb-24 relative z-10">
-        <DashboardHeader userName={user?.first_name} />
-        
-        <SearchBar 
-          searchQuery={searchQuery} 
-          setSearchQuery={setSearchQuery} 
-        />
-        
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.2 }}
-          className="mb-8 relative"
-        >
-          <div className="flex justify-between items-center">
-            <CategoryButtons 
-              activeCategory={activeCategory}
-              onCategoryChange={handleCategoryChange}
-            />
-            <FilterFAB 
-              activeFilter={activeFilter} 
-              onFilterChange={handleFilterChange} 
-            />
-          </div>
-        </motion.div>
-        
-        <DishListing
-          isLoading={isLoading}
-          displayedOptions={safeDisplayedOptions}
-          filteredOptions={safeFilteredOptions}
-          showMore={showMore}
-          toggleShowMore={toggleShowMore}
-          calculateSubsidizedPrice={calculateSubsidizedPrice}
-          handleSelectDish={handleSelectDish}
-        />
-      </div>
+      <DishListing
+        isLoading={isLoading}
+        displayedOptions={safeDisplayedOptions}
+        filteredOptions={safeFilteredOptions}
+        showMore={showMore}
+        toggleShowMore={toggleShowMore}
+        calculateSubsidizedPrice={calculateSubsidizedPrice}
+        handleSelectDish={handleSelectDish}
+      />
     </div>
   );
 };

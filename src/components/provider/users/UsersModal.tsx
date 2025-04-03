@@ -84,7 +84,10 @@ const UsersModal: React.FC<UsersModalProps> = ({
           e.preventDefault();
           onClose();
         }}
-        onEscapeKeyDown={onClose}
+        onEscapeKeyDown={(e) => {
+          e.preventDefault();
+          onClose();
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         <DialogHeader className="pb-4 border-b border-white/20">
@@ -93,7 +96,11 @@ const UsersModal: React.FC<UsersModalProps> = ({
               variant="ghost"
               size="sm"
               className="mr-2 rounded-full p-0 h-8 w-8 text-white hover:bg-white/10"
-              onClick={onClose}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onClose();
+              }}
             >
               <ArrowLeft size={16} />
             </Button>
@@ -124,6 +131,7 @@ const UsersModal: React.FC<UsersModalProps> = ({
               className="bg-white/20 hover:bg-white/30 text-white border-white/30"
               onClick={(e) => {
                 e.stopPropagation();
+                e.preventDefault();
                 setIsCreateUserOpen(true);
               }}
             >
@@ -147,7 +155,11 @@ const UsersModal: React.FC<UsersModalProps> = ({
                     <TableRow 
                       key={user.id}
                       className="cursor-pointer hover:bg-white/10 table-row-hover"
-                      onClick={() => onUserClick(user)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onUserClick(user);
+                      }}
                     >
                       <TableCell className="font-medium text-white">
                         {user.first_name} {user.last_name}

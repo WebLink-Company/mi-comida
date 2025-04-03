@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter } from '@/components/ui/alert-dialog';
+import { AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogFooter, AlertDialogDescription } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Calendar, DollarSign, Package } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -33,7 +33,10 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, orders, onClo
   return (
     <AlertDialogContent 
       className="sm:max-w-md blue-glass-modal overflow-y-auto max-h-[90vh] shadow-2xl backdrop-blur-2xl z-[1000]"
-      onClick={(e) => e.stopPropagation()}
+      onEscapeKeyDown={(e) => {
+        e.preventDefault(); // Prevent event from bubbling to parent modal
+        onClose();
+      }}
     >
       <AlertDialogHeader className="pb-2">
         <div className="flex items-center mb-2">
@@ -42,7 +45,8 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, orders, onClo
             size="sm"
             className="mr-2 rounded-full p-0 h-8 w-8 text-white hover:bg-white/10"
             onClick={(e) => {
-              e.stopPropagation(); // Prevent event bubbling
+              e.preventDefault(); // Prevent default behavior
+              e.stopPropagation(); // Stop propagation to parent elements
               onClose();
             }}
           >
@@ -60,6 +64,11 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, orders, onClo
           </Badge>
         </div>
       </AlertDialogHeader>
+
+      {/* Adding description for accessibility */}
+      <AlertDialogDescription className="sr-only">
+        User details and recent orders for {user.first_name} {user.last_name}
+      </AlertDialogDescription>
 
       <div className="my-3">
         <h3 className="text-sm font-medium text-white/90 mb-3 flex items-center">
@@ -113,7 +122,16 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, orders, onClo
       </div>
 
       <AlertDialogFooter className="border-t border-white/20 pt-4 flex justify-end">
-        <Button variant="outline" size="sm" onClick={onClose} className="bg-white/10 text-white hover:bg-white/20 border-white/30">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onClose();
+          }} 
+          className="bg-white/10 text-white hover:bg-white/20 border-white/30"
+        >
           Close
         </Button>
       </AlertDialogFooter>

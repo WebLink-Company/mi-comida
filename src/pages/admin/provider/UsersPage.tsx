@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -183,18 +182,10 @@ const ProviderUsersPage = () => {
   };
 
   const handleCloseDetailsModal = () => {
+    // Only close the details modal, keeping the user modal open
     setIsDetailsModalOpen(false);
     
     // Use a small timeout to ensure state is cleaned up after animation
-    setTimeout(() => {
-      setSelectedUser(null);
-      setUserOrders([]);
-    }, 300);
-  };
-
-  const handleBackFromDetails = () => {
-    setIsDetailsModalOpen(false);
-    
     setTimeout(() => {
       setSelectedUser(null);
       setUserOrders([]);
@@ -242,12 +233,18 @@ const ProviderUsersPage = () => {
         )}
       </div>
 
-      {/* Users Modal (Level 2) */}
+      {/* Users Modal (Level 2) - This should stay open even when details modal is interacted with */}
       <Dialog 
         open={isUserModalOpen} 
         onOpenChange={(open) => {
-          if (!open) {
+          if (!open && !isDetailsModalOpen) {
             handleCloseUserModal();
+          }
+          // If details modal is open, don't change this modal's state when it would close
+          else if (!open && isDetailsModalOpen) {
+            setIsUserModalOpen(true); // Keep user modal open if details modal is open
+          } else if (open) {
+            setIsUserModalOpen(true);
           }
         }}
       >
@@ -266,7 +263,7 @@ const ProviderUsersPage = () => {
         open={isDetailsModalOpen} 
         onOpenChange={(open) => {
           if (!open) {
-            handleBackFromDetails();
+            handleCloseDetailsModal();
           }
         }}
       >
@@ -274,7 +271,7 @@ const ProviderUsersPage = () => {
           <UserDetailsModal
             user={selectedUser}
             orders={userOrders}
-            onClose={handleBackFromDetails}
+            onClose={handleCloseDetailsModal}
           />
         )}
       </AlertDialog>

@@ -81,7 +81,6 @@ const EmployeeDashboardNew: React.FC = () => {
       />
       
       <MobileNavbar />
-      <FilterFAB activeFilter={activeFilter} onFilterChange={handleFilterChange} />
       
       <div className="container px-4 pt-20 pb-24 relative z-10">
         <DashboardHeader userName={user?.first_name} />
@@ -95,12 +94,18 @@ const EmployeeDashboardNew: React.FC = () => {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.2 }}
-          className="mb-8"
+          className="mb-8 relative"
         >
-          <CategoryButtons 
-            activeCategory={activeCategory}
-            onCategoryChange={handleCategoryChange}
-          />
+          <div className="flex justify-between items-center">
+            <CategoryButtons 
+              activeCategory={activeCategory}
+              onCategoryChange={handleCategoryChange}
+            />
+            <FilterFAB 
+              activeFilter={activeFilter} 
+              onFilterChange={handleFilterChange} 
+            />
+          </div>
         </motion.div>
         
         <DishListing

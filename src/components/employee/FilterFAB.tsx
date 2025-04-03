@@ -37,7 +37,7 @@ const FilterFAB: React.FC<FilterFABProps> = ({ activeFilter, onFilterChange }) =
   };
 
   return (
-    <div className="fixed top-24 right-0 z-30">
+    <div className="absolute right-0 z-20">
       <motion.div
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}

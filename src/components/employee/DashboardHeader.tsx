@@ -19,7 +19,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ userName }) => {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="mb-12 flex flex-col items-center text-center mt-10"
+      className="mb-10 flex flex-col items-center text-center mt-8"
     >
       <h1 className="text-4xl font-bold mb-1">
         Hola{' '}

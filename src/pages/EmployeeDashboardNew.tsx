@@ -67,7 +67,7 @@ const EmployeeDashboardNew: React.FC = () => {
   const safeDisplayedOptions = Array.isArray(displayedOptions) ? displayedOptions : [];
   
   return (
-    <div className="container px-4 pt-20 pb-24">
+    <div className="container px-4 pt-16 pb-24">
       <DashboardHeader userName={user?.first_name} />
       
       <SearchBar 
@@ -79,7 +79,7 @@ const EmployeeDashboardNew: React.FC = () => {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.2 }}
-        className="mb-8 relative"
+        className="mb-6 relative"
       >
         <div className="flex justify-between items-center">
           <CategoryButtons 

@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 import { LunchOption } from '@/lib/types';
 import DishCard from '@/components/employee/DishCard';
+import TextFilterTrigger from '@/components/employee/TextFilterTrigger';
 
 interface DishListingProps {
   isLoading: boolean;
@@ -13,6 +14,8 @@ interface DishListingProps {
   toggleShowMore: () => void;
   calculateSubsidizedPrice: (price: number) => number;
   handleSelectDish: (dish: LunchOption) => void;
+  activeFilter: string;
+  onFilterChange: (filterId: string) => void;
 }
 
 const DishListing: React.FC<DishListingProps> = ({
@@ -22,7 +25,9 @@ const DishListing: React.FC<DishListingProps> = ({
   showMore,
   toggleShowMore,
   calculateSubsidizedPrice,
-  handleSelectDish
+  handleSelectDish,
+  activeFilter,
+  onFilterChange
 }) => {
   return (
     <>
@@ -72,7 +77,7 @@ const DishListing: React.FC<DishListingProps> = ({
           initial={{ opacity: 0 }} 
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
-          className="flex flex-col items-center my-6 pb-16"
+          className="flex flex-col items-center my-6"
         >
           <span className="text-xs text-white/80">Ver más</span>
           <motion.button
@@ -91,6 +96,13 @@ const DishListing: React.FC<DishListingProps> = ({
           </motion.button>
         </motion.div>
       )}
+      
+      <div className="flex justify-center pb-16 mt-6">
+        <TextFilterTrigger 
+          activeFilter={activeFilter} 
+          onFilterChange={onFilterChange} 
+        />
+      </div>
     </>
   );
 };

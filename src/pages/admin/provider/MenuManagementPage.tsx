@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -79,7 +78,6 @@ const MenuManagementPage = () => {
   const [activeTab, setActiveTab] = useState<string>('menu');
   const [openDialog, setOpenDialog] = useState<'newItem' | 'editItem' | 'newCategory' | 'editCategory' | null>(null);
   
-  // Menu items state
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [currentItem, setCurrentItem] = useState<Partial<MenuItem>>({
@@ -94,14 +92,12 @@ const MenuManagementPage = () => {
     category_id: null,
   });
   
-  // Category state
   const [currentCategory, setCurrentCategory] = useState<Partial<Category>>({
     name: '',
     description: '',
     sort_order: 0,
   });
   
-  // Tag input for menu items
   const [tagInput, setTagInput] = useState<string>('');
 
   useEffect(() => {
@@ -114,7 +110,6 @@ const MenuManagementPage = () => {
     setLoading(true);
     
     try {
-      // Fetch categories
       const { data: categoriesData, error: categoriesError } = await supabase
         .from('menu_categories')
         .select('*')
@@ -124,7 +119,6 @@ const MenuManagementPage = () => {
       if (categoriesError) throw categoriesError;
       setCategories(categoriesData || []);
       
-      // Fetch menu items
       const { data: menuData, error: menuError } = await supabase
         .from('lunch_options')
         .select(`
@@ -135,7 +129,6 @@ const MenuManagementPage = () => {
         
       if (menuError) throw menuError;
       
-      // Format menu items with category name and ensure menu_type is correctly typed
       const formattedMenuItems: MenuItem[] = (menuData || []).map(item => ({
         ...item,
         menu_type: (item.menu_type || 'predefined') as 'predefined' | 'component',
@@ -229,7 +222,7 @@ const MenuManagementPage = () => {
     try {
       const itemData = {
         ...currentItem,
-        provider_id: user.id,
+        provider_id: user.provider_id,
         name: currentItem.name,
         description: currentItem.description,
         price: currentItem.price,
@@ -237,7 +230,6 @@ const MenuManagementPage = () => {
       };
       
       if (currentItem.id) {
-        // Update existing item
         const { data, error } = await supabase
           .from('lunch_options')
           .update(itemData)
@@ -250,7 +242,6 @@ const MenuManagementPage = () => {
           
         if (error) throw error;
         
-        // Update state with properly typed menu_type
         const updatedItem: MenuItem = {
           ...data,
           menu_type: (data.menu_type || 'predefined') as 'predefined' | 'component',
@@ -266,7 +257,6 @@ const MenuManagementPage = () => {
           description: 'Menu item updated successfully',
         });
       } else {
-        // Create new item
         const { data, error } = await supabase
           .from('lunch_options')
           .insert(itemData)
@@ -278,7 +268,6 @@ const MenuManagementPage = () => {
           
         if (error) throw error;
         
-        // Update state with properly typed menu_type
         const newItem: MenuItem = {
           ...data,
           menu_type: (data.menu_type || 'predefined') as 'predefined' | 'component',
@@ -293,7 +282,6 @@ const MenuManagementPage = () => {
         });
       }
       
-      // Reset form and close dialog
       setCurrentItem({
         name: '',
         description: '',
@@ -329,12 +317,11 @@ const MenuManagementPage = () => {
     try {
       const categoryData = {
         ...currentCategory,
-        provider_id: user.id,
+        provider_id: user.provider_id,
         name: currentCategory.name,
       };
       
       if (currentCategory.id) {
-        // Update existing category
         const { data, error } = await supabase
           .from('menu_categories')
           .update(categoryData)
@@ -344,7 +331,6 @@ const MenuManagementPage = () => {
           
         if (error) throw error;
         
-        // Update state
         setCategories(categories.map(category => 
           category.id === data.id ? data : category
         ));
@@ -354,16 +340,17 @@ const MenuManagementPage = () => {
           description: 'Category updated successfully',
         });
       } else {
-        // Create new category
         const { data, error } = await supabase
           .from('menu_categories')
           .insert(categoryData)
           .select()
           .single();
           
-        if (error) throw error;
+        if (error) {
+          console.error('Error creating category:', error);
+          throw error;
+        }
         
-        // Update state
         setCategories([...categories, data]);
         
         toast({
@@ -372,7 +359,6 @@ const MenuManagementPage = () => {
         });
       }
       
-      // Reset form and close dialog
       setCurrentCategory({
         name: '',
         description: '',
@@ -408,7 +394,6 @@ const MenuManagementPage = () => {
         
       if (error) throw error;
       
-      // Update state
       setMenuItems(menuItems.filter(item => item.id !== id));
       
       toast({
@@ -427,7 +412,6 @@ const MenuManagementPage = () => {
 
   const deleteCategory = async (id: string) => {
     try {
-      // Check if category has menu items
       const { count, error: countError } = await supabase
         .from('lunch_options')
         .select('*', { count: 'exact', head: true })
@@ -451,7 +435,6 @@ const MenuManagementPage = () => {
         
       if (error) throw error;
       
-      // Update state
       setCategories(categories.filter(category => category.id !== id));
       
       toast({
@@ -670,7 +653,6 @@ const MenuManagementPage = () => {
         </TabsContent>
       </Tabs>
 
-      {/* Menu Item Dialog */}
       <Dialog open={openDialog === 'newItem' || openDialog === 'editItem'} onOpenChange={() => setOpenDialog(null)}>
         <DialogContent className="bg-white/10 backdrop-blur-md border-white/20 text-white">
           <DialogHeader>
@@ -820,7 +802,6 @@ const MenuManagementPage = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Category Dialog */}
       <Dialog open={openDialog === 'newCategory' || openDialog === 'editCategory'} onOpenChange={() => setOpenDialog(null)}>
         <DialogContent className="bg-white/10 backdrop-blur-md border-white/20 text-white">
           <DialogHeader>

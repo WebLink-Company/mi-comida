@@ -27,7 +27,7 @@ const DishListing: React.FC<DishListingProps> = ({
   return (
     <>
       {isLoading ? (
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[1, 2, 3].map((_, i) => (
             <div 
               key={i} 
@@ -40,15 +40,21 @@ const DishListing: React.FC<DishListingProps> = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.4, delay: 0.3 }}
-          className="grid grid-cols-3 gap-3"
+          className="grid grid-cols-1 md:grid-cols-3 gap-4"
+          layout
         >
           {displayedOptions.map((option) => (
-            <DishCard
+            <motion.div
               key={option.id}
-              dish={option}
-              subsidizedPrice={calculateSubsidizedPrice(option.price)}
-              onSelect={() => handleSelectDish(option)}
-            />
+              layout
+              transition={{ duration: 0.4 }}
+            >
+              <DishCard
+                dish={option}
+                subsidizedPrice={calculateSubsidizedPrice(option.price)}
+                onSelect={() => handleSelectDish(option)}
+              />
+            </motion.div>
           ))}
         </motion.div>
       ) : (

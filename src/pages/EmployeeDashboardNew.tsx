@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
@@ -12,7 +11,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import DishCard from '@/components/employee/DishCard';
 import MobileNavbar from '@/components/employee/MobileNavbar';
-import '@/components/employee/scrollbar-hide.css';
 
 const EmployeeDashboardNew: React.FC = () => {
   const { user } = useAuth();
@@ -28,7 +26,6 @@ const EmployeeDashboardNew: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState('all');
   const [showMore, setShowMore] = useState(false);
   
-  // Get time of day for greeting
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Buenos días';
@@ -36,7 +33,6 @@ const EmployeeDashboardNew: React.FC = () => {
     return 'Buenas noches';
   };
   
-  // Fetch data from Supabase
   useEffect(() => {
     const fetchData = async () => {
       if (!user) return;
@@ -44,7 +40,6 @@ const EmployeeDashboardNew: React.FC = () => {
       try {
         setIsLoading(true);
         
-        // Fetch user's company
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('company_id')
@@ -53,7 +48,6 @@ const EmployeeDashboardNew: React.FC = () => {
           
         if (profileError) throw profileError;
         
-        // Fetch company details
         if (profileData?.company_id) {
           const { data: companyData, error: companyError } = await supabase
             .from('companies')
@@ -64,7 +58,6 @@ const EmployeeDashboardNew: React.FC = () => {
           if (companyError) throw companyError;
           setCompany(companyData);
           
-          // Fetch lunch options for this company (via provider)
           if (companyData.provider_id) {
             const { data: lunchData, error: lunchError } = await supabase
               .from('lunch_options')
@@ -75,8 +68,6 @@ const EmployeeDashboardNew: React.FC = () => {
             if (lunchError) throw lunchError;
             setLunchOptions(lunchData || []);
             setFilteredOptions(lunchData || []);
-
-            // Initially show first 3 options only
             setDisplayedOptions((lunchData || []).slice(0, 3));
           }
         }
@@ -88,7 +79,6 @@ const EmployeeDashboardNew: React.FC = () => {
           variant: 'destructive',
         });
         
-        // Load mock data in case of error
         import('@/lib/mockData').then(({ mockLunchOptions, mockCompanies }) => {
           setLunchOptions(mockLunchOptions);
           setFilteredOptions(mockLunchOptions);
@@ -103,7 +93,6 @@ const EmployeeDashboardNew: React.FC = () => {
     fetchData();
   }, [user, toast]);
   
-  // Handle search
   useEffect(() => {
     if (searchQuery.trim() === '') {
       setFilteredOptions(lunchOptions);
@@ -120,7 +109,6 @@ const EmployeeDashboardNew: React.FC = () => {
     setDisplayedOptions(filtered.slice(0, showMore ? filtered.length : 3));
   }, [searchQuery, lunchOptions, showMore]);
   
-  // Handle filter selection
   const handleFilterChange = (filter: string) => {
     setActiveFilter(filter);
     setShowMore(false);
@@ -134,21 +122,17 @@ const EmployeeDashboardNew: React.FC = () => {
     let filtered;
     switch (filter) {
       case 'popular':
-        // For demo, just show some options - in real app would use order frequency
         filtered = [...lunchOptions].sort(() => Math.random() - 0.5).slice(0, 3);
         break;
       case 'special':
-        // Filter by tags containing 'special'
         filtered = lunchOptions.filter(option => 
           option.tags?.some(tag => tag.toLowerCase().includes('special'))
         );
         if (filtered.length === 0) {
-          // If no specials, show a random selection
           filtered = [...lunchOptions].sort(() => Math.random() - 0.5).slice(0, 2);
         }
         break;
       case 'recommended':
-        // For demo, just show some options - in real app would use recommendations
         filtered = [...lunchOptions].sort(() => Math.random() - 0.5).slice(0, 4);
         break;
       default:
@@ -159,7 +143,6 @@ const EmployeeDashboardNew: React.FC = () => {
     setDisplayedOptions(filtered.slice(0, 3));
   };
 
-  // Toggle showing more options
   const toggleShowMore = () => {
     setShowMore(prev => !prev);
     if (!showMore) {
@@ -169,13 +152,10 @@ const EmployeeDashboardNew: React.FC = () => {
     }
   };
   
-  // Handle dish selection
   const handleSelectDish = (dish: LunchOption) => {
-    // Create the order
     createOrder(dish)
       .then(orderId => {
         if (orderId) {
-          // Navigate to order details page
           navigate(`/employee/order/${orderId}`);
         }
       })
@@ -189,7 +169,6 @@ const EmployeeDashboardNew: React.FC = () => {
       });
   };
   
-  // Create order in database
   const createOrder = async (dish: LunchOption): Promise<string | null> => {
     if (!user || !company) return null;
     
@@ -222,7 +201,6 @@ const EmployeeDashboardNew: React.FC = () => {
     }
   };
   
-  // Calculate subsidized price
   const calculateSubsidizedPrice = (price: number) => {
     if (!company) return price;
     
@@ -234,7 +212,6 @@ const EmployeeDashboardNew: React.FC = () => {
     return price * (1 - (subsidyPercentage / 100));
   };
 
-  // Get subsidy text
   const getSubsidyText = () => {
     if (!company) return '';
     
@@ -248,12 +225,9 @@ const EmployeeDashboardNew: React.FC = () => {
   
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-600 to-blue-800 pb-20">
-      {/* Bottom Navigation */}
       <MobileNavbar />
       
-      {/* Main Content */}
       <div className="container px-4 pt-8 pb-20">
-        {/* Header Section */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -280,7 +254,6 @@ const EmployeeDashboardNew: React.FC = () => {
           )}
         </motion.div>
         
-        {/* Search Section */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -299,7 +272,6 @@ const EmployeeDashboardNew: React.FC = () => {
           </div>
         </motion.div>
         
-        {/* Quick Filters */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -332,7 +304,6 @@ const EmployeeDashboardNew: React.FC = () => {
           </Badge>
         </motion.div>
         
-        {/* Dishes Grid */}
         {isLoading ? (
           <div className="grid grid-cols-3 gap-3">
             {[1, 2, 3].map((_, i) => (
@@ -375,7 +346,6 @@ const EmployeeDashboardNew: React.FC = () => {
           </motion.div>
         )}
 
-        {/* Show More Button */}
         {filteredOptions.length > 3 && (
           <motion.div 
             initial={{ opacity: 0 }} 
@@ -398,7 +368,6 @@ const EmployeeDashboardNew: React.FC = () => {
   );
 };
 
-// Add format function for date formatting
 function format(date: Date, formatStr: string): string {
   const months = [
     'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -410,7 +379,6 @@ function format(date: Date, formatStr: string): string {
     'Jueves', 'Viernes', 'Sábado'
   ];
   
-  // Simple formatter for the required patterns
   if (formatStr === 'EEEE, MMMM d') {
     return `${days[date.getDay()]}, ${months[date.getMonth()]} ${date.getDate()}`;
   }
@@ -420,7 +388,7 @@ function format(date: Date, formatStr: string): string {
     const minutes = date.getMinutes().toString().padStart(2, '0');
     const ampm = hours >= 12 ? 'PM' : 'AM';
     hours = hours % 12;
-    hours = hours ? hours : 12; // the hour '0' should be '12'
+    hours = hours ? hours : 12;
     return `${hours}:${minutes} ${ampm}`;
   }
   

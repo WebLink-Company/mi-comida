@@ -1,9 +1,9 @@
-import React, { useEffect } from 'react';
+
+import React, { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
 import { useEmployeeDashboard } from '@/hooks/useEmployeeDashboard';
 import { useToast } from '@/hooks/use-toast';
-import { Building } from 'lucide-react';
 import MobileNavbar from '@/components/employee/MobileNavbar';
 import FilterFAB from '@/components/employee/FilterFAB';
 import CategoryButtons from '@/components/employee/CategoryButtons';
@@ -14,6 +14,8 @@ import DishListing from '@/components/employee/DishListing';
 const EmployeeDashboardNew: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const toastShownRef = useRef(false);
+  
   const {
     isLoading,
     company,
@@ -31,9 +33,11 @@ const EmployeeDashboardNew: React.FC = () => {
     handleSelectDish
   } = useEmployeeDashboard(user?.id);
 
-  // Show company and subsidy info in toast notification when the page loads
+  // Show company and subsidy info in toast notification only once when the page loads
   useEffect(() => {
-    if (company) {
+    if (company && !toastShownRef.current) {
+      toastShownRef.current = true;
+      
       const subsidyText = company.fixed_subsidy_amount && company.fixed_subsidy_amount > 0 
         ? `$${company.fixed_subsidy_amount.toFixed(2)}` 
         : `${company.subsidy_percentage || company.subsidyPercentage || 0}%`;

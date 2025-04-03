@@ -23,18 +23,20 @@ const MobileNavbar: React.FC = () => {
   return (
     <>
       {/* Bottom Navigation Bar */}
-      <div className="fixed bottom-0 left-0 right-0 h-16 bg-background/80 backdrop-blur-lg border-t z-50">
+      <div className="fixed bottom-0 left-0 right-0 h-16 bg-background/20 backdrop-blur-xl border-t border-white/20 z-50">
         <div className="container h-full flex items-center justify-around">
           <Link 
             to="/employee"
             className={`flex flex-col items-center justify-center w-16 pt-1 ${
               isActive('/employee') 
                 ? 'text-primary' 
-                : 'text-muted-foreground hover:text-foreground transition-colors'
+                : 'text-white/70 hover:text-white transition-colors'
             }`}
           >
-            <ShoppingBag className="h-5 w-5" />
-            <span className="text-xs mt-1">Menú</span>
+            <div className="flex items-center justify-center w-10 h-10">
+              <ShoppingBag className="h-5 w-5" />
+            </div>
+            <span className="text-xs">Menú</span>
           </Link>
           
           <Link 
@@ -42,17 +44,19 @@ const MobileNavbar: React.FC = () => {
             className={`flex flex-col items-center justify-center w-16 pt-1 ${
               isActive('/employee/orders') 
                 ? 'text-primary' 
-                : 'text-muted-foreground hover:text-foreground transition-colors'
+                : 'text-white/70 hover:text-white transition-colors'
             }`}
           >
-            <Clock className="h-5 w-5" />
-            <span className="text-xs mt-1">Pedidos</span>
+            <div className="flex items-center justify-center w-10 h-10">
+              <Clock className="h-5 w-5" />
+            </div>
+            <span className="text-xs">Pedidos</span>
           </Link>
           
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
               <motion.button 
-                className="flex flex-col items-center justify-center w-16 pt-1 text-muted-foreground hover:text-foreground transition-colors relative"
+                className="flex flex-col items-center justify-center w-16 pt-1 text-white/70 hover:text-white transition-colors relative"
                 onMouseEnter={() => setMenuHovered(true)}
                 onMouseLeave={() => setMenuHovered(false)}
                 initial={{ scale: 1 }}
@@ -60,7 +64,7 @@ const MobileNavbar: React.FC = () => {
               >
                 <div className="relative flex items-center justify-center">
                   <motion.div 
-                    className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center"
+                    className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center"
                     animate={{ 
                       backgroundColor: open || menuHovered ? "rgba(255, 255, 255, 0.3)" : "rgba(255, 255, 255, 0.2)"
                     }}
@@ -75,12 +79,12 @@ const MobileNavbar: React.FC = () => {
                     </motion.div>
                   </motion.div>
                 </div>
-                <span className="text-xs mt-1">Más</span>
+                <span className="text-xs">Más</span>
               </motion.button>
             </SheetTrigger>
             <SheetContent 
               side="bottom" 
-              className="h-auto pb-8 rounded-t-xl backdrop-blur-md bg-white/20 border-white/30"
+              className="h-auto pb-8 rounded-t-xl backdrop-blur-xl bg-white/20 border-white/30"
             >
               <AnimatePresence>
                 {open && (

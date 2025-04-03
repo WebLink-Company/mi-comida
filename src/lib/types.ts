@@ -1,3 +1,4 @@
+
 export type UserRole = 'admin' | 'provider' | 'supervisor' | 'employee' | 'company';
 
 export interface User {

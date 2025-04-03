@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { LunchOption, Company } from '@/lib/types';
 import { useNavigate } from 'react-router-dom';
-import { Search, ChevronRight, Star, Clock, Award, ChevronDown } from 'lucide-react';
+import { Search, ChevronRight, Star, Award, ChevronDown, TrendingUp, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -280,27 +280,27 @@ const EmployeeDashboardNew: React.FC = () => {
         >
           <Badge
             onClick={() => handleFilterChange('all')}
-            className={`px-3 py-1 cursor-pointer ${activeFilter === 'all' ? 'bg-white/40 hover:bg-white/50' : 'bg-white/20 hover:bg-white/30'} border-white/30 text-white`}
+            className={`px-3 py-1 cursor-pointer flex items-center gap-1 ${activeFilter === 'all' ? 'bg-white/40 hover:bg-white/50' : 'bg-white/20 hover:bg-white/30'} border-white/30 text-white text-xs`}
           >
-            Todos
+            <Clock className="h-3 w-3" /> Todos
           </Badge>
           <Badge
             onClick={() => handleFilterChange('popular')}
-            className={`px-3 py-1 cursor-pointer flex items-center gap-1 ${activeFilter === 'popular' ? 'bg-white/40 hover:bg-white/50' : 'bg-white/20 hover:bg-white/30'} border-white/30 text-white`}
+            className={`px-3 py-1 cursor-pointer flex items-center gap-1 ${activeFilter === 'popular' ? 'bg-white/40 hover:bg-white/50' : 'bg-white/20 hover:bg-white/30'} border-white/30 text-white text-xs`}
           >
-            <Star className="h-3 w-3" /> Más pedidos
+            <TrendingUp className="h-3 w-3" /> Más pedidos
           </Badge>
           <Badge
             onClick={() => handleFilterChange('special')}
-            className={`px-3 py-1 cursor-pointer flex items-center gap-1 ${activeFilter === 'special' ? 'bg-white/40 hover:bg-white/50' : 'bg-white/20 hover:bg-white/30'} border-white/30 text-white`}
+            className={`px-3 py-1 cursor-pointer flex items-center gap-1 ${activeFilter === 'special' ? 'bg-white/40 hover:bg-white/50' : 'bg-white/20 hover:bg-white/30'} border-white/30 text-white text-xs`}
           >
-            <Award className="h-3 w-3" /> Especial del chef
+            <Award className="h-3 w-3" /> Especial
           </Badge>
           <Badge
             onClick={() => handleFilterChange('recommended')}
-            className={`px-3 py-1 cursor-pointer flex items-center gap-1 ${activeFilter === 'recommended' ? 'bg-white/40 hover:bg-white/50' : 'bg-white/20 hover:bg-white/30'} border-white/30 text-white`}
+            className={`px-3 py-1 cursor-pointer flex items-center gap-1 ${activeFilter === 'recommended' ? 'bg-white/40 hover:bg-white/50' : 'bg-white/20 hover:bg-white/30'} border-white/30 text-white text-xs`}
           >
-            <ChevronRight className="h-3 w-3" /> Recomendados
+            <Star className="h-3 w-3" /> Recomendados
           </Badge>
         </motion.div>
         

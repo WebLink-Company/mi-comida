@@ -2,8 +2,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { LunchOption } from '@/lib/types';
-import { Button } from '@/components/ui/button';
-import { ShoppingBag } from 'lucide-react';
+import { ShoppingBag, Check } from 'lucide-react';
 
 interface DishCardProps {
   dish: LunchOption;
@@ -14,7 +13,7 @@ interface DishCardProps {
 const DishCard: React.FC<DishCardProps> = ({ dish, subsidizedPrice, onSelect }) => {
   return (
     <motion.div 
-      className="rounded-lg overflow-hidden bg-white/20 backdrop-blur-sm border border-white/30 hover:shadow-lg transition-all duration-200 flex flex-col"
+      className="rounded-lg overflow-hidden bg-white/20 backdrop-blur-sm border border-white/30 hover:shadow-lg transition-all duration-200 flex flex-col relative"
       whileHover={{ y: -4, transition: { duration: 0.2 } }}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -46,16 +45,17 @@ const DishCard: React.FC<DishCardProps> = ({ dish, subsidizedPrice, onSelect }) 
               ${subsidizedPrice.toFixed(2)}
             </span>
           </div>
-          <Button 
-            size="sm" 
-            variant="outline" 
-            className="h-7 text-xs px-2 bg-white/20 hover:bg-white/30 border-white/30 text-white" 
-            onClick={onSelect}
-          >
-            Seleccionar
-          </Button>
         </div>
       </div>
+
+      {/* Floating action button for selection */}
+      <button
+        onClick={onSelect}
+        className="absolute bottom-2 right-2 w-8 h-8 rounded-full bg-white/30 hover:bg-white/40 border border-white/40 flex items-center justify-center transition-all duration-200 backdrop-blur-sm"
+        aria-label="Seleccionar"
+      >
+        <Check className="h-4 w-4 text-white" />
+      </button>
     </motion.div>
   );
 };

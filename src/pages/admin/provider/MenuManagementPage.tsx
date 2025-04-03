@@ -110,13 +110,18 @@ const MenuManagementPage = () => {
     setLoading(true);
     
     try {
+      console.log('Fetching data for provider:', user?.provider_id);
+      
       const { data: categoriesData, error: categoriesError } = await supabase
         .from('menu_categories')
         .select('*')
-        .eq('provider_id', user?.id)
+        .eq('provider_id', user?.provider_id)
         .order('sort_order');
         
-      if (categoriesError) throw categoriesError;
+      if (categoriesError) {
+        console.error('Error fetching categories:', categoriesError);
+        throw categoriesError;
+      }
       setCategories(categoriesData || []);
       
       const { data: menuData, error: menuError } = await supabase
@@ -125,9 +130,12 @@ const MenuManagementPage = () => {
           *,
           menu_categories(name)
         `)
-        .eq('provider_id', user?.id);
+        .eq('provider_id', user?.provider_id);
         
-      if (menuError) throw menuError;
+      if (menuError) {
+        console.error('Error fetching menu items:', menuError);
+        throw menuError;
+      }
       
       const formattedMenuItems: MenuItem[] = (menuData || []).map(item => ({
         ...item,
@@ -210,7 +218,7 @@ const MenuManagementPage = () => {
   };
 
   const saveMenuItem = async () => {
-    if (!user?.id || !currentItem.name || !currentItem.description || currentItem.price === undefined) {
+    if (!user?.provider_id || !currentItem.name || !currentItem.description || currentItem.price === undefined) {
       toast({
         title: 'Error',
         description: 'Please fill in all required fields',
@@ -229,6 +237,8 @@ const MenuManagementPage = () => {
         image: currentItem.image || '/placeholder.svg',
       };
       
+      console.log('Saving menu item with provider_id:', user.provider_id);
+      
       if (currentItem.id) {
         const { data, error } = await supabase
           .from('lunch_options')
@@ -240,7 +250,10 @@ const MenuManagementPage = () => {
           `)
           .single();
           
-        if (error) throw error;
+        if (error) {
+          console.error('Error updating menu item:', error);
+          throw error;
+        }
         
         const updatedItem: MenuItem = {
           ...data,
@@ -266,7 +279,10 @@ const MenuManagementPage = () => {
           `)
           .single();
           
-        if (error) throw error;
+        if (error) {
+          console.error('Error inserting menu item:', error);
+          throw error;
+        }
         
         const newItem: MenuItem = {
           ...data,
@@ -294,18 +310,18 @@ const MenuManagementPage = () => {
         category_id: null,
       });
       setOpenDialog(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving menu item:', error);
       toast({
         title: 'Error',
-        description: 'Failed to save menu item',
+        description: error.message || 'Failed to save menu item',
         variant: 'destructive',
       });
     }
   };
 
   const saveCategory = async () => {
-    if (!user?.id || !currentCategory.name) {
+    if (!user?.provider_id || !currentCategory.name) {
       toast({
         title: 'Error',
         description: 'Category name is required',
@@ -321,6 +337,8 @@ const MenuManagementPage = () => {
         name: currentCategory.name,
       };
       
+      console.log('Saving category with provider_id:', user.provider_id);
+      
       if (currentCategory.id) {
         const { data, error } = await supabase
           .from('menu_categories')
@@ -329,7 +347,10 @@ const MenuManagementPage = () => {
           .select()
           .single();
           
-        if (error) throw error;
+        if (error) {
+          console.error('Error updating category:', error);
+          throw error;
+        }
         
         setCategories(categories.map(category => 
           category.id === data.id ? data : category
@@ -365,11 +386,11 @@ const MenuManagementPage = () => {
         sort_order: categories.length,
       });
       setOpenDialog(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving category:', error);
       toast({
         title: 'Error',
-        description: 'Failed to save category',
+        description: error.message || 'Failed to save category',
         variant: 'destructive',
       });
     }

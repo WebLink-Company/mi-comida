@@ -147,7 +147,7 @@ export type Database = {
             foreignKeyName: "lunch_options_provider_id_fkey"
             columns: ["provider_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "providers"
             referencedColumns: ["id"]
           },
         ]

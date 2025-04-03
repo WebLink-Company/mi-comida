@@ -53,10 +53,10 @@ const DishCard: React.FC<DishCardProps> = ({ dish, subsidizedPrice, onSelect }) 
         onClick={onSelect}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
-        className="absolute bottom-2 right-2 w-8 h-8 rounded-full bg-white/30 hover:bg-white/40 border border-white/40 flex items-center justify-center transition-all duration-200 backdrop-blur-sm"
+        className="absolute bottom-2 right-2 w-8 h-8 rounded-full bg-primary/70 hover:bg-primary border border-white/30 flex items-center justify-center transition-all duration-200 backdrop-blur-sm text-white shadow-sm"
         aria-label="Seleccionar"
       >
-        <Check className="h-4 w-4 text-white" />
+        <Check className="h-4 w-4" />
       </motion.button>
     </motion.div>
   );

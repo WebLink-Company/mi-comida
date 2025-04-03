@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { LunchOption, Company } from '@/lib/types';
 import { useNavigate } from 'react-router-dom';
-import { Search, ChevronRight, Star, Award, ChevronDown, TrendingUp, Clock, ChevronUp } from 'lucide-react';
+import { Search, Star, Award, TrendingUp, Clock, ChevronDown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -240,14 +240,14 @@ const EmployeeDashboardNew: React.FC = () => {
       
       <MobileNavbar />
       
-      <div className="container px-4 pt-12 pb-20 relative z-10">
+      <div className="container px-4 pt-16 pb-20 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
           className="mb-12 flex flex-col items-center text-center"
         >
-          <h1 className="text-4xl font-bold mb-1 bg-gradient-to-r from-blue-300 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+          <h1 className="text-4xl font-bold mb-1 bg-clip-text text-transparent bg-gradient-to-r from-white via-blue-200 to-blue-100">
             {`Hola ${user?.first_name || 'Usuario'}.`}
           </h1>
           <p className="text-sm text-white/80 mb-1">
@@ -289,31 +289,47 @@ const EmployeeDashboardNew: React.FC = () => {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.2 }}
-          className="mb-8 flex justify-center gap-2 overflow-x-auto pb-2 scrollbar-hide"
+          className="mb-8 flex justify-center gap-1 overflow-x-auto pb-2 scrollbar-hide"
         >
           <Badge
             onClick={() => handleFilterChange('all')}
-            className={`px-3 py-1 cursor-pointer flex items-center gap-1 ${activeFilter === 'all' ? 'bg-white/40 hover:bg-white/50' : 'bg-white/20 hover:bg-white/30'} border-white/30 text-white text-xs`}
+            className={`cursor-pointer flex items-center gap-1 px-3 py-1 text-xs ${
+              activeFilter === 'all' 
+                ? 'bg-white/40 hover:bg-white/50' 
+                : 'bg-white/20 hover:bg-white/30'
+            } border-white/30 text-white`}
           >
-            <Clock className="h-3 w-3" /> Todos
+            <Clock className="h-3.5 w-3.5" /> Todos
           </Badge>
           <Badge
             onClick={() => handleFilterChange('popular')}
-            className={`px-3 py-1 cursor-pointer flex items-center gap-1 ${activeFilter === 'popular' ? 'bg-white/40 hover:bg-white/50' : 'bg-white/20 hover:bg-white/30'} border-white/30 text-white text-xs`}
+            className={`cursor-pointer flex items-center gap-1 px-3 py-1 text-xs ${
+              activeFilter === 'popular' 
+                ? 'bg-white/40 hover:bg-white/50' 
+                : 'bg-white/20 hover:bg-white/30'
+            } border-white/30 text-white`}
           >
-            <TrendingUp className="h-3 w-3" /> Más pedidos
+            <TrendingUp className="h-3.5 w-3.5" /> Más pedidos
           </Badge>
           <Badge
             onClick={() => handleFilterChange('special')}
-            className={`px-3 py-1 cursor-pointer flex items-center gap-1 ${activeFilter === 'special' ? 'bg-white/40 hover:bg-white/50' : 'bg-white/20 hover:bg-white/30'} border-white/30 text-white text-xs`}
+            className={`cursor-pointer flex items-center gap-1 px-3 py-1 text-xs ${
+              activeFilter === 'special' 
+                ? 'bg-white/40 hover:bg-white/50' 
+                : 'bg-white/20 hover:bg-white/30'
+            } border-white/30 text-white`}
           >
-            <Award className="h-3 w-3" /> Especial
+            <Award className="h-3.5 w-3.5" /> Especial
           </Badge>
           <Badge
             onClick={() => handleFilterChange('recommended')}
-            className={`px-3 py-1 cursor-pointer flex items-center gap-1 ${activeFilter === 'recommended' ? 'bg-white/40 hover:bg-white/50' : 'bg-white/20 hover:bg-white/30'} border-white/30 text-white text-xs`}
+            className={`cursor-pointer flex items-center gap-1 px-3 py-1 text-xs ${
+              activeFilter === 'recommended' 
+                ? 'bg-white/40 hover:bg-white/50' 
+                : 'bg-white/20 hover:bg-white/30'
+            } border-white/30 text-white`}
           >
-            <Star className="h-3 w-3" /> Recomendados
+            <Star className="h-3.5 w-3.5" /> Recomendados
           </Badge>
         </motion.div>
         
@@ -364,27 +380,23 @@ const EmployeeDashboardNew: React.FC = () => {
             initial={{ opacity: 0 }} 
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
-            className="flex justify-center mt-6"
+            className="flex flex-col items-center mt-6"
           >
-            <motion.div
-              onMouseEnter={() => setIsMenuHovered(true)}
-              onMouseLeave={() => setIsMenuHovered(false)}
-              className="relative"
+            <span className="text-xs text-white/80 mb-1">Ver más</span>
+            <motion.button
+              onClick={toggleShowMore}
+              className="flex items-center justify-center cursor-pointer"
+              initial={{ y: 0 }}
+              animate={{ y: [0, 3, 0] }}
+              transition={{ 
+                duration: 1.5, 
+                repeat: Infinity, 
+                repeatType: "loop", 
+                ease: "easeInOut" 
+              }}
             >
-              <Button 
-                variant="ghost" 
-                onClick={toggleShowMore}
-                className="text-white flex items-center gap-1 px-4 py-2 bg-white/20 backdrop-blur-sm border border-white/30 hover:bg-white/30 rounded-md transition-all duration-300"
-              >
-                {showMore ? 'Ver menos' : 'Ver más'} 
-                <motion.div
-                  animate={{ rotate: showMore || isMenuHovered ? 180 : 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <ChevronDown className="h-4 w-4" />
-                </motion.div>
-              </Button>
-            </motion.div>
+              <ChevronDown className="h-5 w-5 text-blue-400" />
+            </motion.button>
           </motion.div>
         )}
       </div>

@@ -51,6 +51,13 @@ const EmployeeDashboardNew: React.FC = () => {
     }
   }, [company, toast]);
   
+  // Reset toast ref when component unmounts (for when user navigates away and comes back)
+  useEffect(() => {
+    return () => {
+      toastShownRef.current = false;
+    };
+  }, []);
+  
   // Make sure the arrays are defined before passing them to components
   const safeFilteredOptions = Array.isArray(filteredOptions) ? filteredOptions : [];
   const safeDisplayedOptions = Array.isArray(displayedOptions) ? displayedOptions : [];

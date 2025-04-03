@@ -40,16 +40,15 @@ const DishListing: React.FC<DishListingProps> = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.4, delay: 0.3 }}
-          className="grid grid-cols-3 gap-3 relative"
+          className="grid grid-cols-3 gap-3"
         >
           {displayedOptions.map((option) => (
-            <div key={option.id} className="relative" style={{ minHeight: "160px" }}>
-              <DishCard
-                dish={option}
-                subsidizedPrice={calculateSubsidizedPrice(option.price)}
-                onSelect={() => handleSelectDish(option)}
-              />
-            </div>
+            <DishCard
+              key={option.id}
+              dish={option}
+              subsidizedPrice={calculateSubsidizedPrice(option.price)}
+              onSelect={() => handleSelectDish(option)}
+            />
           ))}
         </motion.div>
       ) : (

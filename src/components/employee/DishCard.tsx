@@ -46,33 +46,22 @@ const DishCard: React.FC<DishCardProps> = ({ dish, subsidizedPrice, onSelect }) 
       )}
       
       <motion.div 
-        className={`rounded-lg overflow-hidden bg-white/20 backdrop-blur-sm border border-white/30 hover:shadow-lg transition-all duration-300 ${
-          isExpanded ? 'z-50 absolute' : 'z-10 relative'
+        className={`rounded-lg overflow-hidden bg-white/20 backdrop-blur-sm border border-white/30 hover:shadow-lg transition-all duration-200 flex flex-col relative ${
+          isExpanded ? 'z-50' : 'z-10'
         }`}
-        whileHover={!isMobile ? {
-          scale: 1.05,
-          zIndex: 20,
-          width: '200%',
-          boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)',
-          transition: { duration: 0.3 }
-        } : undefined}
+        whileHover={!isMobile ? { y: -4, transition: { duration: 0.2 } } : undefined}
         initial={{ opacity: 0, y: 20 }}
         animate={{ 
           opacity: 1, 
           y: 0,
           ...(isExpanded && isMobile ? {
-            position: 'absolute',
-            width: '200%',
-            left: '-50%',
-            scale: 1.05,
+            scale: 1.03,
             boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)',
-            borderColor: 'rgba(255, 255, 255, 0.5)',
-            zIndex: 50
+            borderColor: 'rgba(255, 255, 255, 0.5)'
           } : {})
         }}
         transition={{ duration: 0.3 }}
         onClick={handleCardClick}
-        layout
       >
         <div className="relative h-24 bg-gradient-to-b from-primary/5 to-primary/10">
           {dish.image ? (
@@ -105,31 +94,24 @@ const DishCard: React.FC<DishCardProps> = ({ dish, subsidizedPrice, onSelect }) 
         </div>
         
         <div className="p-3 flex flex-col flex-1">
-          <motion.h3 
-            className="font-medium text-sm text-white"
-            layout
-          >
-            {dish.name}
-          </motion.h3>
+          <h3 className={`font-medium text-sm ${isExpanded ? '' : 'line-clamp-1'} text-white`}>{dish.name}</h3>
           
           <AnimatePresence>
-            {(isExpanded || (!isMobile && false)) && (
+            {isExpanded && (
               <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.3 }}
                 className="mt-2"
-                layout
               >
-                <p className="text-xs text-white/80 mb-3">{dish.description}</p>
+                <p className="text-xs text-white/80 line-clamp-3 mb-3">{dish.description}</p>
                 
                 <motion.button
                   onClick={handleSelectClick}
                   whileTap={{ scale: 0.95 }}
                   className="w-full py-2 px-4 rounded-md bg-primary/70 hover:bg-primary/90 border border-white/30 flex items-center justify-center transition-all duration-200 backdrop-blur-sm text-white shadow-sm text-sm"
                   aria-label="Seleccionar"
-                  layout
                 >
                   <Check className="h-4 w-4 mr-2" /> Seleccionar
                 </motion.button>
@@ -137,10 +119,7 @@ const DishCard: React.FC<DishCardProps> = ({ dish, subsidizedPrice, onSelect }) 
             )}
           </AnimatePresence>
           
-          <motion.div 
-            className="mt-auto flex items-center justify-between"
-            layout
-          >
+          <div className="mt-auto flex items-center justify-between">
             <div className="flex flex-col">
               <span className="text-xs text-white/60 line-through">
                 ${dish.price.toFixed(2)}
@@ -149,7 +128,7 @@ const DishCard: React.FC<DishCardProps> = ({ dish, subsidizedPrice, onSelect }) 
                 ${subsidizedPrice.toFixed(2)}
               </span>
             </div>
-          </motion.div>
+          </div>
         </div>
 
         {/* Floating action button for selection (only shown when not expanded) */}

@@ -72,7 +72,7 @@ const DishListing: React.FC<DishListingProps> = ({
           initial={{ opacity: 0 }} 
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
-          className="flex flex-col items-center mt-6"
+          className="flex flex-col items-center my-6 pb-16"
         >
           <span className="text-xs text-white/80">Ver más</span>
           <motion.button

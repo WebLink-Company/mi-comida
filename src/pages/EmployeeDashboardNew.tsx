@@ -30,7 +30,7 @@ const EmployeeDashboardNew: React.FC = () => {
   } = useEmployeeDashboard(user?.id);
   
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-600 to-blue-800 relative overflow-hidden pb-20">
+    <div className="min-h-screen bg-gradient-to-b from-blue-600 to-blue-800 relative overflow-hidden pb-24">
       <motion.div 
         className="absolute inset-0 opacity-20 pointer-events-none z-0"
         animate={{
@@ -46,7 +46,7 @@ const EmployeeDashboardNew: React.FC = () => {
       <MobileNavbar />
       <FilterFAB activeFilter={activeFilter} onFilterChange={handleFilterChange} />
       
-      <div className="container px-4 pt-20 pb-20 relative z-10">
+      <div className="container px-4 pt-20 pb-24 relative z-10">
         <DashboardHeader 
           userName={user?.first_name} 
           company={company} 

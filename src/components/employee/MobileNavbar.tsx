@@ -23,7 +23,7 @@ const MobileNavbar: React.FC = () => {
   return (
     <>
       {/* Bottom Navigation Bar */}
-      <div className="fixed bottom-0 left-0 right-0 h-16 bg-background/20 backdrop-blur-xl border-t border-white/20 z-50">
+      <div className="fixed bottom-0 left-0 right-0 h-16 bg-white/20 backdrop-blur-xl border-t border-white/20 z-50">
         <div className="container h-full flex items-center justify-around">
           <Link 
             to="/employee"
@@ -96,12 +96,12 @@ const MobileNavbar: React.FC = () => {
                     transition={{ duration: 0.3 }}
                   >
                     <div className="flex items-center mb-6">
-                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                      <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center text-primary backdrop-blur-sm">
                         <User className="h-5 w-5" />
                       </div>
                       <div className="ml-3">
-                        <p className="font-medium">{user?.first_name} {user?.last_name}</p>
-                        <p className="text-xs text-muted-foreground">{user?.email}</p>
+                        <p className="font-medium text-white">{user?.first_name} {user?.last_name}</p>
+                        <p className="text-xs text-white/70">{user?.email}</p>
                       </div>
                     </div>
                     
@@ -109,7 +109,7 @@ const MobileNavbar: React.FC = () => {
                       <SheetClose asChild>
                         <Link 
                           to="/employee/profile" 
-                          className="flex items-center py-2 px-1 hover:text-primary transition-colors"
+                          className="flex items-center py-2 px-1 text-white hover:text-primary transition-colors"
                         >
                           <User className="h-4 w-4 mr-2" />
                           <span>Mi Perfil</span>

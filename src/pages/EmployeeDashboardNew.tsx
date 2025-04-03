@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
@@ -240,7 +241,7 @@ const EmployeeDashboardNew: React.FC = () => {
       
       <MobileNavbar />
       
-      <div className="container px-4 pt-16 pb-20 relative z-10">
+      <div className="container px-4 pt-20 pb-20 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -289,47 +290,47 @@ const EmployeeDashboardNew: React.FC = () => {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.2 }}
-          className="mb-8 flex justify-center gap-1 overflow-x-auto pb-2 scrollbar-hide"
+          className="mb-8 flex justify-center gap-2 overflow-x-auto pb-2 scrollbar-hide"
         >
           <Badge
             onClick={() => handleFilterChange('all')}
-            className={`cursor-pointer flex items-center gap-1 px-3 py-1 text-xs ${
+            className={`cursor-pointer px-3 py-1 text-xs ${
               activeFilter === 'all' 
                 ? 'bg-white/40 hover:bg-white/50' 
                 : 'bg-white/20 hover:bg-white/30'
             } border-white/30 text-white`}
           >
-            <Clock className="h-3.5 w-3.5" /> Todos
+            <Clock className="h-3 w-3 mr-1" /> Todos
           </Badge>
           <Badge
             onClick={() => handleFilterChange('popular')}
-            className={`cursor-pointer flex items-center gap-1 px-3 py-1 text-xs ${
+            className={`cursor-pointer px-3 py-1 text-xs ${
               activeFilter === 'popular' 
                 ? 'bg-white/40 hover:bg-white/50' 
                 : 'bg-white/20 hover:bg-white/30'
             } border-white/30 text-white`}
           >
-            <TrendingUp className="h-3.5 w-3.5" /> Más pedidos
+            <TrendingUp className="h-3 w-3 mr-1" /> Más pedidos
           </Badge>
           <Badge
             onClick={() => handleFilterChange('special')}
-            className={`cursor-pointer flex items-center gap-1 px-3 py-1 text-xs ${
+            className={`cursor-pointer px-3 py-1 text-xs ${
               activeFilter === 'special' 
                 ? 'bg-white/40 hover:bg-white/50' 
                 : 'bg-white/20 hover:bg-white/30'
             } border-white/30 text-white`}
           >
-            <Award className="h-3.5 w-3.5" /> Especial
+            <Award className="h-3 w-3 mr-1" /> Especial
           </Badge>
           <Badge
             onClick={() => handleFilterChange('recommended')}
-            className={`cursor-pointer flex items-center gap-1 px-3 py-1 text-xs ${
+            className={`cursor-pointer px-3 py-1 text-xs ${
               activeFilter === 'recommended' 
                 ? 'bg-white/40 hover:bg-white/50' 
                 : 'bg-white/20 hover:bg-white/30'
             } border-white/30 text-white`}
           >
-            <Star className="h-3.5 w-3.5" /> Recomendados
+            <Star className="h-3 w-3 mr-1" /> Recomendados
           </Badge>
         </motion.div>
         
@@ -382,10 +383,10 @@ const EmployeeDashboardNew: React.FC = () => {
             transition={{ delay: 0.5 }}
             className="flex flex-col items-center mt-6"
           >
-            <span className="text-xs text-white/80 mb-1">Ver más</span>
+            <span className="text-xs text-white/80">Ver más</span>
             <motion.button
               onClick={toggleShowMore}
-              className="flex items-center justify-center cursor-pointer"
+              className="flex items-center justify-center cursor-pointer mt-1"
               initial={{ y: 0 }}
               animate={{ y: [0, 3, 0] }}
               transition={{ 

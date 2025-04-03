@@ -14,7 +14,7 @@ interface DishCardProps {
 const DishCard: React.FC<DishCardProps> = ({ dish, subsidizedPrice, onSelect }) => {
   return (
     <motion.div 
-      className="rounded-lg overflow-hidden bg-white/70 shadow-sm border border-primary/10 hover:shadow-md transition-all duration-200 flex flex-col"
+      className="rounded-lg overflow-hidden bg-white/20 backdrop-blur-sm border border-white/30 hover:shadow-lg transition-all duration-200 flex flex-col"
       whileHover={{ y: -4, transition: { duration: 0.2 } }}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -29,33 +29,27 @@ const DishCard: React.FC<DishCardProps> = ({ dish, subsidizedPrice, onSelect }) 
           />
         ) : (
           <div className="flex items-center justify-center w-full h-full bg-primary/5">
-            <ShoppingBag className="h-8 w-8 text-primary/40" />
+            <ShoppingBag className="h-8 w-8 text-white/60" />
           </div>
         )}
       </div>
       
       <div className="p-3 flex flex-col flex-1">
-        <h3 className="font-medium text-sm line-clamp-1">{dish.name}</h3>
-        
-        <div className="mt-1 mb-2">
-          <p className="text-xs text-muted-foreground line-clamp-2">
-            {dish.description}
-          </p>
-        </div>
+        <h3 className="font-medium text-sm line-clamp-1 text-white">{dish.name}</h3>
         
         <div className="mt-auto flex items-center justify-between">
           <div className="flex flex-col">
-            <span className="text-xs text-muted-foreground line-through">
+            <span className="text-xs text-white/60 line-through">
               ${dish.price.toFixed(2)}
             </span>
-            <span className="text-sm font-bold text-primary">
+            <span className="text-sm font-bold text-white">
               ${subsidizedPrice.toFixed(2)}
             </span>
           </div>
           <Button 
             size="sm" 
             variant="outline" 
-            className="h-8 text-xs px-2" 
+            className="h-7 text-xs px-2 bg-white/20 hover:bg-white/30 border-white/30 text-white" 
             onClick={onSelect}
           >
             Seleccionar

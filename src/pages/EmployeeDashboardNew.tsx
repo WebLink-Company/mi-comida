@@ -1,17 +1,18 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { LunchOption, Company } from '@/lib/types';
 import { useNavigate } from 'react-router-dom';
-import { Search, ChevronRight, Star, Clock, Award } from 'lucide-react';
+import { Search, ChevronRight, Star, Clock, Award, ChevronDown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import DishCard from '@/components/employee/DishCard';
 import MobileNavbar from '@/components/employee/MobileNavbar';
+import '@/components/employee/scrollbar-hide.css';
 
 const EmployeeDashboardNew: React.FC = () => {
   const { user } = useAuth();
@@ -22,8 +23,10 @@ const EmployeeDashboardNew: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [lunchOptions, setLunchOptions] = useState<LunchOption[]>([]);
   const [filteredOptions, setFilteredOptions] = useState<LunchOption[]>([]);
+  const [displayedOptions, setDisplayedOptions] = useState<LunchOption[]>([]);
   const [company, setCompany] = useState<Company | null>(null);
   const [activeFilter, setActiveFilter] = useState('all');
+  const [showMore, setShowMore] = useState(false);
   
   // Get time of day for greeting
   const getGreeting = () => {
@@ -72,6 +75,9 @@ const EmployeeDashboardNew: React.FC = () => {
             if (lunchError) throw lunchError;
             setLunchOptions(lunchData || []);
             setFilteredOptions(lunchData || []);
+
+            // Initially show first 3 options only
+            setDisplayedOptions((lunchData || []).slice(0, 3));
           }
         }
       } catch (error) {
@@ -86,6 +92,7 @@ const EmployeeDashboardNew: React.FC = () => {
         import('@/lib/mockData').then(({ mockLunchOptions, mockCompanies }) => {
           setLunchOptions(mockLunchOptions);
           setFilteredOptions(mockLunchOptions);
+          setDisplayedOptions(mockLunchOptions.slice(0, 3));
           setCompany(mockCompanies[0]);
         });
       } finally {
@@ -100,6 +107,7 @@ const EmployeeDashboardNew: React.FC = () => {
   useEffect(() => {
     if (searchQuery.trim() === '') {
       setFilteredOptions(lunchOptions);
+      setDisplayedOptions(lunchOptions.slice(0, showMore ? lunchOptions.length : 3));
       return;
     }
     
@@ -109,14 +117,17 @@ const EmployeeDashboardNew: React.FC = () => {
     );
     
     setFilteredOptions(filtered);
-  }, [searchQuery, lunchOptions]);
+    setDisplayedOptions(filtered.slice(0, showMore ? filtered.length : 3));
+  }, [searchQuery, lunchOptions, showMore]);
   
   // Handle filter selection
   const handleFilterChange = (filter: string) => {
     setActiveFilter(filter);
+    setShowMore(false);
     
     if (filter === 'all') {
       setFilteredOptions(lunchOptions);
+      setDisplayedOptions(lunchOptions.slice(0, 3));
       return;
     }
     
@@ -145,6 +156,17 @@ const EmployeeDashboardNew: React.FC = () => {
     }
     
     setFilteredOptions(filtered);
+    setDisplayedOptions(filtered.slice(0, 3));
+  };
+
+  // Toggle showing more options
+  const toggleShowMore = () => {
+    setShowMore(prev => !prev);
+    if (!showMore) {
+      setDisplayedOptions(filteredOptions);
+    } else {
+      setDisplayedOptions(filteredOptions.slice(0, 3));
+    }
   };
   
   // Handle dish selection
@@ -225,26 +247,35 @@ const EmployeeDashboardNew: React.FC = () => {
   };
   
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-background/90 pb-20">
+    <div className="min-h-screen bg-gradient-to-b from-blue-600 to-blue-800 pb-20">
       {/* Bottom Navigation */}
       <MobileNavbar />
       
       {/* Main Content */}
-      <div className="container px-4 pt-6 pb-20">
+      <div className="container px-4 pt-8 pb-20">
         {/* Header Section */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="mb-6"
+          className="mb-10 flex flex-col items-center text-center"
         >
-          <h1 className="text-2xl font-bold">
-            {getGreeting()}, {user?.first_name || 'Usuario'} 👋
+          <h1 className="text-4xl font-bold text-white mb-1">
+            {user?.first_name || 'Usuario'}
           </h1>
+          <p className="text-sm text-white/80 mb-1">
+            {format(new Date(), 'EEEE, MMMM d')}
+          </p>
+          <p className="text-sm text-white/80 mb-5">
+            {format(new Date(), 'h:mm a')}
+          </p>
+          <p className="text-white text-xl">
+            {getGreeting()} 👋
+          </p>
           {company && (
-            <div className="mt-2 text-sm text-muted-foreground">
+            <div className="mt-2 text-sm text-white/80">
               <p>{company.name}</p>
-              <p className="mt-1 text-primary font-medium">{getSubsidyText()}</p>
+              <p className="mt-1 text-white font-medium">{getSubsidyText()}</p>
             </div>
           )}
         </motion.div>
@@ -254,14 +285,14 @@ const EmployeeDashboardNew: React.FC = () => {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.1 }}
-          className="mb-6"
+          className="mb-6 max-w-md mx-auto"
         >
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/60 h-4 w-4" />
             <Input
               type="text"
               placeholder="¿Qué deseas comer hoy?"
-              className="pl-10 w-full bg-white/50 backdrop-blur-sm border-primary/20 focus-visible:ring-primary/30 shadow-sm"
+              className="pl-10 w-full bg-white/20 backdrop-blur-sm border-white/30 focus-visible:ring-white/30 text-white placeholder:text-white/60 shadow-sm"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -273,29 +304,29 @@ const EmployeeDashboardNew: React.FC = () => {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.2 }}
-          className="mb-6 flex gap-2 overflow-x-auto pb-2 scrollbar-hide"
+          className="mb-6 flex justify-center gap-2 overflow-x-auto pb-2 scrollbar-hide"
         >
           <Badge
             onClick={() => handleFilterChange('all')}
-            className={`px-3 py-1 cursor-pointer ${activeFilter === 'all' ? 'bg-primary' : 'bg-secondary hover:bg-secondary/80'}`}
+            className={`px-3 py-1 cursor-pointer ${activeFilter === 'all' ? 'bg-white/40 hover:bg-white/50' : 'bg-white/20 hover:bg-white/30'} border-white/30 text-white`}
           >
             Todos
           </Badge>
           <Badge
             onClick={() => handleFilterChange('popular')}
-            className={`px-3 py-1 cursor-pointer flex items-center gap-1 ${activeFilter === 'popular' ? 'bg-primary' : 'bg-secondary hover:bg-secondary/80'}`}
+            className={`px-3 py-1 cursor-pointer flex items-center gap-1 ${activeFilter === 'popular' ? 'bg-white/40 hover:bg-white/50' : 'bg-white/20 hover:bg-white/30'} border-white/30 text-white`}
           >
             <Star className="h-3 w-3" /> Más pedidos
           </Badge>
           <Badge
             onClick={() => handleFilterChange('special')}
-            className={`px-3 py-1 cursor-pointer flex items-center gap-1 ${activeFilter === 'special' ? 'bg-primary' : 'bg-secondary hover:bg-secondary/80'}`}
+            className={`px-3 py-1 cursor-pointer flex items-center gap-1 ${activeFilter === 'special' ? 'bg-white/40 hover:bg-white/50' : 'bg-white/20 hover:bg-white/30'} border-white/30 text-white`}
           >
             <Award className="h-3 w-3" /> Especial del chef
           </Badge>
           <Badge
             onClick={() => handleFilterChange('recommended')}
-            className={`px-3 py-1 cursor-pointer flex items-center gap-1 ${activeFilter === 'recommended' ? 'bg-primary' : 'bg-secondary hover:bg-secondary/80'}`}
+            className={`px-3 py-1 cursor-pointer flex items-center gap-1 ${activeFilter === 'recommended' ? 'bg-white/40 hover:bg-white/50' : 'bg-white/20 hover:bg-white/30'} border-white/30 text-white`}
           >
             <ChevronRight className="h-3 w-3" /> Recomendados
           </Badge>
@@ -303,22 +334,22 @@ const EmployeeDashboardNew: React.FC = () => {
         
         {/* Dishes Grid */}
         {isLoading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {[1, 2, 3, 4, 5, 6].map((_, i) => (
+          <div className="grid grid-cols-3 gap-3">
+            {[1, 2, 3].map((_, i) => (
               <div 
                 key={i} 
-                className="bg-white/50 animate-pulse rounded-lg h-48"
+                className="bg-white/20 animate-pulse rounded-lg h-32"
               />
             ))}
           </div>
-        ) : filteredOptions.length > 0 ? (
+        ) : displayedOptions.length > 0 ? (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.4, delay: 0.3 }}
-            className="grid grid-cols-2 md:grid-cols-3 gap-4"
+            className="grid grid-cols-3 gap-3"
           >
-            {filteredOptions.map((option) => (
+            {displayedOptions.map((option) => (
               <DishCard
                 key={option.id}
                 dish={option}
@@ -333,13 +364,32 @@ const EmployeeDashboardNew: React.FC = () => {
             animate={{ opacity: 1 }}
             className="text-center py-12"
           >
-            <p className="text-muted-foreground">No se encontraron opciones de almuerzo.</p>
+            <p className="text-white/80">No se encontraron opciones de almuerzo.</p>
             <Button 
               variant="outline" 
-              className="mt-4"
+              className="mt-4 bg-white/20 hover:bg-white/30 border-white/30 text-white"
               onClick={() => setSearchQuery('')}
             >
               Mostrar todas las opciones
+            </Button>
+          </motion.div>
+        )}
+
+        {/* Show More Button */}
+        {filteredOptions.length > 3 && (
+          <motion.div 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="flex justify-center mt-6"
+          >
+            <Button 
+              variant="ghost" 
+              className="text-white flex items-center gap-1 hover:bg-white/10"
+              onClick={toggleShowMore}
+            >
+              {showMore ? 'Ver menos' : 'Ver más'} 
+              <ChevronDown className={`h-4 w-4 transition-transform ${showMore ? 'rotate-180' : ''}`} />
             </Button>
           </motion.div>
         )}
@@ -347,5 +397,34 @@ const EmployeeDashboardNew: React.FC = () => {
     </div>
   );
 };
+
+// Add format function for date formatting
+function format(date: Date, formatStr: string): string {
+  const months = [
+    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+  ];
+  
+  const days = [
+    'Domingo', 'Lunes', 'Martes', 'Miércoles',
+    'Jueves', 'Viernes', 'Sábado'
+  ];
+  
+  // Simple formatter for the required patterns
+  if (formatStr === 'EEEE, MMMM d') {
+    return `${days[date.getDay()]}, ${months[date.getMonth()]} ${date.getDate()}`;
+  }
+  
+  if (formatStr === 'h:mm a') {
+    let hours = date.getHours();
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12; // the hour '0' should be '12'
+    return `${hours}:${minutes} ${ampm}`;
+  }
+  
+  return date.toLocaleDateString();
+}
 
 export default EmployeeDashboardNew;

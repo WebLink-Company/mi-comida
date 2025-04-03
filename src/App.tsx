@@ -14,6 +14,9 @@ import AdminLayout from "./layouts/AdminLayout";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import EmployeeDashboard from "./pages/EmployeeDashboard";
+import EmployeeDashboardNew from "./pages/EmployeeDashboardNew"; // Import the new Employee Dashboard
+import EmployeeOrderDetails from "./pages/EmployeeOrderDetails"; // Import the new Order Details page
+import EmployeeOrdersPage from "./pages/EmployeeOrdersPage"; // Import the new Orders page
 import SupervisorDashboard from "./pages/SupervisorDashboard";
 import ProviderDashboard from "./pages/ProviderDashboard";
 import CompanyDashboard from "./pages/CompanyDashboard";
@@ -29,13 +32,13 @@ import ReportsPage from "./pages/admin/ReportsPage";
 import SettingsPage from "./pages/admin/SettingsPage";
 
 // Provider Pages
-import ProviderOrderDashboard from "./pages/admin/provider/ProviderOrderDashboard"; // Import the new dashboard component
+import ProviderOrderDashboard from "./pages/admin/provider/ProviderOrderDashboard";
 import MenuManagementPage from "./pages/admin/provider/MenuManagementPage";
 import AssignMenusPage from "./pages/admin/provider/AssignMenusPage";
 import DeliverySettingsPage from "./pages/admin/provider/DeliverySettingsPage";
 import ProviderCompaniesPage from "./pages/admin/provider/CompaniesPage";
 import ProviderUsersPage from "./pages/admin/provider/UsersPage";
-import BillingPage from "./pages/admin/provider/BillingPage"; // Import the new BillingPage component
+import BillingPage from "./pages/admin/provider/BillingPage";
 
 const queryClient = new QueryClient();
 
@@ -74,7 +77,7 @@ const App = () => (
               <Route index element={<ProviderDashboardPage />} />
               <Route path="dashboard" element={<ProviderDashboardPage />} />
               <Route path="menu" element={<MenuManagementPage />} />
-              <Route path="orders" element={<ProviderOrderDashboard />} /> {/* Updated to use the new dashboard */}
+              <Route path="orders" element={<ProviderOrderDashboard />} />
               <Route path="assign-menus" element={<AssignMenusPage />} />
               <Route path="companies" element={<ProviderCompaniesPage />} />
               <Route path="delivery-settings" element={<DeliverySettingsPage />} />
@@ -100,15 +103,32 @@ const App = () => (
               </ProtectedRoute>
             } />
             
-            {/* Employee Routes */}
-            <Route path="/employee" element={
+            {/* Employee Routes - Legacy */}
+            <Route path="/employee-legacy" element={
               <ProtectedRoute allowedRoles={['employee']}>
                 <EmployeeDashboard />
               </ProtectedRoute>
             } />
-            <Route path="/employee/orders" element={
+            <Route path="/employee-legacy/orders" element={
               <ProtectedRoute allowedRoles={['employee']}>
                 <EmployeeDashboard activeTab="orders" />
+              </ProtectedRoute>
+            } />
+            
+            {/* New Mobile-First Employee Routes */}
+            <Route path="/employee" element={
+              <ProtectedRoute allowedRoles={['employee']}>
+                <EmployeeDashboardNew />
+              </ProtectedRoute>
+            } />
+            <Route path="/employee/orders" element={
+              <ProtectedRoute allowedRoles={['employee']}>
+                <EmployeeOrdersPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/employee/order/:orderId" element={
+              <ProtectedRoute allowedRoles={['employee']}>
+                <EmployeeOrderDetails />
               </ProtectedRoute>
             } />
             

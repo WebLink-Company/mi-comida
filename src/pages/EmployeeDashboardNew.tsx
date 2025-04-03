@@ -14,6 +14,7 @@ import DishListing from '@/components/employee/DishListing';
 const EmployeeDashboardNew: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  // Using a ref to track if the toast has been shown
   const toastShownRef = useRef(false);
   
   const {
@@ -35,13 +36,16 @@ const EmployeeDashboardNew: React.FC = () => {
 
   // Show company and subsidy info in toast notification only once when the page loads
   useEffect(() => {
+    // Only show the toast if we have company data and haven't shown it yet
     if (company && !toastShownRef.current) {
+      // Set the ref to true BEFORE showing the toast to prevent loop
       toastShownRef.current = true;
       
       const subsidyText = company.fixed_subsidy_amount && company.fixed_subsidy_amount > 0 
         ? `$${company.fixed_subsidy_amount.toFixed(2)}` 
         : `${company.subsidy_percentage || company.subsidyPercentage || 0}%`;
       
+      // Add duration to ensure it automatically dismisses
       toast({
         title: `🏢 ${company.name}`,
         description: `Subsidio activo: ${subsidyText}`,
@@ -49,7 +53,7 @@ const EmployeeDashboardNew: React.FC = () => {
         duration: 4000,
       });
     }
-  }, [company, toast]);
+  }, [company]);
   
   // Reset toast ref when component unmounts (for when user navigates away and comes back)
   useEffect(() => {

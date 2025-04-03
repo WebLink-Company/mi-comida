@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
@@ -19,70 +19,75 @@ export const useEmployeeDashboard = (userId: string | undefined) => {
   const [activeCategory, setActiveCategory] = useState('daily');
   const [showMore, setShowMore] = useState(false);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!userId) return;
+  // Memoize the fetchData function to prevent unnecessary recreations
+  const fetchData = useCallback(async () => {
+    if (!userId) return;
+    
+    try {
+      setIsLoading(true);
       
-      try {
-        setIsLoading(true);
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', userId)
+        .single();
         
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('company_id')
-          .eq('id', userId)
+      if (profileError) throw profileError;
+      
+      if (profileData?.company_id) {
+        const { data: companyData, error: companyError } = await supabase
+          .from('companies')
+          .select('*')
+          .eq('id', profileData.company_id)
           .single();
           
-        if (profileError) throw profileError;
+        if (companyError) throw companyError;
+        setCompany(companyData);
         
-        if (profileData?.company_id) {
-          const { data: companyData, error: companyError } = await supabase
-            .from('companies')
+        if (companyData.provider_id) {
+          const { data: lunchData, error: lunchError } = await supabase
+            .from('lunch_options')
             .select('*')
-            .eq('id', profileData.company_id)
-            .single();
+            .eq('provider_id', companyData.provider_id)
+            .eq('available', true);
             
-          if (companyError) throw companyError;
-          setCompany(companyData);
+          if (lunchError) throw lunchError;
           
-          if (companyData.provider_id) {
-            const { data: lunchData, error: lunchError } = await supabase
-              .from('lunch_options')
-              .select('*')
-              .eq('provider_id', companyData.provider_id)
-              .eq('available', true);
-              
-            if (lunchError) throw lunchError;
-            
-            // Ensure we always have arrays, even if data is undefined
-            const safeData = lunchData || [];
-            setLunchOptions(safeData);
-            setFilteredOptions(safeData);
-            setDisplayedOptions(safeData.slice(0, 3));
-          }
+          // Ensure we always have arrays, even if data is undefined
+          const safeData = lunchData || [];
+          setLunchOptions(safeData);
+          setFilteredOptions(safeData);
+          setDisplayedOptions(safeData.slice(0, 3));
         }
-      } catch (error) {
-        console.error('Error fetching data:', error);
-        toast({
-          title: 'Error',
-          description: 'No se pudieron cargar los datos. Por favor, intenta de nuevo más tarde.',
-          variant: 'destructive',
-        });
-        
-        // Load mock data as fallback
-        import('@/lib/mockData').then(({ mockLunchOptions, mockCompanies }) => {
-          setLunchOptions(mockLunchOptions);
-          setFilteredOptions(mockLunchOptions);
-          setDisplayedOptions(mockLunchOptions.slice(0, 3));
-          setCompany(mockCompanies[0]);
-        });
-      } finally {
-        setIsLoading(false);
       }
-    };
-    
-    fetchData();
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      // Only show error toast once
+      toast({
+        title: 'Error',
+        description: 'No se pudieron cargar los datos. Por favor, intenta de nuevo más tarde.',
+        variant: 'destructive',
+        duration: 4000, // Add duration to automatically dismiss
+      });
+      
+      // Load mock data as fallback
+      import('@/lib/mockData').then(({ mockLunchOptions, mockCompanies }) => {
+        setLunchOptions(mockLunchOptions);
+        setFilteredOptions(mockLunchOptions);
+        setDisplayedOptions(mockLunchOptions.slice(0, 3));
+        setCompany(mockCompanies[0]);
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }, [userId, toast]);
 
+  // Only run fetchData when userId changes
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Handle search and filtering with stable references
   useEffect(() => {
     // Ensure we're working with arrays even if they're undefined
     const currentOptions = Array.isArray(lunchOptions) ? lunchOptions : [];
@@ -102,7 +107,8 @@ export const useEmployeeDashboard = (userId: string | undefined) => {
     setDisplayedOptions(filtered.slice(0, showMore ? filtered.length : 3));
   }, [searchQuery, lunchOptions, showMore]);
 
-  const handleFilterChange = (filter: string) => {
+  // Use useCallback for handlers to prevent unnecessary recreations
+  const handleFilterChange = useCallback((filter: string) => {
     setActiveFilter(filter);
     setShowMore(false);
     
@@ -137,9 +143,9 @@ export const useEmployeeDashboard = (userId: string | undefined) => {
     
     setFilteredOptions(filtered);
     setDisplayedOptions(filtered.slice(0, 3));
-  };
+  }, [lunchOptions]);
 
-  const handleCategoryChange = (category: string) => {
+  const handleCategoryChange = useCallback((category: string) => {
     setActiveCategory(category);
     
     // Ensure we're working with arrays
@@ -154,9 +160,9 @@ export const useEmployeeDashboard = (userId: string | undefined) => {
     // Ensure filteredOptions is an array
     const safeFilteredOptions = Array.isArray(filteredOptions) ? filteredOptions : [];
     setDisplayedOptions(safeFilteredOptions.slice(0, showMore ? safeFilteredOptions.length : 3));
-  };
+  }, [lunchOptions, filteredOptions, showMore]);
 
-  const toggleShowMore = () => {
+  const toggleShowMore = useCallback(() => {
     setShowMore(prev => !prev);
     
     // Ensure filteredOptions is an array
@@ -167,9 +173,9 @@ export const useEmployeeDashboard = (userId: string | undefined) => {
     } else {
       setDisplayedOptions(safeFilteredOptions.slice(0, 3));
     }
-  };
+  }, [filteredOptions, showMore]);
 
-  const calculateSubsidizedPrice = (price: number) => {
+  const calculateSubsidizedPrice = useCallback((price: number) => {
     if (!company) return price;
     
     if (company.fixed_subsidy_amount && company.fixed_subsidy_amount > 0) {
@@ -178,9 +184,9 @@ export const useEmployeeDashboard = (userId: string | undefined) => {
     
     const subsidyPercentage = company.subsidy_percentage || company.subsidyPercentage || 0;
     return price * (1 - (subsidyPercentage / 100));
-  };
+  }, [company]);
 
-  const handleSelectDish = async (dish: LunchOption) => {
+  const handleSelectDish = useCallback(async (dish: LunchOption) => {
     if (!userId || !company) return;
     
     try {
@@ -203,6 +209,7 @@ export const useEmployeeDashboard = (userId: string | undefined) => {
       toast({
         title: '¡Pedido realizado!',
         description: 'Tu pedido ha sido enviado y está pendiente de aprobación.',
+        duration: 4000, // Add duration to automatically dismiss
       });
       
       navigate(`/employee/order/${data.id}`);
@@ -212,9 +219,10 @@ export const useEmployeeDashboard = (userId: string | undefined) => {
         title: 'Error',
         description: 'No se pudo crear el pedido. Por favor, intenta de nuevo.',
         variant: 'destructive',
+        duration: 4000, // Add duration to automatically dismiss
       });
     }
-  };
+  }, [userId, company, toast, navigate]);
 
   return {
     isLoading,

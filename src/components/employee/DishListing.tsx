@@ -28,6 +28,16 @@ const DishListing: React.FC<DishListingProps> = ({
   const safeDisplayedOptions = Array.isArray(displayedOptions) ? displayedOptions : [];
   const safeFilteredOptions = Array.isArray(filteredOptions) ? filteredOptions : [];
 
+  // Use React.memo to prevent unnecessary re-renders
+  const renderDishCard = React.useCallback((option: LunchOption) => (
+    <DishCard
+      key={option.id}
+      dish={option}
+      subsidizedPrice={calculateSubsidizedPrice(option.price)}
+      onSelect={() => handleSelectDish(option)}
+    />
+  ), [calculateSubsidizedPrice, handleSelectDish]);
+
   return (
     <>
       {isLoading ? (
@@ -46,14 +56,7 @@ const DishListing: React.FC<DishListingProps> = ({
           transition={{ duration: 0.4, delay: 0.3 }}
           className="grid grid-cols-3 gap-3"
         >
-          {safeDisplayedOptions.map((option) => (
-            <DishCard
-              key={option.id}
-              dish={option}
-              subsidizedPrice={calculateSubsidizedPrice(option.price)}
-              onSelect={() => handleSelectDish(option)}
-            />
-          ))}
+          {safeDisplayedOptions.map(renderDishCard)}
         </motion.div>
       ) : (
         <motion.div
@@ -99,4 +102,5 @@ const DishListing: React.FC<DishListingProps> = ({
   );
 };
 
-export default DishListing;
+// Export as memoized component to prevent unnecessary re-renders
+export default React.memo(DishListing);

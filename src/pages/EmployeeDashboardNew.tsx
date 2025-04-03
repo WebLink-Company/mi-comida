@@ -1,8 +1,10 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
 import { useEmployeeDashboard } from '@/hooks/useEmployeeDashboard';
+import { useToast } from '@/hooks/use-toast';
+import { Building } from 'lucide-react';
 import MobileNavbar from '@/components/employee/MobileNavbar';
 import FilterFAB from '@/components/employee/FilterFAB';
 import CategoryButtons from '@/components/employee/CategoryButtons';
@@ -12,6 +14,7 @@ import DishListing from '@/components/employee/DishListing';
 
 const EmployeeDashboardNew: React.FC = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const {
     isLoading,
     company,
@@ -28,6 +31,27 @@ const EmployeeDashboardNew: React.FC = () => {
     calculateSubsidizedPrice,
     handleSelectDish
   } = useEmployeeDashboard(user?.id);
+
+  // Show company and subsidy info in toast notification when the page loads
+  useEffect(() => {
+    if (company) {
+      const subsidyText = company.fixed_subsidy_amount && company.fixed_subsidy_amount > 0 
+        ? `$${company.fixed_subsidy_amount.toFixed(2)}` 
+        : `${company.subsidy_percentage || company.subsidyPercentage || 0}%`;
+      
+      toast({
+        title: (
+          <div className="flex items-center gap-2">
+            <Building className="h-4 w-4" />
+            <span>{company.name}</span>
+          </div>
+        ),
+        description: `Subsidio activo: ${subsidyText}`,
+        className: "backdrop-blur-md bg-white/10 border border-white/20 text-white",
+        duration: 4000,
+      });
+    }
+  }, [company, toast]);
   
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-600 to-blue-800 relative overflow-hidden pb-24">
@@ -47,10 +71,7 @@ const EmployeeDashboardNew: React.FC = () => {
       <FilterFAB activeFilter={activeFilter} onFilterChange={handleFilterChange} />
       
       <div className="container px-4 pt-20 pb-24 relative z-10">
-        <DashboardHeader 
-          userName={user?.first_name} 
-          company={company} 
-        />
+        <DashboardHeader userName={user?.first_name} />
         
         <SearchBar 
           searchQuery={searchQuery} 

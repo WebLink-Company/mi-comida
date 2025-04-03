@@ -1,30 +1,17 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Company } from '@/lib/types';
 
 interface DashboardHeaderProps {
   userName: string | undefined;
-  company: Company | null;
 }
 
-const DashboardHeader: React.FC<DashboardHeaderProps> = ({ userName, company }) => {
+const DashboardHeader: React.FC<DashboardHeaderProps> = ({ userName }) => {
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Buenos días';
     if (hour < 18) return 'Buenas tardes';
     return 'Buenas noches';
-  };
-
-  const getSubsidyText = () => {
-    if (!company) return '';
-    
-    if (company.fixed_subsidy_amount && company.fixed_subsidy_amount > 0) {
-      return `Tu empresa cubre $${company.fixed_subsidy_amount.toFixed(2)} de tu comida.`;
-    }
-    
-    const percentage = company.subsidy_percentage || company.subsidyPercentage || 0;
-    return `Tu empresa cubre el ${percentage}% de tu comida.`;
   };
 
   return (
@@ -34,8 +21,11 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ userName, company }) 
       transition={{ duration: 0.3 }}
       className="mb-12 flex flex-col items-center text-center"
     >
-      <h1 className="text-4xl font-bold mb-1 bg-clip-text text-transparent bg-gradient-to-r from-white via-blue-200 to-blue-100">
-        {`Hola ${userName || 'Usuario'}.`}
+      <h1 className="text-4xl font-bold mb-1">
+        Hola{' '}
+        <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-400 to-pink-400">
+          {userName || 'Usuario'}.
+        </span>
       </h1>
       <p className="text-sm text-white/80 mb-1">
         {format(new Date(), 'EEEE, MMMM d')}
@@ -46,12 +36,6 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ userName, company }) 
       <p className="text-white text-xl">
         {getGreeting()} 👋
       </p>
-      {company && (
-        <div className="mt-2 text-sm text-white/80">
-          <p>{company.name}</p>
-          <p className="mt-1 text-white font-medium">{getSubsidyText()}</p>
-        </div>
-      )}
     </motion.div>
   );
 };

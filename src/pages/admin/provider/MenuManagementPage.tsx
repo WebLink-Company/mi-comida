@@ -112,38 +112,81 @@ const MenuManagementPage = () => {
     try {
       console.log('Fetching data for provider:', user?.provider_id);
       
-      const { data: categoriesData, error: categoriesError } = await supabase
-        .from('menu_categories')
-        .select('*')
-        .eq('provider_id', user?.provider_id)
-        .order('sort_order');
+      // First, attempt to fetch by provider_id if the user is a provider
+      if (user?.provider_id) {
+        const { data: categoriesData, error: categoriesError } = await supabase
+          .from('menu_categories')
+          .select('*')
+          .eq('provider_id', user.provider_id)
+          .order('sort_order');
+          
+        if (categoriesError) {
+          console.error('Error fetching categories by provider_id:', categoriesError);
+          throw categoriesError;
+        }
         
-      if (categoriesError) {
-        console.error('Error fetching categories:', categoriesError);
-        throw categoriesError;
-      }
-      setCategories(categoriesData || []);
-      
-      const { data: menuData, error: menuError } = await supabase
-        .from('lunch_options')
-        .select(`
-          *,
-          menu_categories(name)
-        `)
-        .eq('provider_id', user?.provider_id);
+        setCategories(categoriesData || []);
         
-      if (menuError) {
-        console.error('Error fetching menu items:', menuError);
-        throw menuError;
+        const { data: menuData, error: menuError } = await supabase
+          .from('lunch_options')
+          .select(`
+            *,
+            menu_categories(name)
+          `)
+          .eq('provider_id', user.provider_id);
+          
+        if (menuError) {
+          console.error('Error fetching menu items by provider_id:', menuError);
+          throw menuError;
+        }
+        
+        const formattedMenuItems: MenuItem[] = (menuData || []).map(item => ({
+          ...item,
+          menu_type: (item.menu_type || 'predefined') as 'predefined' | 'component',
+          category_name: item.menu_categories?.name || 'Uncategorized'
+        }));
+        
+        setMenuItems(formattedMenuItems);
+      } 
+      // If the user has no provider_id but is a provider, try fetching by user.id
+      else if (user?.role === 'provider') {
+        console.log('Trying to fetch by user.id as fallback:', user.id);
+        
+        const { data: categoriesData, error: categoriesError } = await supabase
+          .from('menu_categories')
+          .select('*')
+          .eq('provider_id', user.id)
+          .order('sort_order');
+          
+        if (categoriesError) {
+          console.error('Error fetching categories by user.id:', categoriesError);
+          // Don't throw here, just log
+        } else {
+          setCategories(categoriesData || []);
+        }
+        
+        const { data: menuData, error: menuError } = await supabase
+          .from('lunch_options')
+          .select(`
+            *,
+            menu_categories(name)
+          `)
+          .eq('provider_id', user.id);
+          
+        if (menuError) {
+          console.error('Error fetching menu items by user.id:', menuError);
+          // Don't throw here, just log
+        } else {
+          const formattedMenuItems: MenuItem[] = (menuData || []).map(item => ({
+            ...item,
+            menu_type: (item.menu_type || 'predefined') as 'predefined' | 'component',
+            category_name: item.menu_categories?.name || 'Uncategorized'
+          }));
+          
+          setMenuItems(formattedMenuItems);
+        }
       }
       
-      const formattedMenuItems: MenuItem[] = (menuData || []).map(item => ({
-        ...item,
-        menu_type: (item.menu_type || 'predefined') as 'predefined' | 'component',
-        category_name: item.menu_categories?.name || 'Uncategorized'
-      }));
-      
-      setMenuItems(formattedMenuItems);
     } catch (error) {
       console.error('Error fetching data:', error);
       toast({
@@ -218,7 +261,10 @@ const MenuManagementPage = () => {
   };
 
   const saveMenuItem = async () => {
-    if (!user?.provider_id || !currentItem.name || !currentItem.description || currentItem.price === undefined) {
+    // Determine provider_id: use user.provider_id if available, otherwise fallback to user.id
+    const effectiveProviderId = user?.provider_id || user?.id;
+    
+    if (!effectiveProviderId || !currentItem.name || !currentItem.description || currentItem.price === undefined) {
       toast({
         title: 'Error',
         description: 'Please fill in all required fields',
@@ -230,14 +276,14 @@ const MenuManagementPage = () => {
     try {
       const itemData = {
         ...currentItem,
-        provider_id: user.provider_id,
+        provider_id: effectiveProviderId,
         name: currentItem.name,
         description: currentItem.description,
         price: currentItem.price,
         image: currentItem.image || '/placeholder.svg',
       };
       
-      console.log('Saving menu item with provider_id:', user.provider_id);
+      console.log('Saving menu item with provider_id:', effectiveProviderId);
       
       if (currentItem.id) {
         const { data, error } = await supabase
@@ -321,7 +367,10 @@ const MenuManagementPage = () => {
   };
 
   const saveCategory = async () => {
-    if (!user?.provider_id || !currentCategory.name) {
+    // Determine provider_id: use user.provider_id if available, otherwise fallback to user.id
+    const effectiveProviderId = user?.provider_id || user?.id;
+    
+    if (!effectiveProviderId || !currentCategory.name) {
       toast({
         title: 'Error',
         description: 'Category name is required',
@@ -333,11 +382,11 @@ const MenuManagementPage = () => {
     try {
       const categoryData = {
         ...currentCategory,
-        provider_id: user.provider_id,
+        provider_id: effectiveProviderId,
         name: currentCategory.name,
       };
       
-      console.log('Saving category with provider_id:', user.provider_id);
+      console.log('Saving category with provider_id:', effectiveProviderId);
       
       if (currentCategory.id) {
         const { data, error } = await supabase

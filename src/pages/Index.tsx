@@ -50,8 +50,8 @@ const Index = () => {
             transition={{ duration: 0.5 }}
           >
             <h1 className="text-4xl md:text-6xl font-bold mb-4">
-              <span className="text-foreground">Lunch</span>
-              <span className="text-primary">Wise</span>
+              <span className="text-foreground">Mi</span>
+              <span className="text-primary">Comida</span>
             </h1>
             <p className="text-xl md:text-2xl text-muted-foreground mb-8">
               La solución inteligente para gestionar almuerzos corporativos

@@ -205,8 +205,8 @@ const Auth = () => {
         className="mb-8 text-center"
       >
         <h1 className="text-4xl font-bold mb-2">
-          <span className="text-foreground">Lunch</span>
-          <span className="text-primary">Wise</span>
+          <span className="text-foreground">Mi</span>
+          <span className="text-primary">Comida</span>
         </h1>
         <p className="text-muted-foreground">La solución inteligente para el almuerzo corporativo</p>
       </motion.div>

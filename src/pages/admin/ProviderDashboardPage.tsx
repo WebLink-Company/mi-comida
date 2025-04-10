@@ -1,9 +1,9 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ClockDisplay } from '@/components/admin/dashboard/ClockDisplay';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { Building, Package, Receipt, UserPlus } from 'lucide-react';
+import { Building, Package, Receipt, UserPlus, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import DashboardMetrics from '@/components/admin/dashboard/DashboardMetrics';
 import '@/styles/dashboard.css';
@@ -13,17 +13,42 @@ import { UsersModal } from '@/components/admin/dashboard/UsersModal';
 import { CompaniesModal } from '@/components/admin/dashboard/CompaniesModal';
 import { OrdersModal } from '@/components/admin/dashboard/OrdersModal';
 import { InvoicesModal } from '@/components/admin/dashboard/InvoicesModal';
+import { Card, CardContent } from '@/components/ui/card';
 
 const ProviderDashboardPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
   const [activeDialog, setActiveDialog] = useState<string | null>(null);
+  const [hasError, setHasError] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string>('');
   
   console.log("Provider dashboard - Current user:", user);
   
+  useEffect(() => {
+    if (!user?.provider_id) {
+      console.error("Missing provider_id in user profile", user);
+      setHasError(true);
+      setErrorMessage("No provider ID found in your profile. This could be caused by an authentication issue or missing environment variables.");
+    }
+  }, [user]);
+  
   // Fetch dashboard stats using our hook with the provider ID from user profile
   const stats = useProviderDashboardData(user?.provider_id);
+  
+  useEffect(() => {
+    // This will help debug if API requests are failing
+    const logErrors = async () => {
+      try {
+        console.log("Current environment:", import.meta.env.MODE);
+        console.log("Current base URL:", window.location.origin);
+      } catch (error) {
+        console.error("Error logging debug info:", error);
+      }
+    };
+    
+    logErrors();
+  }, []);
   
   // Quick actions for the provider
   const quickActions = [
@@ -62,6 +87,25 @@ const ProviderDashboardPage = () => {
       setActiveDialog(null);
     }, 50);
   };
+
+  if (hasError) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <Card className="border-destructive">
+          <CardContent className="p-6 space-y-4">
+            <div className="flex items-center space-x-2 text-destructive">
+              <AlertTriangle className="h-5 w-5" />
+              <h2 className="text-xl font-semibold">Connection Error</h2>
+            </div>
+            <p>{errorMessage}</p>
+            <p className="text-muted-foreground text-sm">
+              Please check your Netlify environment variables and ensure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set correctly.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">

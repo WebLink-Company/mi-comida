@@ -1,73 +1,94 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Package, Users, CheckCircle, Clock } from 'lucide-react';
-
-interface CompanyOrderSummary {
-  id: string;
-  name: string;
-  orders: number;
-  users: number;
-  dispatched: number;
-  pending: number;
-}
+import { Card, CardContent } from '@/components/ui/card';
+import { Building, Package, CheckCircle, Clock } from 'lucide-react';
+import { cn } from '@/lib/cn';
 
 interface CompanyOrderCardProps {
-  company: CompanyOrderSummary;
+  company: {
+    id: string;
+    name: string;
+    orders: number;
+    users: number;
+    dispatched: number;
+    pending: number;
+    approved?: number; // Make approved optional since it might not be in all card data
+  };
   onClick: () => void;
 }
 
-const CompanyOrderCard = ({ company, onClick }: CompanyOrderCardProps) => {
-  const isFullyDispatched = company.pending === 0 && company.dispatched > 0;
-
+const CompanyOrderCard: React.FC<CompanyOrderCardProps> = ({ company, onClick }) => {
+  // Calculate percentage of orders that are in progress (dispatched or approved)
+  const inProgressCount = (company.dispatched || 0) + (company.approved || 0);
+  const totalOrders = company.orders || 1; // Prevent division by zero
+  const inProgressPercentage = Math.round((inProgressCount / totalOrders) * 100);
+  
+  // Calculate pending percentage
+  const pendingPercentage = Math.round((company.pending / totalOrders) * 100);
+  
   return (
     <Card 
+      className="glass hover:shadow-lg transition-all cursor-pointer hover:border-blue-500/40"
       onClick={onClick}
-      className={`cursor-pointer transition-all hover:shadow-md ${isFullyDispatched ? 'border-green-300' : 'border-blue-200'}`}
     >
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-start">
-          <CardTitle className="text-xl font-bold">
-            {company.name}
-          </CardTitle>
-          {company.pending > 0 && (
-            <Badge variant="outline" className="bg-amber-50 text-amber-600 border-amber-300">
-              {company.pending} pendientes
-            </Badge>
-          )}
-          {isFullyDispatched && (
-            <Badge variant="outline" className="bg-green-50 text-green-600 border-green-300">
-              Todos despachados
-            </Badge>
-          )}
+      <CardContent className="p-5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <Building className="h-6 w-6 text-blue-400 mr-2" />
+            <h3 className="font-semibold text-white truncate max-w-[200px]">{company.name}</h3>
+          </div>
+          <div className="flex items-center gap-1">
+            <Package className="h-4 w-4 text-white/70" />
+            <span className="text-white font-semibold">{company.orders}</span>
+          </div>
         </div>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-2 gap-y-2 text-sm">
-          <div className="flex items-center">
-            <Package className="h-4 w-4 mr-2 text-muted-foreground" />
-            <span className="text-muted-foreground">Pedidos totales:</span>
+        
+        <div className="mt-4 space-y-3">
+          {/* Order Progress Bar */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center text-sm text-white/80">
+                <Clock className="h-3.5 w-3.5 mr-1" />
+                <span>Pendientes: {company.pending}</span>
+              </div>
+              <span className="text-xs text-white/60">{pendingPercentage}%</span>
+            </div>
+            <div className="w-full bg-white/10 rounded-full h-2">
+              <div 
+                className="bg-amber-400/80 h-2 rounded-full" 
+                style={{ width: `${pendingPercentage}%` }}
+              ></div>
+            </div>
           </div>
-          <div className="font-medium text-right">{company.orders}</div>
           
-          <div className="flex items-center">
-            <Users className="h-4 w-4 mr-2 text-muted-foreground" />
-            <span className="text-muted-foreground">Usuarios pidieron:</span>
+          {/* In Progress Bar */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center text-sm text-white/80">
+                <CheckCircle className="h-3.5 w-3.5 mr-1" />
+                <span>
+                  En proceso: {inProgressCount} 
+                  {company.approved !== undefined && ` (${company.approved} aprobados)`}
+                </span>
+              </div>
+              <span className="text-xs text-white/60">{inProgressPercentage}%</span>
+            </div>
+            <div className="w-full bg-white/10 rounded-full h-2">
+              <div 
+                className="bg-green-400/80 h-2 rounded-full" 
+                style={{ width: `${inProgressPercentage}%` }}
+              ></div>
+            </div>
           </div>
-          <div className="font-medium text-right">{company.users}</div>
-
-          <div className="flex items-center">
-            <CheckCircle className="h-4 w-4 mr-2 text-muted-foreground" />
-            <span className="text-muted-foreground">Despachados:</span>
+        </div>
+        
+        <div className="mt-4 pt-3 border-t border-white/10 flex justify-between items-center">
+          <div className="text-xs text-white/60">
+            {company.users} {company.users === 1 ? 'usuario' : 'usuarios'}
           </div>
-          <div className="font-medium text-right">{company.dispatched}</div>
-
-          <div className="flex items-center">
-            <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
-            <span className="text-muted-foreground">Pendientes:</span>
+          <div className="text-xs text-white/60">
+            Click para ver detalles
           </div>
-          <div className="font-medium text-right">{company.pending}</div>
         </div>
       </CardContent>
     </Card>

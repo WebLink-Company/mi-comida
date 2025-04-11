@@ -92,12 +92,20 @@ export const useProviderDashboardStats = () => {
       
     if (ordersError) throw ordersError;
     
-    // Filter today's orders
-    const todayOrders = orders?.filter(order => order.date === today) || [];
+    // Filter today's orders - include approved, prepared, and delivered status
+    const todayOrders = orders?.filter(order => 
+      order.date === today && 
+      ['approved', 'prepared', 'delivered', 'pending'].includes(order.status)
+    ) || [];
+    
+    // Filter orders that are approved or beyond (for display in dashboard)
+    const approvedOrders = todayOrders.filter(order => 
+      ['approved', 'prepared', 'delivered'].includes(order.status)
+    );
     
     // Calculate statistics
     const ordersToday = todayOrders.length;
-    const totalMealsToday = todayOrders.length;
+    const totalMealsToday = approvedOrders.length; // Only count approved/prepared/delivered as "meals"
     const uniqueCompanies = [...new Set(todayOrders.map(order => order.company_id))];
     const companiesWithOrdersToday = uniqueCompanies.length;
     const pendingOrdersCount = todayOrders.filter(order => order.status === 'pending').length;
@@ -111,14 +119,14 @@ export const useProviderDashboardStats = () => {
       }
     });
     
-    // Calculate most ordered dish today
+    // Calculate most ordered dish today - only from approved orders
     let topOrderedMeal: TopMeal = { name: 'No hay datos', count: 0 };
     
-    if (todayOrders.length > 0) {
+    if (approvedOrders.length > 0) {
       const mealCount: {[key: string]: {count: number, name: string}} = {};
       
       // Count occurrences of each dish
-      todayOrders.forEach(order => {
+      approvedOrders.forEach(order => {
         if (order.lunch_options) {
           const id = order.lunch_option_id;
           const name = order.lunch_options.name;

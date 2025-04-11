@@ -20,6 +20,7 @@ interface CompanyOrderSummary {
   users: number;
   dispatched: number;
   pending: number;
+  approved: number; // Add approved field
 }
 
 const ProviderOrderDashboard = () => {
@@ -99,12 +100,14 @@ const ProviderOrderDashboard = () => {
           // Count unique users
           const uniqueUsers = [...new Set(orders.map(order => order.user_id))].length;
           
-          // Count dispatched vs pending orders
+          // Count different types of orders
           const dispatched = orders.filter(order => 
             order.status === 'prepared' || order.status === 'delivered'
           ).length;
           
-          const pending = orders.length - dispatched;
+          const approved = orders.filter(order => order.status === 'approved').length;
+          
+          const pending = orders.filter(order => order.status === 'pending').length;
 
           return {
             id: company.id,
@@ -112,6 +115,7 @@ const ProviderOrderDashboard = () => {
             orders: orders.length,
             users: uniqueUsers,
             dispatched,
+            approved,
             pending
           };
         })

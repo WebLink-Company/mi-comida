@@ -57,6 +57,7 @@ export type Database = {
           name: string
           provider_id: string | null
           subsidy_percentage: number | null
+          tenant_id: string | null
           updated_at: string | null
         }
         Insert: {
@@ -67,6 +68,7 @@ export type Database = {
           name: string
           provider_id?: string | null
           subsidy_percentage?: number | null
+          tenant_id?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -77,12 +79,20 @@ export type Database = {
           name?: string
           provider_id?: string | null
           subsidy_percentage?: number | null
+          tenant_id?: string | null
           updated_at?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "companies_provider_id_fkey"
             columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "providers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "companies_tenant_id_fkey"
+            columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "providers"
             referencedColumns: ["id"]
@@ -421,6 +431,7 @@ export type Database = {
           last_name: string
           provider_id: string | null
           role: Database["public"]["Enums"]["user_role"]
+          tenant_id: string | null
           updated_at: string | null
         }
         Insert: {
@@ -432,6 +443,7 @@ export type Database = {
           last_name: string
           provider_id?: string | null
           role: Database["public"]["Enums"]["user_role"]
+          tenant_id?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -443,6 +455,7 @@ export type Database = {
           last_name?: string
           provider_id?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          tenant_id?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -456,6 +469,13 @@ export type Database = {
           {
             foreignKeyName: "profiles_provider_id_fkey"
             columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "providers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_tenant_id_fkey"
+            columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "providers"
             referencedColumns: ["id"]

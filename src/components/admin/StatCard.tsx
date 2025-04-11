@@ -68,11 +68,6 @@ const StatCard: React.FC<StatCardProps> = ({
       return <Skeleton className="h-8 w-20" />;
     }
     
-    // Handle TopMeal objects by extracting the name
-    if (typeof val === 'object' && val !== null && 'name' in val) {
-      return val.name;
-    }
-    
     return formatValue(val);
   };
 

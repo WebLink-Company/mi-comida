@@ -1,23 +1,18 @@
+
 import React, { useState, useEffect } from 'react';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import { 
   CalendarDays, ChefHat, ShoppingBag, DollarSign, 
-  Users, FileText, Building, Edit, Package, BarChart
+  Users, FileText, Building, Edit
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Badge } from '@/components/ui/badge';
 import StatCard from '@/components/admin/StatCard';
 import { Button } from '@/components/ui/button';
 import { DashboardHeader } from '@/components/admin/dashboard/DashboardHeader';
 import "@/styles/dashboard.css";
-import { useProviderDashboardStats } from '@/hooks/useProviderDashboardStats';
-import { useProviderUserStats } from '@/hooks/provider/useProviderUserStats';
 import { useProviderCompanies } from '@/hooks/provider/useProviderCompanies';
-import { useProviderCompanyStats } from '@/hooks/provider/useProviderCompanyStats';
 
 const ProviderDashboard = () => {
   const navigate = useNavigate();
@@ -27,26 +22,18 @@ const ProviderDashboard = () => {
   const [error, setError] = useState<string | null>(null);
   const [providerName, setProviderName] = useState<string>('');
   
-  const {
-    ordersToday,
-    loadingOrdersToday,
-    totalMealsToday,
-    loadingMealsToday,
-    companiesWithOrdersToday: companiesOrderingToday,
-    loadingCompaniesOrders,
-    topOrderedMeal,
-    loadingTopMeal,
-    pendingOrders,
-    loadingPending,
-    monthlyOrders,
-    loadingMonthlyOrders,
-    monthlyRevenue,
-    loadingMonthlyRevenue,
-  } = useProviderDashboardStats();
+  // Static data to avoid excessive queries
+  const ordersToday = 0;
+  const totalMealsToday = 0;
+  const companiesWithOrdersToday = 0;
+  const topOrderedMeal = { name: 'No hay datos disponibles', count: 0 };
+  const pendingOrders = 0;
+  const monthlyOrders = 0;
+  const monthlyRevenue = 0;
+  const newUsers = 0;
   
-  const { newUsers, loadingNewUsers } = useProviderUserStats();
+  // Only load company data (not orders)
   const { activeCompanies, loading: loadingCompanies } = useProviderCompanies();
-  const { companiesWithOrdersToday, loading: loadingCompanyStats } = useProviderCompanyStats();
 
   useEffect(() => {
     const fetchProviderData = async () => {
@@ -130,6 +117,17 @@ const ProviderDashboard = () => {
     },
   ];
 
+  // Display a simple message about the dashboard metrics being temporarily disabled
+  const dashboardInfo = () => (
+    <div className="glass p-6 rounded-lg border border-orange-500/30 mb-6">
+      <h3 className="text-lg font-medium text-white mb-2">Métricas en Mantenimiento</h3>
+      <p className="text-white/70">
+        Las métricas del panel están temporalmente deshabilitadas para optimización.
+        Por favor, utilice las páginas específicas para ver información detallada.
+      </p>
+    </div>
+  );
+
   return (
     <div className="space-y-6 p-4 max-w-7xl mx-auto">
       <DashboardHeader 
@@ -138,13 +136,15 @@ const ProviderDashboard = () => {
         refreshData={refreshData}
       />
 
+      {dashboardInfo()}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Pedidos Hoy"
           value={ordersToday}
           icon={<ShoppingBag size={20} />}
           description="Pedidos recibidos para hoy"
-          loading={loadingOrdersToday}
+          loading={false}
           linkTo="/provider/orders"
           className="glass"
           borderColor="border-blue-500/40" 
@@ -166,8 +166,7 @@ const ProviderDashboard = () => {
           value={monthlyOrders}
           icon={<CalendarDays size={20} />}
           description="Total de pedidos este mes"
-          loading={loadingMonthlyOrders}
-          trend={{ value: 12, isPositive: true }}
+          loading={false}
           linkTo="/provider/orders"
           className="glass"
           borderColor="border-purple-400/40"
@@ -178,55 +177,10 @@ const ProviderDashboard = () => {
           value={monthlyRevenue}
           icon={<DollarSign size={20} />}
           description="Ingresos totales del mes"
-          loading={loadingMonthlyRevenue}
-          trend={{ value: 5, isPositive: true }}
+          loading={false}
           linkTo="/provider/billing"
           className="glass"
           borderColor="border-green-500/40"
-        />
-
-        <StatCard
-          title="Platos Hoy"
-          value={totalMealsToday}
-          icon={<ChefHat size={20} />}
-          description="Total de platos para entregar hoy"
-          loading={loadingMealsToday}
-          linkTo="/provider/orders"
-          className="glass"
-          borderColor="border-amber-400/40"
-        />
-
-        <StatCard
-          title="Empresas con Pedidos"
-          value={companiesWithOrdersToday}
-          icon={<Package size={20} />}
-          description="Empresas con pedidos para hoy"
-          loading={loadingCompanyStats}
-          linkTo="/provider/companies"
-          className="glass"
-          borderColor="border-orange-400/40"
-        />
-
-        <StatCard
-          title="Pedidos Pendientes"
-          value={pendingOrders}
-          icon={<BarChart size={20} />}
-          description="Pedidos pendientes de preparación"
-          loading={loadingPending}
-          linkTo="/provider/orders"
-          className="glass"
-          borderColor="border-red-400/40"
-        />
-
-        <StatCard
-          title="Plato Más Pedido"
-          value={topOrderedMeal}
-          icon={<ChefHat size={20} />}
-          description="Plato más popular entre los clientes"
-          loading={loadingTopMeal}
-          linkTo="/provider/menu"
-          className="glass"
-          borderColor="border-pink-400/40"
         />
       </div>
 

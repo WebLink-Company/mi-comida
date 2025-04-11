@@ -75,9 +75,7 @@ export const ClockDisplay: React.FC<ClockDisplayProps> = ({ user, quickActions }
           {format(time, 'EEEE, d MMMM', { locale: es })}
         </div>
         
-        <div className="text-white/80 text-xl font-light mt-1 fade-up" style={{ animationDelay: "0.2s" }}>
-          {format(time, 'h:mm a')}
-        </div>
+        {/* Removed the time display to reduce API requests */}
 
         <div className="mt-4 text-white/80 text-lg font-light fade-up" style={{ animationDelay: "0.3s" }}>
           {getGreeting()}, {getFirstName()} 👋

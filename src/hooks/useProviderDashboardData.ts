@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -359,8 +360,11 @@ export const useProviderDashboardData = (providerId?: string) => {
           return 0;
         }
         
+        // Fix for TypeScript error - ensuring both values are explicitly treated as numbers
         const averageMealPrice = 12.50;
-        return Number(data.length) * Number(averageMealPrice);
+        const orderCount = data.length;
+        // Convert both to numbers explicitly to satisfy TypeScript's type checking
+        return Number(orderCount) * Number(averageMealPrice);
       } catch (error) {
         console.error('Error fetching monthly revenue:', error);
         return 0;

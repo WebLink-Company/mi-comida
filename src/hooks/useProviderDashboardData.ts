@@ -386,7 +386,8 @@ export const useProviderDashboardData = (providerId?: string) => {
         
         // For now, just return an estimated revenue based on average meal price
         const averageMealPrice = 12.50; // Assuming average meal price is $12.50
-        return data.length * averageMealPrice;
+        // Fix the type error by ensuring we're using numbers for the calculation
+        return data.length * Number(averageMealPrice);
       } catch (error) {
         console.error('Error fetching monthly revenue:', error);
         return 0;

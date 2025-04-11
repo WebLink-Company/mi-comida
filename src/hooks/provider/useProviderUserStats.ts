@@ -16,13 +16,13 @@ export const useProviderUserStats = () => {
       setLoadingNewUsers(true);
       
       try {
-        // For now, we're setting a mock value
-        // In a real implementation, we would fetch this from the database
-        // For example, users created in the last 7 days
+        // Por ahora, estamos estableciendo un valor ficticio
+        // En una implementación real, obtendríamos esto de la base de datos
+        // Por ejemplo, usuarios creados en los últimos 7 días
         setNewUsers(5);
       } catch (err) {
-        console.error('Error fetching user stats:', err);
-        setError('Error fetching user stats');
+        console.error('Error al obtener estadísticas de usuarios:', err);
+        setError('Error al obtener estadísticas de usuarios');
       } finally {
         setLoadingNewUsers(false);
       }

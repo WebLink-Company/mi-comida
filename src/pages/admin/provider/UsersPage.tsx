@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -78,7 +79,7 @@ const ProviderUsersPage = () => {
       console.error('Error fetching companies:', error);
       toast({
         title: 'Error',
-        description: 'Failed to load companies data',
+        description: 'Error al cargar datos de empresas',
         variant: 'destructive',
       });
     } finally {
@@ -119,7 +120,7 @@ const ProviderUsersPage = () => {
       console.error('Error fetching company users:', error);
       toast({
         title: 'Error',
-        description: 'Failed to load company users',
+        description: 'Error al cargar usuarios de la empresa',
         variant: 'destructive',
       });
     }
@@ -163,7 +164,7 @@ const ProviderUsersPage = () => {
       console.error('Error fetching user orders:', error);
       toast({
         title: 'Error',
-        description: 'Failed to load user orders',
+        description: 'Error al cargar pedidos del usuario',
         variant: 'destructive',
       });
     }
@@ -206,7 +207,7 @@ const ProviderUsersPage = () => {
     <div className="container mx-auto py-6 px-4 sm:px-6 lg:px-8 animate-fade-in">
       <div className="flex flex-col space-y-4">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-semibold text-white">Companies & Users</h1>
+          <h1 className="text-2xl font-semibold text-white">Empresas & Usuarios</h1>
         </div>
         
         {loading ? (
@@ -225,9 +226,9 @@ const ProviderUsersPage = () => {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center h-64 text-center">
-            <p className="text-lg text-gray-300">No companies found for your provider account.</p>
+            <p className="text-lg text-gray-300">No se encontraron empresas para su cuenta de proveedor.</p>
             <p className="text-sm text-gray-400 mt-2">
-              Companies will appear here once they are associated with your provider account.
+              Las empresas aparecerán aquí una vez que estén asociadas con su cuenta de proveedor.
             </p>
           </div>
         )}

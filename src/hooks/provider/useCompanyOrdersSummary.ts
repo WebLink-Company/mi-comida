@@ -19,7 +19,7 @@ export const useCompanyOrdersSummary = (companyIds: string[] = []) => {
       try {
         const today = new Date().toISOString().split('T')[0];
         
-        // Fetch companies by provider
+        // Buscar empresas por proveedor
         const { data: companiesData, error: companiesError } = await supabase
           .from('companies')
           .select('id, name')
@@ -33,28 +33,28 @@ export const useCompanyOrdersSummary = (companyIds: string[] = []) => {
           return;
         }
         
-        // For each company, get order stats
+        // Para cada empresa, obtener estadísticas de pedidos
         const summaries = await Promise.all(
           companiesData.map(async (company) => {
-            // Get all orders for this company
+            // Obtener todos los pedidos para esta empresa
             const { data: orders, error: ordersError } = await supabase
               .from('orders')
               .select('id, user_id, status')
               .eq('company_id', company.id);
               
             if (ordersError) {
-              console.error(`Error fetching orders for company ${company.id}:`, ordersError);
+              console.error(`Error al buscar pedidos para la empresa ${company.id}:`, ordersError);
               return null;
             }
             
             if (!orders || orders.length === 0) {
-              return null; // Skip companies with no orders
+              return null; // Omitir empresas sin pedidos
             }
             
-            // Count unique users
+            // Contar usuarios únicos
             const uniqueUsers = [...new Set(orders.map(order => order.user_id))].length;
             
-            // Count dispatched vs pending orders
+            // Contar pedidos enviados vs pendientes
             const dispatched = orders.filter(order => 
               order.status === 'prepared' || order.status === 'delivered'
             ).length;
@@ -72,12 +72,12 @@ export const useCompanyOrdersSummary = (companyIds: string[] = []) => {
           })
         );
         
-        // Filter out null values
+        // Filtrar valores nulos
         const filteredSummaries = summaries.filter(Boolean) as CompanyOrderSummary[];
         setCompanyOrders(filteredSummaries);
       } catch (err) {
-        console.error('Error fetching company order summaries:', err);
-        setError('Error fetching company order summaries');
+        console.error('Error al buscar resúmenes de pedidos de empresas:', err);
+        setError('Error al buscar resúmenes de pedidos de empresas');
       } finally {
         setLoading(false);
       }

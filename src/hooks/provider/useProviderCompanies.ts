@@ -19,16 +19,16 @@ export const useProviderCompanies = () => {
       setError(null);
       
       try {
-        // Get provider ID
+        // Obtener ID del proveedor
         const providerId = user.provider_id;
         
         if (!providerId) {
-          setError('No provider ID found');
+          setError('No se encontró ID de proveedor');
           setLoading(false);
           return;
         }
         
-        // Fetch companies associated with this provider
+        // Buscar empresas asociadas a este proveedor
         const { data: companiesData, error: companiesError } = await supabase
           .from('companies')
           .select('*')
@@ -39,8 +39,8 @@ export const useProviderCompanies = () => {
         setCompanies(companiesData || []);
         setActiveCompanies(companiesData?.length || 0);
       } catch (err) {
-        console.error('Error fetching companies:', err);
-        setError('Error fetching companies. Please try again later.');
+        console.error('Error al buscar empresas:', err);
+        setError('Error al buscar empresas. Por favor intente más tarde.');
       } finally {
         setLoading(false);
       }

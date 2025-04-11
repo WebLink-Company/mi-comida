@@ -70,6 +70,21 @@ const UsersModal: React.FC<UsersModalProps> = ({
     }
   };
 
+  const translateRole = (role: string) => {
+    switch(role.toLowerCase()) {
+      case 'admin':
+        return 'Administrador';
+      case 'supervisor':
+        return 'Supervisor';
+      case 'provider':
+        return 'Proveedor';
+      case 'employee':
+        return 'Empleado';
+      default:
+        return role;
+    }
+  };
+
   const handleCreateUserSuccess = () => {
     setIsCreateUserOpen(false);
     // The parent component should refresh users
@@ -106,10 +121,10 @@ const UsersModal: React.FC<UsersModalProps> = ({
             </Button>
             <div>
               <DialogTitle className="text-2xl font-bold text-white">
-                {company.name || `Company ${company.id.substring(0, 6)}`}
+                {company.name || `Compañía ${company.id.substring(0, 6)}`}
               </DialogTitle>
               <DialogDescription className="text-white/70">
-                Managing {company.userCount} users in this company
+                Administrando {company.userCount} usuarios en esta empresa
               </DialogDescription>
             </div>
           </div>
@@ -120,7 +135,7 @@ const UsersModal: React.FC<UsersModalProps> = ({
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-white/60" />
               <Input
-                placeholder="Search users..."
+                placeholder="Buscar usuarios..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-9 w-[280px] bg-white/10 border-white/20 text-white placeholder:text-white/50"
@@ -135,7 +150,7 @@ const UsersModal: React.FC<UsersModalProps> = ({
                 setIsCreateUserOpen(true);
               }}
             >
-              <Plus className="mr-1 h-4 w-4" /> Add User
+              <Plus className="mr-1 h-4 w-4" /> Añadir Usuario
             </Button>
           </div>
 
@@ -144,10 +159,10 @@ const UsersModal: React.FC<UsersModalProps> = ({
               <Table className="w-full">
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
-                    <TableHead className="w-[250px] text-white">Name</TableHead>
+                    <TableHead className="w-[250px] text-white">Nombre</TableHead>
                     <TableHead className="hidden md:table-cell text-white">Email</TableHead>
-                    <TableHead className="w-[100px] text-white">Role</TableHead>
-                    <TableHead className="hidden sm:table-cell w-[120px] text-white">Created</TableHead>
+                    <TableHead className="w-[100px] text-white">Rol</TableHead>
+                    <TableHead className="hidden sm:table-cell w-[120px] text-white">Creado</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -169,11 +184,11 @@ const UsersModal: React.FC<UsersModalProps> = ({
                       </TableCell>
                       <TableCell>
                         <Badge variant={getRoleBadgeVariant(user.role)} className="capitalize bg-white/20 text-white">
-                          {user.role}
+                          {translateRole(user.role)}
                         </Badge>
                       </TableCell>
                       <TableCell className="hidden sm:table-cell text-sm text-white/80">
-                        {user.created_at ? format(new Date(user.created_at), 'MMM d, yyyy') : 'N/A'}
+                        {user.created_at ? format(new Date(user.created_at), 'dd/MM/yyyy') : 'N/A'}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -183,9 +198,9 @@ const UsersModal: React.FC<UsersModalProps> = ({
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-center bg-white/5 rounded-lg">
               <Users className="h-12 w-12 text-white/40 mb-4" />
-              <p className="text-lg font-medium text-white">No users found</p>
+              <p className="text-lg font-medium text-white">No se encontraron usuarios</p>
               <p className="text-sm text-white/70 mt-1 max-w-sm">
-                {searchTerm ? 'Try adjusting your search term' : 'There are no users in this company yet'}
+                {searchTerm ? 'Intenta ajustar tu término de búsqueda' : 'Aún no hay usuarios en esta empresa'}
               </p>
             </div>
           )}
@@ -193,7 +208,7 @@ const UsersModal: React.FC<UsersModalProps> = ({
 
         <DialogFooter className="border-t border-white/20 pt-4">
           <div className="text-xs text-white/60">
-            Showing {filteredUsers.length} of {users.length} users
+            Mostrando {filteredUsers.length} de {users.length} usuarios
           </div>
         </DialogFooter>
       </DialogContent>

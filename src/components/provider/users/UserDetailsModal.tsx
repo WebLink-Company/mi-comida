@@ -30,6 +30,40 @@ interface UserDetailsModalProps {
 }
 
 const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, orders, onClose }) => {
+  // Función para traducir el estado del pedido
+  const translateOrderStatus = (status: string) => {
+    switch(status) {
+      case 'delivered':
+        return 'Entregado';
+      case 'approved':
+        return 'Aprobado';
+      case 'pending':
+        return 'Pendiente';
+      case 'rejected':
+        return 'Rechazado';
+      case 'prepared':
+        return 'Preparado';
+      default:
+        return status;
+    }
+  };
+
+  // Función para traducir el rol del usuario
+  const translateUserRole = (role: string) => {
+    switch(role) {
+      case 'admin':
+        return 'Administrador';
+      case 'supervisor':
+        return 'Supervisor';
+      case 'provider':
+        return 'Proveedor';
+      case 'employee':
+        return 'Empleado';
+      default:
+        return role;
+    }
+  };
+
   return (
     <AlertDialogContent 
       className="sm:max-w-md blue-glass-modal overflow-y-auto max-h-[90vh] shadow-2xl backdrop-blur-2xl z-[1000]"
@@ -60,7 +94,7 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, orders, onClo
           <span className="text-sm text-white/80">{user.email}</span>
           <span className="text-white/40">•</span>
           <Badge variant="outline" className="capitalize bg-white/10 text-white border-white/20">
-            {user.role}
+            {translateUserRole(user.role)}
           </Badge>
         </div>
       </AlertDialogHeader>
@@ -94,10 +128,7 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, orders, onClo
                                   order.status === 'approved' ? 'secondary' : 'default'} 
                           className="capitalize text-xs bg-white/20 text-white border-white/30"
                         >
-                          {order.status === 'delivered' ? 'Entregado' : 
-                           order.status === 'approved' ? 'Aprobado' : 
-                           order.status === 'pending' ? 'Pendiente' : 
-                           order.status === 'rejected' ? 'Rechazado' : order.status}
+                          {translateOrderStatus(order.status)}
                         </Badge>
                       </div>
                       <div className="flex items-center mt-1 text-sm text-white/80">

@@ -31,6 +31,7 @@ const GlassSidebar = ({ collapsed, setCollapsed, userRole = 'admin' }: GlassSide
     const items = [
       { 
         name: 'Dashboard', 
+        displayName: 'Panel Principal',
         icon: LayoutDashboard, 
         adminPath: '/admin',
         providerPath: '/provider',
@@ -44,6 +45,7 @@ const GlassSidebar = ({ collapsed, setCollapsed, userRole = 'admin' }: GlassSide
       items.push(
         { 
           name: 'Users', 
+          displayName: 'Usuarios',
           icon: Users, 
           adminPath: '/admin/users',
           providerPath: '/provider/users',
@@ -52,6 +54,7 @@ const GlassSidebar = ({ collapsed, setCollapsed, userRole = 'admin' }: GlassSide
         },
         { 
           name: 'Companies', 
+          displayName: 'Empresas',
           icon: Building, 
           adminPath: '/admin/companies',
           providerPath: '/provider/companies',
@@ -60,6 +63,7 @@ const GlassSidebar = ({ collapsed, setCollapsed, userRole = 'admin' }: GlassSide
         },
         { 
           name: 'Providers', 
+          displayName: 'Proveedores',
           icon: Package, 
           adminPath: '/admin/providers',
           providerPath: '/provider/providers',
@@ -68,6 +72,7 @@ const GlassSidebar = ({ collapsed, setCollapsed, userRole = 'admin' }: GlassSide
         },
         { 
           name: 'Reports', 
+          displayName: 'Reportes',
           icon: BarChart3, 
           adminPath: '/admin/reports',
           providerPath: '/provider/reports',
@@ -76,6 +81,7 @@ const GlassSidebar = ({ collapsed, setCollapsed, userRole = 'admin' }: GlassSide
         },
         { 
           name: 'Settings', 
+          displayName: 'Configuración',
           icon: Settings, 
           adminPath: '/admin/settings',
           providerPath: '/provider/settings',
@@ -90,6 +96,7 @@ const GlassSidebar = ({ collapsed, setCollapsed, userRole = 'admin' }: GlassSide
       items.push(
         { 
           name: 'Users', 
+          displayName: 'Usuarios',
           icon: Users, 
           adminPath: '/admin/users',
           providerPath: '/provider/users',
@@ -98,6 +105,7 @@ const GlassSidebar = ({ collapsed, setCollapsed, userRole = 'admin' }: GlassSide
         },
         { 
           name: 'Companies', 
+          displayName: 'Empresas',
           icon: Building, 
           adminPath: '/admin/companies',
           providerPath: '/provider/companies',
@@ -106,6 +114,7 @@ const GlassSidebar = ({ collapsed, setCollapsed, userRole = 'admin' }: GlassSide
         },
         { 
           name: 'Menu Management', 
+          displayName: 'Gestión de Menú',
           icon: Utensils, 
           adminPath: '/admin/menu',
           providerPath: '/provider/menu',
@@ -114,6 +123,7 @@ const GlassSidebar = ({ collapsed, setCollapsed, userRole = 'admin' }: GlassSide
         },
         { 
           name: 'Orders', 
+          displayName: 'Pedidos',
           icon: Package, 
           adminPath: '/admin/orders',
           providerPath: '/provider/orders',
@@ -122,6 +132,7 @@ const GlassSidebar = ({ collapsed, setCollapsed, userRole = 'admin' }: GlassSide
         },
         { 
           name: 'Assign Menus', 
+          displayName: 'Asignar Menús',
           icon: Building, 
           adminPath: '/admin/assign-menus',
           providerPath: '/provider/assign-menus',
@@ -130,6 +141,7 @@ const GlassSidebar = ({ collapsed, setCollapsed, userRole = 'admin' }: GlassSide
         },
         { 
           name: 'Delivery Settings', 
+          displayName: 'Configuración de Entrega',
           icon: Truck, 
           adminPath: '/admin/delivery',
           providerPath: '/provider/delivery-settings',
@@ -138,6 +150,7 @@ const GlassSidebar = ({ collapsed, setCollapsed, userRole = 'admin' }: GlassSide
         },
         { 
           name: 'Invoices', 
+          displayName: 'Facturas',
           icon: Receipt, 
           adminPath: '/admin/invoices',
           providerPath: '/provider/billing',
@@ -146,6 +159,7 @@ const GlassSidebar = ({ collapsed, setCollapsed, userRole = 'admin' }: GlassSide
         },
         { 
           name: 'Reports', 
+          displayName: 'Reportes',
           icon: BarChart3, 
           adminPath: '/admin/provider-reports',
           providerPath: '/provider/reports',
@@ -181,12 +195,12 @@ const GlassSidebar = ({ collapsed, setCollapsed, userRole = 'admin' }: GlassSide
             "font-semibold text-xl transition-opacity text-white", 
             collapsed ? "opacity-0 w-0" : "opacity-100"
           )}>
-            {userRole === 'admin' ? 'Admin' : 'Provider'}
+            {userRole === 'admin' ? 'Admin' : 'Proveedor'}
           </h2>
           <button
             onClick={() => setCollapsed(!collapsed)}
             className="h-8 w-8 rounded-md hover:bg-white/10 flex items-center justify-center text-white transition-all duration-200 hover:scale-105"
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-label={collapsed ? "Expandir menú" : "Colapsar menú"}
           >
             <ChevronLeft 
               className={cn(
@@ -218,7 +232,7 @@ const GlassSidebar = ({ collapsed, setCollapsed, userRole = 'admin' }: GlassSide
                     : "text-white/70 hover:bg-white/5 hover:text-white",
                   collapsed ? "justify-center w-10 h-10" : "px-4 w-full"
                 )}
-                title={collapsed ? item.name : ""}
+                title={collapsed ? item.displayName : ""}
               >
                 <item.icon className={cn(
                   "flex-shrink-0",
@@ -228,7 +242,7 @@ const GlassSidebar = ({ collapsed, setCollapsed, userRole = 'admin' }: GlassSide
                   "ml-3 transition-all duration-300 whitespace-nowrap",
                   collapsed ? "hidden" : "block"
                 )}>
-                  {item.name}
+                  {item.displayName}
                 </span>
               </RoleBasedLink>
             ))}
@@ -247,7 +261,7 @@ const GlassSidebar = ({ collapsed, setCollapsed, userRole = 'admin' }: GlassSide
               "ml-3 transition-all duration-300",
               collapsed ? "opacity-0 w-0" : "opacity-100"
             )}>
-              <p className="text-sm font-medium text-white">{userRole === 'admin' ? 'Admin' : 'Provider'} Panel</p>
+              <p className="text-sm font-medium text-white">{userRole === 'admin' ? 'Panel de Admin' : 'Panel de Proveedor'}</p>
               <p className="text-xs text-white/70">v1.0</p>
             </div>
           </div>

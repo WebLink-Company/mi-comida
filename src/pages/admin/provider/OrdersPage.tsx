@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -57,7 +56,10 @@ const OrdersPage = () => {
         .select('id')
         .eq('provider_id', user?.provider_id);
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error al buscar empresas del proveedor:", error);
+        throw error;
+      }
       
       if (companies && companies.length > 0) {
         const ids = companies.map(company => company.id);
@@ -85,6 +87,7 @@ const OrdersPage = () => {
     try {
       // Only proceed if we have companies to query
       if (companyIds.length === 0) {
+        console.log("No hay empresas para buscar pedidos");
         setOrders([]);
         setLoading(false);
         return;
@@ -113,12 +116,13 @@ const OrdersPage = () => {
       const { data, error } = await query;
 
       if (error) {
+        console.error("Error al obtener pedidos:", error);
         throw error;
       }
 
+      console.log(`Se encontraron ${data?.length || 0} pedidos para la fecha y filtros seleccionados`);
+      
       if (data) {
-        console.log(`Se encontraron ${data.length} pedidos para la fecha y filtros seleccionados`);
-        
         // Transform the data to add user_name, meal_name, and company_name
         const processedOrders = data.map(order => ({
           ...order,
@@ -150,7 +154,10 @@ const OrdersPage = () => {
         .update({ status: newStatus, updated_at: new Date().toISOString() })
         .eq('id', orderId);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error al actualizar estado del pedido:", error);
+        throw error;
+      }
 
       // Update local state
       setOrders(prevOrders =>

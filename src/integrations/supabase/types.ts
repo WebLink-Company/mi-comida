@@ -283,6 +283,7 @@ export type Database = {
           id: string
           lunch_option_id: string
           status: string
+          tenant_id: string
           updated_at: string | null
           user_id: string
         }
@@ -294,6 +295,7 @@ export type Database = {
           id?: string
           lunch_option_id: string
           status?: string
+          tenant_id: string
           updated_at?: string | null
           user_id: string
         }
@@ -305,6 +307,7 @@ export type Database = {
           id?: string
           lunch_option_id?: string
           status?: string
+          tenant_id?: string
           updated_at?: string | null
           user_id?: string
         }
@@ -328,6 +331,13 @@ export type Database = {
             columns: ["lunch_option_id"]
             isOneToOne: false
             referencedRelation: "lunch_options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "providers"
             referencedColumns: ["id"]
           },
           {

@@ -77,62 +77,67 @@ const ProviderOrderDashboard = () => {
       console.log(`Se encontraron ${providerCompanies.length} empresas para el proveedor`);
       const selectedDateStr = format(selectedDate, 'yyyy-MM-dd');
       
-      // For each company, get order stats - only consider approved, prepared, and delivered orders
-      const companiesWithOrders = await Promise.all(
-        providerCompanies.map(async (company) => {
-          // Get all orders for this company on the selected date
-          const { data: orders, error: ordersError } = await supabase
-            .from('orders')
-            .select('id, user_id, status')
-            .eq('company_id', company.id)
-            .eq('date', selectedDateStr);
+      // Evitar búsqueda si no hay empresas
+      if (providerCompanies.length === 0) {
+        setCompanyOrders([]);
+        setLoading(false);
+        return;
+      }
+      
+      const companyIds = providerCompanies.map(company => company.id);
+      
+      // Get all orders for these companies on the selected date
+      const { data: orders, error: ordersError } = await supabase
+        .from('orders')
+        .select('id, user_id, status, company_id')
+        .in('company_id', companyIds)
+        .eq('date', selectedDateStr);
 
-          if (ordersError) {
-            console.error(`Error al obtener pedidos para la empresa ${company.id}:`, ordersError);
-            return null;
-          }
+      if (ordersError) {
+        console.error("Error al obtener pedidos:", ordersError);
+        setError(`No se pudieron cargar los pedidos: ${ordersError.message}`);
+        setLoading(false);
+        return;
+      }
 
-          if (!orders || orders.length === 0) {
-            return null; // Skip companies with no orders
-          }
+      console.log(`Se encontraron ${orders?.length || 0} pedidos en total para la fecha ${selectedDateStr}`);
+      
+      // Process each company's orders
+      const companiesWithOrders = providerCompanies.map(company => {
+        // Filter orders for this company
+        const companyOrders = orders?.filter(order => order.company_id === company.id) || [];
+        
+        // Only count approved, prepared, and delivered orders for display
+        const approvedOrders = companyOrders.filter(order => 
+          ['approved', 'prepared', 'delivered'].includes(order.status)
+        );
+        
+        // Count unique users with approved orders
+        const usersWithApprovedOrders = [...new Set(approvedOrders.map(order => order.user_id))];
+        const uniqueUsers = usersWithApprovedOrders.length;
+        
+        // Count different types of orders
+        const dispatched = companyOrders.filter(order => 
+          order.status === 'prepared' || order.status === 'delivered'
+        ).length;
+        
+        const approved = companyOrders.filter(order => order.status === 'approved').length;
+        
+        const pending = companyOrders.filter(order => order.status === 'pending').length;
 
-          // Only count approved, prepared, and delivered orders for display
-          const approvedOrders = orders.filter(order => 
-            ['approved', 'prepared', 'delivered'].includes(order.status)
-          );
-          
-          // Skip companies with no approved orders
-          if (approvedOrders.length === 0) {
-            return null;
-          }
+        return {
+          id: company.id,
+          name: company.name,
+          orders: approvedOrders.length, // Only count approved+ orders
+          users: uniqueUsers,
+          dispatched,
+          approved,
+          pending
+        };
+      });
 
-          // Count unique users with approved orders
-          const usersWithApprovedOrders = [...new Set(approvedOrders.map(order => order.user_id))];
-          const uniqueUsers = usersWithApprovedOrders.length;
-          
-          // Count different types of orders
-          const dispatched = orders.filter(order => 
-            order.status === 'prepared' || order.status === 'delivered'
-          ).length;
-          
-          const approved = orders.filter(order => order.status === 'approved').length;
-          
-          const pending = orders.filter(order => order.status === 'pending').length;
-
-          return {
-            id: company.id,
-            name: company.name,
-            orders: approvedOrders.length, // Only count approved+ orders
-            users: uniqueUsers,
-            dispatched,
-            approved,
-            pending
-          };
-        })
-      );
-
-      // Filter out null values and companies with no approved orders
-      const filteredCompanies = companiesWithOrders.filter(Boolean) as CompanyOrderSummary[];
+      // Filter out companies with no approved orders
+      const filteredCompanies = companiesWithOrders.filter(company => company.orders > 0);
       console.log(`Se encontraron ${filteredCompanies.length} empresas con pedidos aprobados el ${selectedDateStr}`);
       
       if (filteredCompanies.length > 0) {

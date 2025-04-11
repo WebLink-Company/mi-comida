@@ -57,7 +57,9 @@ const OrdersModal: React.FC<OrdersModalProps> = ({ company, date, onClose, onOrd
     try {
       const dateStr = format(date, 'yyyy-MM-dd');
       
-      // Only fetch approved and later status orders
+      console.log(`Buscando pedidos para empresa ${company.id} en fecha ${dateStr}`);
+      
+      // Fetch orders with status approved, prepared, or delivered
       const { data, error } = await supabase
         .from('orders')
         .select(`
@@ -73,8 +75,12 @@ const OrdersModal: React.FC<OrdersModalProps> = ({ company, date, onClose, onOrd
         .eq('date', dateStr)
         .in('status', ['approved', 'prepared', 'delivered']);
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error al obtener pedidos:", error);
+        throw error;
+      }
       
+      console.log(`Se encontraron ${data?.length || 0} pedidos aprobados, preparados o entregados`);
       setOrders(data || []);
     } catch (error) {
       console.error('Error al cargar pedidos:', error);
@@ -98,7 +104,10 @@ const OrdersModal: React.FC<OrdersModalProps> = ({ company, date, onClose, onOrd
         .update({ status: newStatus })
         .eq('id', orderId);
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error al actualizar estado del pedido:", error);
+        throw error;
+      }
       
       setOrders(prevOrders => 
         prevOrders.map(order => 

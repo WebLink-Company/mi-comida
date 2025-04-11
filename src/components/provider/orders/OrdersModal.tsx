@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -42,7 +43,7 @@ const OrdersModal: React.FC<OrdersModalProps> = ({ company, date, onClose, onOrd
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("all");
+  const [activeTab, setActiveTab] = useState("approved");
   const [isUpdating, setIsUpdating] = useState(false);
   
   useEffect(() => {
@@ -56,6 +57,7 @@ const OrdersModal: React.FC<OrdersModalProps> = ({ company, date, onClose, onOrd
     try {
       const dateStr = format(date, 'yyyy-MM-dd');
       
+      // Only fetch approved and later status orders
       const { data, error } = await supabase
         .from('orders')
         .select(`
@@ -68,13 +70,14 @@ const OrdersModal: React.FC<OrdersModalProps> = ({ company, date, onClose, onOrd
           lunch_options:lunch_option_id(name, price)
         `)
         .eq('company_id', company.id)
-        .eq('date', dateStr);
+        .eq('date', dateStr)
+        .in('status', ['approved', 'prepared', 'delivered']);
       
       if (error) throw error;
       
       setOrders(data || []);
     } catch (error) {
-      console.error('Error fetching orders:', error);
+      console.error('Error al cargar pedidos:', error);
       setError('No se pudieron cargar los pedidos');
       toast({
         title: 'Error',
@@ -113,7 +116,7 @@ const OrdersModal: React.FC<OrdersModalProps> = ({ company, date, onClose, onOrd
       }
       
     } catch (error) {
-      console.error('Error updating order status:', error);
+      console.error('Error al actualizar estado del pedido:', error);
       toast({
         title: 'Error',
         description: 'No se pudo actualizar el estado del pedido',
@@ -140,7 +143,6 @@ const OrdersModal: React.FC<OrdersModalProps> = ({ company, date, onClose, onOrd
     return orders.filter(order => order.status === activeTab);
   };
   
-  const pendingCount = orders.filter(o => o.status === 'pending').length;
   const approvedCount = orders.filter(o => o.status === 'approved').length;
   const preparedCount = orders.filter(o => o.status === 'prepared').length;
   const deliveredCount = orders.filter(o => o.status === 'delivered').length;
@@ -171,7 +173,7 @@ const OrdersModal: React.FC<OrdersModalProps> = ({ company, date, onClose, onOrd
         ) : orders.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-10">
             <Package className="h-16 w-16 text-gray-400 mb-4" />
-            <p className="text-center">No hay pedidos para esta empresa en la fecha seleccionada</p>
+            <p className="text-center">No hay pedidos aprobados para esta empresa en la fecha seleccionada</p>
           </div>
         ) : (
           <>
@@ -191,10 +193,6 @@ const OrdersModal: React.FC<OrdersModalProps> = ({ company, date, onClose, onOrd
               <TabsList className="w-full">
                 <TabsTrigger value="all" className="flex-1">
                   Todos ({orders.length})
-                </TabsTrigger>
-                <TabsTrigger value="pending" className="flex-1">
-                  <Clock className="h-4 w-4 mr-1" />
-                  Pendientes ({pendingCount})
                 </TabsTrigger>
                 <TabsTrigger value="approved" className="flex-1">
                   <CheckCircle className="h-4 w-4 mr-1" />
@@ -236,29 +234,6 @@ const OrdersModal: React.FC<OrdersModalProps> = ({ company, date, onClose, onOrd
                         </div>
                         
                         <div className="mt-4 md:mt-0 flex gap-2">
-                          {order.status === 'pending' && (
-                            <>
-                              <Button 
-                                onClick={() => handleUpdateStatus(order.id, 'approved')}
-                                className="bg-green-500 hover:bg-green-600 text-white"
-                                disabled={isUpdating}
-                                size="sm"
-                              >
-                                <CheckCircle className="h-4 w-4 mr-1" />
-                                Aprobar
-                              </Button>
-                              
-                              <Button 
-                                onClick={() => handleUpdateStatus(order.id, 'rejected')}
-                                variant="destructive"
-                                disabled={isUpdating}
-                                size="sm"
-                              >
-                                Rechazar
-                              </Button>
-                            </>
-                          )}
-                          
                           {order.status === 'approved' && (
                             <Button 
                               onClick={() => handleUpdateStatus(order.id, 'prepared')}

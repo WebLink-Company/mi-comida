@@ -1,24 +1,25 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/cn';
+import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TopMeal } from '@/hooks/useProviderDashboardStats';
 
 interface StatCardProps {
   title: string;
-  value: string | number | TopMeal | null;
+  value: number | string | TopMeal | undefined;
   icon?: React.ReactNode;
   description?: string;
+  loading?: boolean;
   trend?: {
     value: number;
     isPositive: boolean;
   };
-  loading?: boolean;
   linkTo?: string;
   className?: string;
   borderColor?: string;
-  lastUpdated?: string;
 }
 
 const StatCard: React.FC<StatCardProps> = ({
@@ -26,91 +27,92 @@ const StatCard: React.FC<StatCardProps> = ({
   value,
   icon,
   description,
-  trend,
   loading = false,
+  trend,
   linkTo,
   className,
   borderColor,
-  lastUpdated
 }) => {
-  // Format value for display
-  const displayValue = () => {
-    if (loading) return <Skeleton className="h-7 w-20" />;
-    
-    if (value === null || value === undefined) return "Sin datos";
-    
-    // Handle TopMeal object type - convert it to string for rendering
-    if (typeof value === 'object' && value !== null && 'name' in value) {
-      return value.name.toString();
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    if (linkTo) {
+      navigate(linkTo);
     }
-    
-    // Handle currency-related titles
-    if (title.toLowerCase().includes('facturación') || 
-        title.toLowerCase().includes('ingreso') ||
-        title.toLowerCase().includes('revenue')) {
-      if (typeof value === 'number') {
-        return `$${value.toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-      }
-      return value;
-    }
-    
-    // Handle regular number formatting
-    if (typeof value === 'number') {
-      return value.toLocaleString('es-ES');
-    }
-    
-    return value;
   };
 
-  const cardContent = (
-    <div className={cn(
-      "relative p-6 rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg",
-      className || "glass",
-      borderColor ? `border ${borderColor}` : "border border-gray-100/20"
-    )}>
-      <div className="flex items-start justify-between mb-2">
-        <div>
-          <h3 className="text-lg font-semibold text-white">{title}</h3>
-          <div className="text-2xl font-bold text-white mt-2">
-            {displayValue()}
+  const formatValue = (val: number | string | TopMeal | undefined): string => {
+    if (val === undefined || val === null) return '0';
+    
+    if (typeof val === 'number') {
+      if (val === 0) return '0';
+      if (title.toLowerCase().includes('revenue') || title.toLowerCase().includes('facturación')) {
+        return new Intl.NumberFormat('es-ES', {
+          style: 'currency',
+          currency: 'USD',
+          minimumFractionDigits: 2
+        }).format(val);
+      }
+      return val.toString();
+    }
+    
+    if (typeof val === 'object' && val !== null && 'name' in val) {
+      return val.name; // Extract just the name from TopMeal object
+    }
+    
+    return String(val);
+  };
+
+  const displayValue = (val: number | string | TopMeal | undefined): React.ReactNode => {
+    if (loading) {
+      return <Skeleton className="h-8 w-20" />;
+    }
+    
+    // Handle TopMeal objects by extracting the name
+    if (typeof val === 'object' && val !== null && 'name' in val) {
+      return val.name;
+    }
+    
+    return formatValue(val);
+  };
+
+  return (
+    <Card 
+      className={cn(
+        "overflow-hidden transition-all hover:shadow-md cursor-pointer border",
+        borderColor ? borderColor : "border-primary/10",
+        className
+      )}
+      onClick={handleClick}
+    >
+      <CardContent className="p-4">
+        <div className="flex justify-between items-start">
+          <div>
+            <p className="text-sm font-medium text-white/80">{title}</p>
+            <h3 className="text-2xl font-semibold mt-1 text-white">
+              {displayValue(value)}
+            </h3>
+            {description && (
+              <p className="text-xs text-white/60 mt-1">{description}</p>
+            )}
+            {trend && (
+              <div className="flex items-center mt-2">
+                <span className={`text-xs ${trend.isPositive ? 'text-green-400' : 'text-red-400'}`}>
+                  {trend.isPositive ? '+' : '-'}{trend.value}%
+                </span>
+                <span className="text-xs text-white/60 ml-1">vs. último mes</span>
+              </div>
+            )}
           </div>
+          {icon && (
+            <div className="bg-white/10 p-2 rounded-lg">
+              {icon}
+            </div>
+          )}
         </div>
-        {icon && (
-          <div className="p-2 rounded-full bg-white/10 text-white">
-            {icon}
-          </div>
-        )}
-      </div>
-      
-      {description && (
-        <p className="text-sm text-white/70 mt-2">
-          {loading ? <Skeleton className="h-4 w-full" /> : description}
-        </p>
-      )}
-      
-      {trend && !loading && (
-        <div className={`text-sm mt-2 ${trend.isPositive ? 'text-green-400' : 'text-red-400'}`}>
-          {trend.isPositive ? '+' : '-'}{trend.value}% desde el mes pasado
-        </div>
-      )}
-      
-      {lastUpdated && (
-        <div className="text-xs text-white/50 mt-3">
-          Actualizado: {lastUpdated}
-        </div>
-      )}
-    </div>
+      </CardContent>
+    </Card>
   );
-
-  if (linkTo) {
-    return (
-      <Link to={linkTo} className="block transition-transform duration-300 hover:scale-[1.01]">
-        {cardContent}
-      </Link>
-    );
-  }
-
-  return cardContent;
 };
 
 export default StatCard;

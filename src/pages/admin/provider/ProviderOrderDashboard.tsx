@@ -77,7 +77,7 @@ const ProviderOrderDashboard = () => {
       console.log(`Se encontraron ${providerCompanies.length} empresas para el proveedor`);
       const selectedDateStr = format(selectedDate, 'yyyy-MM-dd');
       
-      // For each company, get order stats
+      // For each company, get order stats - only consider approved, prepared, and delivered orders
       const companiesWithOrders = await Promise.all(
         providerCompanies.map(async (company) => {
           // Get all orders for this company on the selected date
@@ -96,8 +96,19 @@ const ProviderOrderDashboard = () => {
             return null; // Skip companies with no orders
           }
 
-          // Count unique users
-          const uniqueUsers = [...new Set(orders.map(order => order.user_id))].length;
+          // Only count approved, prepared, and delivered orders for display
+          const approvedOrders = orders.filter(order => 
+            ['approved', 'prepared', 'delivered'].includes(order.status)
+          );
+          
+          // Skip companies with no approved orders
+          if (approvedOrders.length === 0) {
+            return null;
+          }
+
+          // Count unique users with approved orders
+          const usersWithApprovedOrders = [...new Set(approvedOrders.map(order => order.user_id))];
+          const uniqueUsers = usersWithApprovedOrders.length;
           
           // Count different types of orders
           const dispatched = orders.filter(order => 
@@ -111,7 +122,7 @@ const ProviderOrderDashboard = () => {
           return {
             id: company.id,
             name: company.name,
-            orders: orders.length,
+            orders: approvedOrders.length, // Only count approved+ orders
             users: uniqueUsers,
             dispatched,
             approved,
@@ -120,12 +131,12 @@ const ProviderOrderDashboard = () => {
         })
       );
 
-      // Filter out null values and companies with no orders
+      // Filter out null values and companies with no approved orders
       const filteredCompanies = companiesWithOrders.filter(Boolean) as CompanyOrderSummary[];
-      console.log(`Se encontraron ${filteredCompanies.length} empresas con pedidos el ${selectedDateStr}`);
+      console.log(`Se encontraron ${filteredCompanies.length} empresas con pedidos aprobados el ${selectedDateStr}`);
       
       if (filteredCompanies.length > 0) {
-        console.log("Companies with orders:", filteredCompanies);
+        console.log("Empresas con pedidos:", filteredCompanies);
       }
       
       setCompanyOrders(filteredCompanies);
@@ -174,7 +185,7 @@ const ProviderOrderDashboard = () => {
         <div>
           <h1 className="text-2xl font-bold text-white">Panel de Pedidos</h1>
           <p className="text-white/70">
-            Gestione los pedidos de sus clientes en todas las empresas
+            Gestione los pedidos aprobados de sus clientes en todas las empresas
           </p>
         </div>
         
@@ -220,9 +231,9 @@ const ProviderOrderDashboard = () => {
             <Card className="glass">
               <CardContent className="flex flex-col items-center justify-center py-10">
                 <Package className="h-16 w-16 text-white mb-4 opacity-30" />
-                <h3 className="text-lg font-medium text-white">No se encontraron pedidos</h3>
+                <h3 className="text-lg font-medium text-white">No se encontraron pedidos aprobados</h3>
                 <p className="text-white/70 text-center max-w-md mt-2">
-                  No hay pedidos para la fecha seleccionada. Intente seleccionar una fecha diferente o revise más tarde.
+                  No hay pedidos aprobados para la fecha seleccionada. Intente seleccionar una fecha diferente o revisar la sección de pedidos pendientes.
                 </p>
               </CardContent>
             </Card>

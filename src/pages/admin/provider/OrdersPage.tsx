@@ -4,6 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { Calendar, Filter, Package, CheckCircle2, Clock, Truck, Users } from 'lucide-react';
 import { 
   Card,
@@ -30,7 +31,7 @@ const OrdersPage = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('approved');
   const [companyIds, setCompanyIds] = useState<string[]>([]);
 
   useEffect(() => {
@@ -49,7 +50,7 @@ const OrdersPage = () => {
 
   const fetchProviderCompanies = async () => {
     try {
-      console.log("Fetching companies for provider:", user?.provider_id);
+      console.log("Buscando empresas para el proveedor:", user?.provider_id);
       
       const { data: companies, error } = await supabase
         .from('companies')
@@ -60,15 +61,15 @@ const OrdersPage = () => {
       
       if (companies && companies.length > 0) {
         const ids = companies.map(company => company.id);
-        console.log("Found company IDs:", ids);
+        console.log("Empresas encontradas:", ids);
         setCompanyIds(ids);
       } else {
-        console.log("No companies found for this provider");
+        console.log("No se encontraron empresas para este proveedor");
         setCompanyIds([]);
         setLoading(false);
       }
     } catch (error) {
-      console.error("Error fetching provider companies:", error);
+      console.error("Error al buscar empresas del proveedor:", error);
       toast({
         title: 'Error',
         description: 'No se pudieron cargar las empresas asociadas a este proveedor.',
@@ -89,9 +90,9 @@ const OrdersPage = () => {
         return;
       }
       
-      console.log("Fetching orders for date:", format(selectedDate, 'yyyy-MM-dd'));
-      console.log("With status filter:", statusFilter);
-      console.log("For companies:", companyIds);
+      console.log("Buscando pedidos para la fecha:", format(selectedDate, 'yyyy-MM-dd'));
+      console.log("Con filtro de estado:", statusFilter);
+      console.log("Para empresas:", companyIds);
       
       let query = supabase
         .from('orders')
@@ -116,7 +117,7 @@ const OrdersPage = () => {
       }
 
       if (data) {
-        console.log(`Found ${data.length} orders for selected date and filters`);
+        console.log(`Se encontraron ${data.length} pedidos para la fecha y filtros seleccionados`);
         
         // Transform the data to add user_name, meal_name, and company_name
         const processedOrders = data.map(order => ({
@@ -131,10 +132,10 @@ const OrdersPage = () => {
         setOrders([]);
       }
     } catch (error) {
-      console.error('Error fetching orders:', error);
+      console.error('Error al cargar pedidos:', error);
       toast({
         title: 'Error',
-        description: 'Failed to load orders. Please try again.',
+        description: 'No se pudieron cargar los pedidos. Intente nuevamente.',
         variant: 'destructive',
       });
     } finally {
@@ -159,31 +160,48 @@ const OrdersPage = () => {
       );
 
       toast({
-        title: 'Success',
-        description: `Order status updated to ${newStatus}`,
+        title: 'Éxito',
+        description: `Estado del pedido actualizado a ${getStatusText(newStatus)}`,
       });
     } catch (error) {
-      console.error('Error updating order status:', error);
+      console.error('Error al actualizar estado del pedido:', error);
       toast({
         title: 'Error',
-        description: 'Failed to update order status',
+        description: 'No se pudo actualizar el estado del pedido',
         variant: 'destructive',
       });
+    }
+  };
+
+  const getStatusText = (status: string): string => {
+    switch (status) {
+      case 'pending':
+        return 'Pendiente';
+      case 'approved':
+        return 'Aprobado';
+      case 'rejected':
+        return 'Rechazado';
+      case 'prepared':
+        return 'Preparado';
+      case 'delivered':
+        return 'Entregado';
+      default:
+        return status;
     }
   };
 
   const getStatusBadge = (status: Order['status']) => {
     switch (status) {
       case 'pending':
-        return <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300">Pending</Badge>;
+        return <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300">Pendiente</Badge>;
       case 'approved':
-        return <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300">Approved</Badge>;
+        return <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300">Aprobado</Badge>;
       case 'rejected':
-        return <Badge variant="outline" className="bg-red-100 text-red-800 border-red-300">Rejected</Badge>;
+        return <Badge variant="outline" className="bg-red-100 text-red-800 border-red-300">Rechazado</Badge>;
       case 'prepared':
-        return <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-300">Prepared</Badge>;
+        return <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-300">Preparado</Badge>;
       case 'delivered':
-        return <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">Delivered</Badge>;
+        return <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">Entregado</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -192,7 +210,7 @@ const OrdersPage = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Orders Management</h1>
+        <h1 className="text-2xl font-bold">Gestión de Pedidos</h1>
         <div className="flex items-center space-x-2">
           <DatePicker 
             date={selectedDate}
@@ -204,35 +222,35 @@ const OrdersPage = () => {
             onValueChange={setStatusFilter}
           >
             <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Filter by status" />
+              <SelectValue placeholder="Filtrar por estado" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Orders</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="approved">Approved</SelectItem>
-              <SelectItem value="rejected">Rejected</SelectItem>
-              <SelectItem value="prepared">Prepared</SelectItem>
-              <SelectItem value="delivered">Delivered</SelectItem>
+              <SelectItem value="all">Todos los Pedidos</SelectItem>
+              <SelectItem value="pending">Pendientes</SelectItem>
+              <SelectItem value="approved">Aprobados</SelectItem>
+              <SelectItem value="rejected">Rechazados</SelectItem>
+              <SelectItem value="prepared">Preparados</SelectItem>
+              <SelectItem value="delivered">Entregados</SelectItem>
             </SelectContent>
           </Select>
           <Button onClick={fetchOrders} variant="outline">
             <Filter className="mr-2 h-4 w-4" />
-            Refresh
+            Actualizar
           </Button>
         </div>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Orders for {format(selectedDate, 'MMMM d, yyyy')}</CardTitle>
+          <CardTitle>Pedidos para {format(selectedDate, 'MMMM d, yyyy', {locale: es})}</CardTitle>
           <CardDescription>
-            Manage lunch orders for the selected date
+            Gestione los pedidos de almuerzo para la fecha seleccionada
           </CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
             <div className="flex justify-center py-8">
-              <p>Loading orders...</p>
+              <p>Cargando pedidos...</p>
             </div>
           ) : orders.length > 0 ? (
             <div className="rounded-md border">
@@ -240,11 +258,11 @@ const OrdersPage = () => {
                 <table className="w-full caption-bottom text-sm">
                   <thead>
                     <tr className="border-b">
-                      <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">User</th>
-                      <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Meal</th>
-                      <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Company</th>
-                      <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Status</th>
-                      <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Actions</th>
+                      <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Usuario</th>
+                      <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Plato</th>
+                      <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Empresa</th>
+                      <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Estado</th>
+                      <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -262,7 +280,7 @@ const OrdersPage = () => {
                               className="mr-2"
                             >
                               <CheckCircle2 className="mr-1 h-4 w-4" />
-                              Mark Prepared
+                              Marcar Preparado
                             </Button>
                           )}
                           {order.status === 'prepared' && (
@@ -272,7 +290,7 @@ const OrdersPage = () => {
                               className="bg-green-600 hover:bg-green-700"
                             >
                               <Truck className="mr-1 h-4 w-4" />
-                              Mark Delivered
+                              Marcar Entregado
                             </Button>
                           )}
                           {(order.status === 'pending' || !['pending', 'approved', 'prepared', 'delivered'].includes(order.status)) && (
@@ -282,14 +300,14 @@ const OrdersPage = () => {
                                 onClick={() => handleStatusChange(order.id, 'approved')}
                                 className="mr-2"
                               >
-                                Approve
+                                Aprobar
                               </Button>
                               <Button 
                                 size="sm" 
                                 variant="destructive"
                                 onClick={() => handleStatusChange(order.id, 'rejected')}
                               >
-                                Reject
+                                Rechazar
                               </Button>
                             </>
                           )}
@@ -303,9 +321,9 @@ const OrdersPage = () => {
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               <Package className="mx-auto h-12 w-12 opacity-30 mb-2" />
-              <p>No orders found for the selected date and filters</p>
+              <p>No se encontraron pedidos para la fecha y filtros seleccionados</p>
               {companyIds.length === 0 && (
-                <p className="mt-2 text-sm">No companies associated with this provider.</p>
+                <p className="mt-2 text-sm">No hay empresas asociadas a este proveedor.</p>
               )}
             </div>
           )}

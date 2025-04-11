@@ -77,9 +77,8 @@ function createSupabaseClient() {
           params: {
             eventsPerSecond: 1,
           },
-        },
-        // Disable debug logging in Supabase client
-        debug: false,
+        }
+        // Removed the unsupported 'debug' property
       }
     );
 

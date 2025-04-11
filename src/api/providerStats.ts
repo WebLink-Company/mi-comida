@@ -24,12 +24,15 @@ export const fetchProviderStats = async (providerId?: string, companyId?: string
   }
   
   const today = new Date().toISOString().split('T')[0];
+  const firstDayOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
   const currentMonth = new Date().toISOString().substring(0, 7); // YYYY-MM
   
   let companyIds: string[] = [];
   
   try {
     console.log("Iniciando fetchStats para providerId:", providerId, "companyId:", companyId);
+    console.log("Fecha de hoy:", today);
+    console.log("Primer día del mes:", firstDayOfMonth);
     
     // Si es supervisor, solo trabajar con su empresa asignada
     if (isSupervisor) {
@@ -84,53 +87,90 @@ export const fetchProviderStats = async (providerId?: string, companyId?: string
       };
     }
     
-    // Optimizar consultando solo los datos necesarios en una única solicitud
-    // Corrección: Usar .in() para buscar en una lista de company_ids
-    console.log(`QUERY OPTIMIZADA: Buscando órdenes para companyIds: [${companyIds.join(', ')}]`);
+    // Consulta específica para órdenes del mes actual (entre el primer día y hoy)
+    console.log(`QUERY MENSUAL: Buscando órdenes desde ${firstDayOfMonth} hasta ${today} para companyIds: [${companyIds.join(', ')}]`);
     
-    // Realizamos una sola consulta para obtener los datos necesarios
-    const { data: orders, error: ordersError } = await supabase
+    const { data: monthlyOrders, error: monthlyOrdersError } = await supabase
       .from('orders')
       .select(`
         id, 
         status, 
         date,
-        company_id, 
-        user_id,
         lunch_options:lunch_option_id(id, name, price)
       `)
-      .in('company_id', companyIds);
+      .in('company_id', companyIds)
+      .gte('date', firstDayOfMonth)
+      .lte('date', today);
       
-    if (ordersError) {
-      console.error("Error al obtener órdenes:", ordersError);
-      throw ordersError;
+    if (monthlyOrdersError) {
+      console.error("Error al obtener órdenes mensuales:", monthlyOrdersError);
+      throw monthlyOrdersError;
     }
     
-    console.log(`Se encontraron ${orders?.length || 0} órdenes en total`);
+    console.log(`Se encontraron ${monthlyOrders?.length || 0} órdenes mensuales en total`);
     
-    // Filtramos las órdenes según las fechas que necesitamos
-    const todayOrders = orders?.filter(order => order.date === today) || [];
-    const monthlyOrders = orders?.filter(order => {
-      const orderMonth = order.date.substring(0, 7); // YYYY-MM
-      return orderMonth === currentMonth;
-    }) || [];
+    // Consulta específica para órdenes de hoy
+    console.log(`QUERY DIARIA: Buscando órdenes para hoy (${today}) para companyIds: [${companyIds.join(', ')}]`);
     
-    // Filtramos y contamos por una sola vez en lugar de múltiples iteraciones
-    const todayApprovedOrders = todayOrders.filter(order => 
+    const { data: todayOrders, error: todayOrdersError } = await supabase
+      .from('orders')
+      .select(`
+        id, 
+        status, 
+        date,
+        company_id,
+        lunch_options:lunch_option_id(id, name, price)
+      `)
+      .in('company_id', companyIds)
+      .eq('date', today);
+      
+    if (todayOrdersError) {
+      console.error("Error al obtener órdenes de hoy:", todayOrdersError);
+      throw todayOrdersError;
+    }
+    
+    console.log(`Se encontraron ${todayOrders?.length || 0} órdenes hoy`);
+    
+    // Consulta específica para órdenes pendientes
+    console.log(`QUERY PENDIENTES: Buscando órdenes pendientes para companyIds: [${companyIds.join(', ')}]`);
+    
+    const { data: pendingOrders, error: pendingOrdersError } = await supabase
+      .from('orders')
+      .select('id')
+      .in('company_id', companyIds)
+      .eq('status', 'pending');
+      
+    if (pendingOrdersError) {
+      console.error("Error al obtener órdenes pendientes:", pendingOrdersError);
+      throw pendingOrdersError;
+    }
+    
+    console.log(`Se encontraron ${pendingOrders?.length || 0} órdenes pendientes`);
+    
+    // Filtrar órdenes aprobadas/entregadas para estadísticas
+    const approvedTodayOrders = todayOrders?.filter(order => 
       ['approved', 'prepared', 'delivered'].includes(order.status)
-    );
-    const pendingTodayOrders = todayOrders.filter(order => order.status === 'pending');
-    const approvedMonthlyOrders = monthlyOrders.filter(order => 
+    ) || [];
+    
+    const approvedMonthlyOrders = monthlyOrders?.filter(order => 
       ['approved', 'prepared', 'delivered'].includes(order.status)
-    );
+    ) || [];
     
     // Calcular estadísticas de forma eficiente
-    const ordersToday = todayApprovedOrders.length;
-    const totalMealsToday = todayApprovedOrders.length;
-    const uniqueCompanies = [...new Set(todayApprovedOrders.map(order => order.company_id))];
+    const ordersToday = approvedTodayOrders.length;
+    const totalMealsToday = approvedTodayOrders.length;
+    
+    // Contar empresas únicas con órdenes aprobadas hoy
+    const uniqueCompanies = [...new Set(approvedTodayOrders.map(order => order.company_id))];
     const companiesWithOrdersToday = uniqueCompanies.length;
-    const pendingOrdersCount = pendingTodayOrders.length;
+    
+    const pendingOrdersCount = pendingOrders?.length || 0;
     const monthlyOrdersCount = approvedMonthlyOrders.length;
+    
+    console.log("Estadísticas calculadas:");
+    console.log("- Órdenes hoy:", ordersToday);
+    console.log("- Órdenes mensuales:", monthlyOrdersCount);
+    console.log("- Órdenes pendientes:", pendingOrdersCount);
     
     // Calcular ingresos totales del mes
     let monthlyRevenue = 0;
@@ -140,14 +180,16 @@ export const fetchProviderStats = async (providerId?: string, companyId?: string
       }
     });
     
+    console.log("- Ingresos mensuales:", monthlyRevenue);
+    
     // Calcular el plato más pedido hoy
     let topOrderedMeal: TopMeal = { name: 'No hay datos', count: 0 };
     
-    if (todayApprovedOrders.length > 0) {
+    if (approvedTodayOrders.length > 0) {
       const mealCounter: Record<string, MealCounterItem> = {};
       
-      // Contar ocurrencias de cada plato de forma más eficiente
-      todayApprovedOrders.forEach(order => {
+      // Contar ocurrencias de cada plato
+      approvedTodayOrders.forEach(order => {
         if (order.lunch_options) {
           const mealId = order.lunch_options.id;
           const mealName = order.lunch_options.name;
@@ -170,10 +212,6 @@ export const fetchProviderStats = async (providerId?: string, companyId?: string
         count: topMeal.count
       };
     }
-    
-    console.log("Estadísticas calculadas de forma eficiente");
-    console.log("Orders today:", ordersToday);
-    console.log("Monthly orders:", monthlyOrdersCount);
     
     return {
       ordersToday,

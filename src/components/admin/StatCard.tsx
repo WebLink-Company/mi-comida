@@ -45,8 +45,12 @@ const StatCard: React.FC<StatCardProps> = ({
     if (val === undefined || val === null) return '0';
     
     if (typeof val === 'number') {
+      // Important: Make sure 0 is displayed as "0" and not empty string
       if (val === 0) return '0';
-      if (title.toLowerCase().includes('revenue') || title.toLowerCase().includes('facturación')) {
+      
+      if (title.toLowerCase().includes('revenue') || 
+          title.toLowerCase().includes('facturación') || 
+          title.toLowerCase().includes('ingreso')) {
         return new Intl.NumberFormat('es-ES', {
           style: 'currency',
           currency: 'USD',
@@ -67,6 +71,9 @@ const StatCard: React.FC<StatCardProps> = ({
     if (loading) {
       return <Skeleton className="h-8 w-20" />;
     }
+    
+    // Debug the value being passed
+    console.log(`StatCard "${title}" value:`, val, "type:", typeof val);
     
     return formatValue(val);
   };

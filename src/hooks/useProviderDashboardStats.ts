@@ -29,13 +29,21 @@ export const useProviderDashboardStats = () => {
   // Use React Query with optimized caching and reduced requests
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['providerStats', providerId, companyId],
-    queryFn: () => fetchProviderStats(providerId, companyId),
+    queryFn: async () => {
+      console.log('Fetching provider stats for:', { providerId, companyId });
+      const stats = await fetchProviderStats(providerId, companyId);
+      console.log('Provider stats fetched:', stats);
+      return stats;
+    },
     enabled: !!(providerId || companyId),
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
     refetchInterval: false,
     refetchOnMount: "always"
   });
+
+  // Log the monthly order count for debugging
+  console.log('Monthly orders from stats:', data?.monthlyOrders);
 
   return {
     // Datos

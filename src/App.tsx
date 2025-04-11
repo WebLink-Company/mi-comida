@@ -76,11 +76,11 @@ const AppRoutes: React.FC = () => {
       
       {/* Provider routes */}
       <Route path="/provider" element={<AdminLayout />}>
-        <Route index element={<ProtectedRoute allowedRoles={['provider']}><ProviderOrderDashboard /></ProtectedRoute>} />
+        <Route index element={<ProtectedRoute allowedRoles={['provider']}><ProviderDashboardPage /></ProtectedRoute>} />
+        <Route path="orders" element={<ProtectedRoute allowedRoles={['provider']}><ProviderOrderDashboard /></ProtectedRoute>} />
         <Route path="menu" element={<ProtectedRoute allowedRoles={['provider']}><MenuManagementPage /></ProtectedRoute>} />
         <Route path="companies" element={<ProtectedRoute allowedRoles={['provider']}><CompaniesProviderPage /></ProtectedRoute>} />
         <Route path="assign-menus" element={<ProtectedRoute allowedRoles={['provider']}><AssignMenusPage /></ProtectedRoute>} />
-        <Route path="orders" element={<ProtectedRoute allowedRoles={['provider']}><OrdersPage /></ProtectedRoute>} />
         <Route path="delivery" element={<ProtectedRoute allowedRoles={['provider']}><DeliverySettingsPage /></ProtectedRoute>} />
         <Route path="billing" element={<ProtectedRoute allowedRoles={['provider']}><BillingPage /></ProtectedRoute>} />
         <Route path="users" element={<ProtectedRoute allowedRoles={['provider']}><UsersProviderPage /></ProtectedRoute>} />

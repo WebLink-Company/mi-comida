@@ -16,30 +16,43 @@ export const useProviderCompanyStats = () => {
       setLoading(true);
       
       try {
-        // Obtener ID del proveedor
-        const providerId = user.provider_id;
+        // Verificar si es un supervisor (tienen company_id pero no provider_id)
+        const isSupervisor = !user.provider_id && user.company_id;
         
-        if (!providerId) {
-          throw new Error('No se encontró ID de proveedor');
+        let companyIds = [];
+        
+        if (isSupervisor) {
+          // Para supervisores, solo trabajar con su empresa asignada
+          if (!user.company_id) {
+            throw new Error('No tienes ninguna empresa asignada actualmente.');
+          }
+          companyIds = [user.company_id];
+        } else {
+          // Para proveedores, obtener todas sus empresas
+          const providerId = user.provider_id;
+          
+          if (!providerId) {
+            throw new Error('No se encontró ID de proveedor');
+          }
+          
+          // Primero obtener empresas para este proveedor
+          const { data: companies, error: companiesError } = await supabase
+            .from('companies')
+            .select('id')
+            .eq('provider_id', providerId);
+            
+          if (companiesError) throw companiesError;
+          
+          if (!companies || companies.length === 0) {
+            setCompaniesWithOrdersToday(0);
+            setLoading(false);
+            return;
+          }
+          
+          companyIds = companies.map(company => company.id);
         }
         
         const today = new Date().toISOString().split('T')[0];
-        
-        // Primero obtener empresas para este proveedor
-        const { data: companies, error: companiesError } = await supabase
-          .from('companies')
-          .select('id')
-          .eq('provider_id', providerId);
-          
-        if (companiesError) throw companiesError;
-        
-        if (!companies || companies.length === 0) {
-          setCompaniesWithOrdersToday(0);
-          setLoading(false);
-          return;
-        }
-        
-        const companyIds = companies.map(company => company.id);
         
         // Buscar pedidos para hoy para estas empresas
         const { data: ordersToday, error: ordersError } = await supabase

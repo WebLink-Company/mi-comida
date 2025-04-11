@@ -13,36 +13,67 @@ export interface TopMeal {
 export const useProviderDashboardStats = () => {
   const { user } = useAuth();
   const providerId = user?.provider_id;
+  const companyId = user?.company_id; // Usar company_id para supervisores
 
   // Función para obtener las estadísticas
   const fetchStats = async () => {
-    if (!providerId) throw new Error("No provider ID available");
+    // Verificar si es un supervisor (tienen company_id pero no provider_id)
+    const isSupervisor = !providerId && companyId;
+    
+    if (!providerId && !companyId) {
+      throw new Error("No hay ID de proveedor o empresa disponible");
+    }
     
     const today = new Date().toISOString().split('T')[0];
     const currentMonth = new Date().toISOString().substring(0, 7); // YYYY-MM
     
-    // 1. Obtener empresas asociadas a este proveedor
-    const { data: companies, error: companiesError } = await supabase
-      .from('companies')
-      .select('id')
-      .eq('provider_id', providerId);
-      
-    if (companiesError) throw companiesError;
+    let companyIds = [];
     
-    if (!companies || companies.length === 0) {
-      // No hay empresas, devolvemos valores predeterminados
+    // Si es supervisor, solo trabajar con su empresa asignada
+    if (isSupervisor) {
+      if (!companyId) {
+        throw new Error("No tienes ninguna empresa asignada actualmente.");
+      }
+      companyIds = [companyId];
+    } 
+    // Si es proveedor, obtener todas sus empresas
+    else if (providerId) {
+      // 1. Obtener empresas asociadas a este proveedor
+      const { data: companies, error: companiesError } = await supabase
+        .from('companies')
+        .select('id')
+        .eq('provider_id', providerId);
+        
+      if (companiesError) throw companiesError;
+      
+      if (!companies || companies.length === 0) {
+        // No hay empresas, devolvemos valores predeterminados
+        return {
+          ordersToday: 0,
+          totalMealsToday: 0,
+          companiesWithOrdersToday: 0,
+          topOrderedMeal: { name: 'No hay datos', count: 0 },
+          pendingOrders: 0,
+          monthlyOrders: 0,
+          monthlyRevenue: 0
+        };
+      }
+      
+      companyIds = companies.map(company => company.id);
+    }
+    
+    // Verificar que tenemos empresas para buscar
+    if (companyIds.length === 0) {
       return {
         ordersToday: 0,
         totalMealsToday: 0,
         companiesWithOrdersToday: 0,
-        topOrderedMeal: 'No hay datos',
+        topOrderedMeal: { name: 'No hay datos', count: 0 },
         pendingOrders: 0,
         monthlyOrders: 0,
         monthlyRevenue: 0
       };
     }
-    
-    const companyIds = companies.map(company => company.id);
     
     // 2. Obtener pedidos para hoy
     const { data: todayOrders, error: todayOrdersError } = await supabase
@@ -74,7 +105,7 @@ export const useProviderDashboardStats = () => {
     
     // 4. Calcular ingresos y plato más pedido
     let monthlyRevenue = 0;
-    let topOrderedMeal = 'No hay datos';
+    let topOrderedMeal: TopMeal = { name: 'No hay datos', count: 0 };
     
     if (monthOrders && monthOrders.length > 0) {
       const lunchOptionIds = monthOrders.map(order => order.lunch_option_id);
@@ -122,7 +153,10 @@ export const useProviderDashboardStats = () => {
         
         // Establecer el nombre del plato más pedido
         if (topMealId && nameMap.get(topMealId)) {
-          topOrderedMeal = nameMap.get(topMealId);
+          topOrderedMeal = {
+            name: nameMap.get(topMealId),
+            count: maxCount
+          };
         }
       }
     }
@@ -140,9 +174,9 @@ export const useProviderDashboardStats = () => {
 
   // Usar React Query para gestionar la solicitud y el estado
   const { data, isLoading, error } = useQuery({
-    queryKey: ['providerStats', providerId],
+    queryKey: ['providerStats', providerId, companyId], // Añadir companyId como dependencia
     queryFn: fetchStats,
-    enabled: !!providerId, // Solo ejecutar si hay un provider_id
+    enabled: !!(providerId || companyId), // Ejecutar si hay provider_id o company_id
     staleTime: 300000, // 5 minutos
     refetchOnWindowFocus: false,
   });

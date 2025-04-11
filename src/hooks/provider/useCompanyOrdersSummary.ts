@@ -11,19 +11,40 @@ export const useCompanyOrdersSummary = (companyIds: string[] = []) => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user || companyIds.length === 0) return;
+    if (!user) return;
     
     const fetchCompanyOrderSummaries = async () => {
       setLoading(true);
       
       try {
+        // Verificar si es un supervisor (tienen company_id pero no provider_id)
+        const isSupervisor = !user.provider_id && user.company_id;
+        
+        // Para supervisores, si no tienen una empresa asignada, mostrar error
+        if (isSupervisor && !user.company_id) {
+          setError('No tienes ninguna empresa asignada actualmente.');
+          setLoading(false);
+          return;
+        }
+        
+        // Para supervisores, solo usar su empresa asignada si no se proporcionan IDs
+        const idsToUse = companyIds.length > 0 
+          ? companyIds 
+          : (isSupervisor ? [user.company_id!] : []);
+        
+        if (idsToUse.length === 0) {
+          setCompanyOrders([]);
+          setLoading(false);
+          return;
+        }
+        
         const today = new Date().toISOString().split('T')[0];
         
-        // Buscar empresas por proveedor
+        // Buscar empresas por los IDs proporcionados o la empresa del supervisor
         const { data: companiesData, error: companiesError } = await supabase
           .from('companies')
           .select('id, name')
-          .in('id', companyIds);
+          .in('id', idsToUse);
           
         if (companiesError) throw companiesError;
         

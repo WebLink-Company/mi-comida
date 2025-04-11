@@ -61,17 +61,70 @@ export const useProviderOrderStats = (companyIds: string[] = []) => {
       return;
     }
     
-    // If no companyIds, set default empty values but don't show error
-    if (companyIds.length === 0) {
-      console.log("useProviderOrderStats: No company IDs provided");
-      setStats(prev => ({ ...prev, companyIds: [] }));
-      finishLoading();
-      return;
-    }
-    
     const fetchOrderStats = async () => {
       try {
-        console.log("useProviderOrderStats: Fetching order stats for companies:", companyIds);
+        // Verificar si es un supervisor (tienen company_id pero no provider_id)
+        const isSupervisor = !user.provider_id && user.company_id;
+        
+        // Determinar qué IDs de empresa usar
+        let idsToUse: string[] = [];
+        
+        if (companyIds.length > 0) {
+          // Si se proporcionan IDs específicos, usarlos (pero verificar acceso para supervisores)
+          if (isSupervisor && user.company_id) {
+            // Los supervisores solo pueden ver su empresa asignada
+            if (!companyIds.includes(user.company_id)) {
+              setError("Solo puedes ver información de tu empresa asignada");
+              finishLoading();
+              return;
+            }
+            idsToUse = [user.company_id];
+          } else {
+            // Proveedores pueden ver múltiples empresas
+            idsToUse = companyIds;
+          }
+        } else if (isSupervisor) {
+          // Si es supervisor sin IDs específicos, usar su empresa asignada
+          if (!user.company_id) {
+            setError("No tienes ninguna empresa asignada actualmente.");
+            finishLoading();
+            return;
+          }
+          idsToUse = [user.company_id];
+        } else {
+          // Si es proveedor sin IDs específicos, obtener todas sus empresas
+          if (!user.provider_id) {
+            setError("No se encontró ID de proveedor o empresa");
+            finishLoading();
+            return;
+          }
+          
+          const { data: companies, error: companiesError } = await supabase
+            .from('companies')
+            .select('id')
+            .eq('provider_id', user.provider_id);
+            
+          if (companiesError) throw companiesError;
+          
+          if (!companies || companies.length === 0) {
+            setStats(prev => ({ ...prev, companyIds: [] }));
+            finishLoading();
+            return;
+          }
+          
+          idsToUse = companies.map(company => company.id);
+        }
+        
+        // Si no hay empresas para buscar, terminar
+        if (idsToUse.length === 0) {
+          console.log("useProviderOrderStats: No company IDs to query");
+          setStats(prev => ({ ...prev, companyIds: [] }));
+          finishLoading();
+          return;
+        }
+        
+        console.log("useProviderOrderStats: Fetching order stats for companies:", idsToUse);
+        setStats(prev => ({ ...prev, companyIds: idsToUse }));
         
         // Get today's date in YYYY-MM-DD format
         const today = new Date().toISOString().split('T')[0];
@@ -84,7 +137,7 @@ export const useProviderOrderStats = (companyIds: string[] = []) => {
             lunch_option:lunch_option_id(*),
             user:user_id(*)
           `)
-          .in('company_id', companyIds)
+          .in('company_id', idsToUse)
           .throwOnError();
         
         if (ordersError) {

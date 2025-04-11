@@ -118,7 +118,7 @@ const OrdersPage = () => {
       if (data) {
         console.log(`Found ${data.length} orders for selected date and filters`);
         
-        // Transform the data to add user_name and meal_name
+        // Transform the data to add user_name, meal_name, and company_name
         const processedOrders = data.map(order => ({
           ...order,
           user_name: `${order.profiles?.first_name || ''} ${order.profiles?.last_name || ''}`,

@@ -1,4 +1,3 @@
-
 export type UserRole = 'admin' | 'provider' | 'supervisor' | 'employee' | 'company';
 
 export interface User {
@@ -59,6 +58,14 @@ export interface Order {
   created_at?: string;
   createdAt?: string; // Added for compatibility
   updated_at?: string;
+  // Add the missing properties used in OrdersPage
+  user_name?: string;
+  meal_name?: string;
+  company_name?: string;
+  // Include any related objects that might be joined
+  profiles?: any;
+  lunch_options?: any;
+  companies?: any;
 }
 
 export interface DashboardStats {

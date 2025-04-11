@@ -147,6 +147,7 @@ export const useProviderDashboardStats = () => {
     refetchOnWindowFocus: false,
   });
 
+  // Return all the individual loading states that the ProviderDashboard expects
   return {
     // Datos
     ordersToday: data?.ordersToday || 0,
@@ -157,7 +158,16 @@ export const useProviderDashboardStats = () => {
     monthlyOrders: data?.monthlyOrders || 0,
     monthlyRevenue: data?.monthlyRevenue || 0,
     
-    // Estado
+    // We'll use the single isLoading state for all individual loading states
+    loadingOrdersToday: isLoading,
+    loadingMealsToday: isLoading,
+    loadingCompaniesOrders: isLoading,
+    loadingTopMeal: isLoading,
+    loadingPending: isLoading,
+    loadingMonthlyOrders: isLoading,
+    loadingMonthlyRevenue: isLoading,
+    
+    // Original state properties
     isLoading,
     error
   };

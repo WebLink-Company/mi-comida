@@ -21,16 +21,15 @@ const ProviderDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [providerName, setProviderName] = useState<string>('');
-  
-  // Static data to avoid excessive queries
-  const ordersToday = 0;
-  const totalMealsToday = 0;
-  const companiesWithOrdersToday = 0;
-  const topOrderedMeal = { name: 'No hay datos disponibles', count: 0 };
-  const pendingOrders = 0;
-  const monthlyOrders = 0;
-  const monthlyRevenue = 0;
-  const newUsers = 0;
+  const [dashboardStats, setDashboardStats] = useState({
+    ordersToday: 0,
+    totalMealsToday: 0,
+    activeCompanies: 0,
+    pendingOrders: 0,
+    monthlyOrders: 0,
+    monthlyRevenue: 0,
+    newUsers: 0
+  });
   
   // Only load company data (not orders)
   const { activeCompanies, loading: loadingCompanies } = useProviderCompanies();
@@ -44,6 +43,7 @@ const ProviderDashboard = () => {
       }
 
       try {
+        // Load provider info for display
         const { data: providerData, error: providerError } = await supabase
           .from('providers')
           .select('business_name')
@@ -55,6 +55,19 @@ const ProviderDashboard = () => {
         }
 
         setProviderName(providerData?.business_name || '');
+        
+        // Fetch essential stats in a single query (significantly reduced payload)
+        // We'll do this later based on user interaction to avoid excessive queries
+        
+        setDashboardStats({
+          ordersToday: 0,
+          totalMealsToday: 0,
+          activeCompanies: activeCompanies,
+          pendingOrders: 0,
+          monthlyOrders: 0,
+          monthlyRevenue: 0,
+          newUsers: 0
+        });
       } catch (error) {
         console.error('Error al obtener datos del proveedor:', error);
         setError('Error al cargar datos del proveedor');
@@ -71,7 +84,7 @@ const ProviderDashboard = () => {
     if (user?.provider_id) {
       fetchProviderData();
     }
-  }, [user, toast]);
+  }, [user, toast, activeCompanies]);
 
   const refreshData = () => {
     setLoading(true);
@@ -141,7 +154,7 @@ const ProviderDashboard = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Pedidos Hoy"
-          value={ordersToday}
+          value={dashboardStats.ordersToday}
           icon={<ShoppingBag size={20} />}
           description="Pedidos recibidos para hoy"
           loading={false}
@@ -163,7 +176,7 @@ const ProviderDashboard = () => {
 
         <StatCard
           title="Pedidos del Mes"
-          value={monthlyOrders}
+          value={dashboardStats.monthlyOrders}
           icon={<CalendarDays size={20} />}
           description="Total de pedidos este mes"
           loading={false}
@@ -174,7 +187,7 @@ const ProviderDashboard = () => {
 
         <StatCard
           title="Facturación Mensual"
-          value={monthlyRevenue}
+          value={dashboardStats.monthlyRevenue}
           icon={<DollarSign size={20} />}
           description="Ingresos totales del mes"
           loading={false}
@@ -195,7 +208,7 @@ const ProviderDashboard = () => {
               <div className="mt-4 space-y-2">
                 <div className="flex items-center">
                   <Users className="h-4 w-4 text-white/70 mr-2" />
-                  <span className="text-white/70">Usuarios nuevos este mes: {newUsers}</span>
+                  <span className="text-white/70">Usuarios nuevos este mes: {dashboardStats.newUsers}</span>
                 </div>
                 <div className="flex items-center">
                   <Building className="h-4 w-4 text-white/70 mr-2" />

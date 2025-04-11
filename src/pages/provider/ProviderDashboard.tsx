@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -28,7 +27,6 @@ const ProviderDashboard = () => {
   const [error, setError] = useState<string | null>(null);
   const [providerName, setProviderName] = useState<string>('');
   
-  // Fetch dashboard statistics using the custom hooks
   const {
     ordersToday,
     loadingOrdersToday,
@@ -50,7 +48,6 @@ const ProviderDashboard = () => {
   const { activeCompanies, loading: loadingCompanies } = useProviderCompanies();
   const { companiesWithOrdersToday, loading: loadingCompanyStats } = useProviderCompanyStats();
 
-  // Fetch the provider name when the component mounts
   useEffect(() => {
     const fetchProviderData = async () => {
       if (!user?.provider_id) {
@@ -60,7 +57,6 @@ const ProviderDashboard = () => {
       }
 
       try {
-        // Fetch the provider details
         const { data: providerData, error: providerError } = await supabase
           .from('providers')
           .select('business_name')
@@ -90,10 +86,8 @@ const ProviderDashboard = () => {
     }
   }, [user, toast]);
 
-  // Function to refresh all data
   const refreshData = () => {
     setLoading(true);
-    // The data will be refreshed automatically since the hooks will be re-triggered
     setTimeout(() => {
       setLoading(false);
       toast({
@@ -103,7 +97,6 @@ const ProviderDashboard = () => {
     }, 500);
   };
 
-  // Define quick actions for the dashboard
   const quickActions = [
     { 
       label: 'Ver Pedidos', 
@@ -139,18 +132,13 @@ const ProviderDashboard = () => {
 
   return (
     <div className="space-y-6 p-4 max-w-7xl mx-auto">
-      {/* Dashboard Header with time, date and welcome message */}
       <DashboardHeader 
         user={user}
         quickActions={quickActions}
         refreshData={refreshData}
       />
 
-      {/* Quick Action Badges already handled by DashboardHeader */}
-
-      {/* Dashboard Metrics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Orders Today Card */}
         <StatCard
           title="Pedidos Hoy"
           value={ordersToday}
@@ -162,7 +150,6 @@ const ProviderDashboard = () => {
           borderColor="border-blue-500/40" 
         />
 
-        {/* Active Companies Card */}
         <StatCard
           title="Empresas Activas"
           value={activeCompanies}
@@ -174,7 +161,6 @@ const ProviderDashboard = () => {
           borderColor="border-indigo-400/40"
         />
 
-        {/* Orders This Month Card */}
         <StatCard
           title="Pedidos del Mes"
           value={monthlyOrders}
@@ -187,7 +173,6 @@ const ProviderDashboard = () => {
           borderColor="border-purple-400/40"
         />
 
-        {/* Monthly Revenue Card */}
         <StatCard
           title="Facturación Mensual"
           value={monthlyRevenue}
@@ -200,7 +185,6 @@ const ProviderDashboard = () => {
           borderColor="border-green-500/40"
         />
 
-        {/* Total Meals Today Card */}
         <StatCard
           title="Platos Hoy"
           value={totalMealsToday}
@@ -212,7 +196,6 @@ const ProviderDashboard = () => {
           borderColor="border-amber-400/40"
         />
 
-        {/* Companies With Orders Today Card */}
         <StatCard
           title="Empresas con Pedidos"
           value={companiesWithOrdersToday}
@@ -224,7 +207,6 @@ const ProviderDashboard = () => {
           borderColor="border-orange-400/40"
         />
 
-        {/* Pending Orders Card */}
         <StatCard
           title="Pedidos Pendientes"
           value={pendingOrders}
@@ -236,10 +218,9 @@ const ProviderDashboard = () => {
           borderColor="border-red-400/40"
         />
 
-        {/* Top Ordered Meal Card */}
         <StatCard
           title="Plato Más Pedido"
-          value={topOrderedMeal || "Sin datos"}
+          value={topOrderedMeal}
           icon={<ChefHat size={20} />}
           description="Plato más popular entre los clientes"
           loading={loadingTopMeal}
@@ -249,7 +230,6 @@ const ProviderDashboard = () => {
         />
       </div>
 
-      {/* Provider Information Section */}
       <div className="mt-8">
         <h2 className="text-xl font-semibold text-white mb-4">Información del Proveedor</h2>
         <div className="glass p-6 rounded-lg shadow-md border border-cyan-400/30">

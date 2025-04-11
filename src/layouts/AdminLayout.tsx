@@ -69,9 +69,9 @@ const AdminLayout = () => {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="flex flex-col min-h-screen">
       {/* This div applies the blue gradient background to the entire screen */}
-      <div className="blue-gradient-bg"></div>
+      <div className="absolute inset-0 -z-10 blue-gradient-bg"></div>
       
       <NavigationBar 
         userRole={userRole} 
@@ -81,7 +81,7 @@ const AdminLayout = () => {
       <div className="flex flex-1 pt-16">
         <GlassSidebar collapsed={collapsed} setCollapsed={setCollapsed} userRole={userRole} />
         
-        <main className={`flex-1 transition-all duration-300 ease-in-out p-4 md:p-6 ${collapsed ? 'ml-[70px]' : 'ml-[240px]'}`}>
+        <main className={`flex-1 overflow-y-auto transition-all duration-300 ease-in-out p-4 md:p-6 ${collapsed ? 'ml-[70px]' : 'ml-[240px]'}`}>
           <Outlet />
         </main>
       </div>

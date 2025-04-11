@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -63,7 +64,7 @@ const OrdersPage = () => {
       
       if (companies && companies.length > 0) {
         const ids = companies.map(company => company.id);
-        console.log("Empresas encontradas:", ids);
+        console.log("QUERY EXACTA: Empresas encontradas para proveedor:", user?.provider_id, "->", ids);
         setCompanyIds(ids);
       } else {
         console.log("No se encontraron empresas para este proveedor");
@@ -93,9 +94,10 @@ const OrdersPage = () => {
         return;
       }
       
-      console.log("Buscando pedidos para la fecha:", format(selectedDate, 'yyyy-MM-dd'));
-      console.log("Con filtro de estado:", statusFilter);
-      console.log("Para empresas:", companyIds);
+      const formattedDate = format(selectedDate, 'yyyy-MM-dd');
+      console.log("QUERY EXACTA: Buscando pedidos para la fecha:", formattedDate);
+      console.log("QUERY EXACTA: Con filtro de estado:", statusFilter);
+      console.log("QUERY EXACTA: Para empresas:", companyIds);
       
       let query = supabase
         .from('orders')
@@ -105,13 +107,24 @@ const OrdersPage = () => {
           lunch_options(name, price),
           companies(name)
         `)
-        .eq('date', format(selectedDate, 'yyyy-MM-dd'))
+        .eq('date', formattedDate)
         .in('company_id', companyIds);
       
       // Apply status filter if not "all"
       if (statusFilter !== 'all') {
         query = query.eq('status', statusFilter);
       }
+      
+      const queryString = `
+        SELECT * FROM orders
+        JOIN profiles ON orders.user_id = profiles.id
+        JOIN lunch_options ON orders.lunch_option_id = lunch_options.id
+        JOIN companies ON orders.company_id = companies.id
+        WHERE orders.date = '${formattedDate}'
+        AND orders.company_id IN (${companyIds.map(id => `'${id}'`).join(',')})
+        ${statusFilter !== 'all' ? `AND orders.status = '${statusFilter}'` : ''}
+      `;
+      console.log("QUERY SQL EQUIVALENTE:", queryString);
       
       const { data, error } = await query;
 
@@ -121,6 +134,7 @@ const OrdersPage = () => {
       }
 
       console.log(`Se encontraron ${data?.length || 0} pedidos para la fecha y filtros seleccionados`);
+      console.log("Muestra de datos recibidos:", data?.slice(0, 3));
       
       if (data) {
         // Transform the data to add user_name, meal_name, and company_name
@@ -149,6 +163,8 @@ const OrdersPage = () => {
 
   const handleStatusChange = async (orderId: string, newStatus: Order['status']) => {
     try {
+      console.log(`Actualizando estado de orden ${orderId} a ${newStatus}`);
+      
       const { error } = await supabase
         .from('orders')
         .update({ status: newStatus, updated_at: new Date().toISOString() })

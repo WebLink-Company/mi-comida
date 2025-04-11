@@ -20,6 +20,7 @@ export const useProviderDashboardStats = () => {
     const isSupervisor = !providerId && companyId;
     
     if (!providerId && !companyId) {
+      console.error("No hay ID de proveedor o empresa disponible");
       throw new Error("No hay ID de proveedor o empresa disponible");
     }
     
@@ -84,9 +85,19 @@ export const useProviderDashboardStats = () => {
         };
       }
       
+      // Construcción de la consulta para depuración
+      const queryInfo = {
+        companyIds: companyIds,
+        month: currentMonth,
+        today: today,
+        provider: providerId,
+        filters: "estado='approved', 'prepared', 'delivered'"
+      };
+      console.log("⚡ DEBUG QUERY PARAMETERS:", JSON.stringify(queryInfo, null, 2));
+      
       // Fetch orders and lunch options in a single request with inner joins
       // This reduces the number of requests significantly
-      console.log("Buscando órdenes para companyIds:", companyIds, "en mes:", currentMonth);
+      console.log(`QUERY EXACTA: Buscando órdenes para companyIds: [${companyIds.join(', ')}], en el mes: ${currentMonth}, con estados: approved, prepared, delivered`);
       const { data: orders, error: ordersError } = await supabase
         .from('orders')
         .select(`
@@ -107,6 +118,7 @@ export const useProviderDashboardStats = () => {
       }
       
       console.log(`Se encontraron ${orders?.length || 0} órdenes en total`);
+      console.log("Primeras 5 órdenes de muestra:", orders?.slice(0, 5));
       
       // Filter today's orders - only include approved, prepared, and delivered status
       const todayOrders = orders?.filter(order => 

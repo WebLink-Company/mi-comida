@@ -57,7 +57,8 @@ const OrdersModal: React.FC<OrdersModalProps> = ({ company, date, onClose, onOrd
     try {
       const dateStr = format(date, 'yyyy-MM-dd');
       
-      console.log(`Buscando pedidos para empresa ${company.id} en fecha ${dateStr}`);
+      console.log(`QUERY EXACTA: Buscando pedidos para empresa ${company.id} en fecha ${dateStr}`);
+      console.log(`QUERY EXACTA: Buscando estados: approved, prepared, delivered`);
       
       // Fetch orders with status approved, prepared, or delivered
       const { data, error } = await supabase
@@ -81,6 +82,8 @@ const OrdersModal: React.FC<OrdersModalProps> = ({ company, date, onClose, onOrd
       }
       
       console.log(`Se encontraron ${data?.length || 0} pedidos aprobados, preparados o entregados`);
+      console.log("Muestra de pedidos:", data?.slice(0, 3));
+      
       setOrders(data || []);
     } catch (error) {
       console.error('Error al cargar pedidos:', error);
@@ -99,6 +102,8 @@ const OrdersModal: React.FC<OrdersModalProps> = ({ company, date, onClose, onOrd
     setIsUpdating(true);
     
     try {
+      console.log(`QUERY EXACTA: Actualizando pedido ${orderId} a estado ${newStatus}`);
+      
       const { error } = await supabase
         .from('orders')
         .update({ status: newStatus })

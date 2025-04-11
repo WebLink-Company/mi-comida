@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { ClockDisplay } from '@/components/admin/dashboard/ClockDisplay';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { Building, Package, Receipt, UserPlus, AlertTriangle, ExternalLink, RefreshCw } from 'lucide-react';
+import { Building, Package, Receipt, UserPlus, AlertTriangle, ExternalLink, RefreshCw, Server, InfoIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import DashboardMetrics from '@/components/admin/dashboard/DashboardMetrics';
 import '@/styles/dashboard.css';
@@ -28,6 +28,7 @@ const ProviderDashboardPage = () => {
   const [showDebugInfo, setShowDebugInfo] = useState<boolean>(false);
   const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
   const [debugInfo, setDebugInfo] = useState<any>({});
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   
   console.log("Provider dashboard - Current user:", user);
   
@@ -35,10 +36,16 @@ const ProviderDashboardPage = () => {
   const refreshData = () => {
     console.log("Manual refresh triggered");
     setRefreshTrigger(prev => prev + 1);
+    setIsLoading(true);
     toast({
       title: "Refreshing dashboard",
       description: "Fetching latest data from the server...",
     });
+    
+    // Set a timeout to ensure the loading state is shown even if the data loads quickly
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 1500);
   };
   
   useEffect(() => {
@@ -89,6 +96,7 @@ const ProviderDashboardPage = () => {
         } else {
           console.log("Supabase connection successful");
           setDebugInfo(prev => ({ ...prev, supabaseTestSuccess: true }));
+          setIsLoading(false);
         }
       } catch (error) {
         console.error("Unexpected error testing Supabase connection:", error);
@@ -98,7 +106,20 @@ const ProviderDashboardPage = () => {
       }
     };
     
-    testConnection();
+    // Set initial loading state
+    setIsLoading(true);
+    
+    // Allow a bit of time to show loading state
+    setTimeout(() => {
+      testConnection();
+    }, 500);
+    
+    // Set a fallback timeout to turn off loading state even if something goes wrong
+    const loadingTimeout = setTimeout(() => {
+      setIsLoading(false);
+    }, 5000);
+    
+    return () => clearTimeout(loadingTimeout);
   }, [user, refreshTrigger]);
   
   // Fetch dashboard stats using our hook with the provider ID from user profile
@@ -159,6 +180,22 @@ const ProviderDashboardPage = () => {
               Also make sure your Supabase project has your Netlify domain added to the allowed CORS origins.
             </p>
             
+            <div className="bg-amber-100 dark:bg-amber-950 border border-amber-300 dark:border-amber-800 p-4 rounded-md text-amber-800 dark:text-amber-300 mt-4">
+              <div className="flex gap-2 items-start">
+                <InfoIcon className="h-5 w-5 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-medium">CORS Configuration Required</p>
+                  <p className="text-sm mt-1">If you're hosting this application on a different domain than where it was developed, you need to add your domain to the allowed origins in your Supabase project settings.</p>
+                  <ol className="list-decimal list-inside text-sm mt-2 space-y-1">
+                    <li>Go to your Supabase Dashboard</li>
+                    <li>Navigate to Project Settings &gt; API</li>
+                    <li>Scroll to "CORS Origins"</li>
+                    <li>Add your domain: {window.location.origin}</li>
+                  </ol>
+                </div>
+              </div>
+            </div>
+            
             <div className="mt-6">
               <Button 
                 variant="outline" 
@@ -182,7 +219,7 @@ const ProviderDashboardPage = () => {
                   Check if VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set in Netlify environment variables
                 </li>
                 <li>
-                  Verify that your Supabase project has CORS configured to allow requests from your Netlify domain
+                  Verify that your Supabase project has CORS configured to allow requests from your domain: {window.location.origin}
                 </li>
                 <li>
                   Try logging out and logging back in
@@ -205,6 +242,21 @@ const ProviderDashboardPage = () => {
             </div>
           </CardContent>
         </Card>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <div className="mb-8">
+          <ClockDisplay user={user} quickActions={[]} />
+        </div>
+        <div className="text-center py-12">
+          <Server className="h-16 w-16 mx-auto mb-4 animate-pulse text-blue-400" />
+          <h2 className="text-xl font-medium mb-2">Loading Dashboard Data...</h2>
+          <p className="text-muted-foreground">Connecting to Supabase and fetching your provider data...</p>
+        </div>
       </div>
     );
   }
@@ -251,6 +303,27 @@ const ProviderDashboardPage = () => {
         loadingMonthlyRevenue={stats.loadingMonthlyRevenue}
       />
 
+      {/* No data message if no companies with orders */}
+      {stats.activeCompanies > 0 && stats.companiesWithOrdersToday === 0 && !stats.loadingCompaniesOrders && (
+        <Card className="mt-8 border-blue-500/20">
+          <CardContent className="flex flex-col items-center justify-center py-10">
+            <Package className="h-16 w-16 text-blue-400 mb-4 opacity-50" />
+            <h3 className="text-lg font-medium">No Orders Today</h3>
+            <p className="text-muted-foreground text-center max-w-md mt-2">
+              There are no orders for today yet. You have {stats.activeCompanies} active companies that can place orders.
+            </p>
+            <Button
+              variant="outline"
+              className="mt-4"
+              onClick={() => navigate('/provider/companies')}
+            >
+              <Building className="h-4 w-4 mr-2" />
+              Manage Companies
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Debug section - visible in all environments */}
       <div className="mt-8">
         <Button 
@@ -259,7 +332,7 @@ const ProviderDashboardPage = () => {
           onClick={() => setShowDebugInfo(!showDebugInfo)}
           className="text-white/70 hover:text-white"
         >
-          {showDebugInfo ? "Hide Debug Info" : "Show Connection Status"}
+          {showDebugInfo ? "Hide Connection Status" : "Show Connection Status"}
         </Button>
         
         {showDebugInfo && (
@@ -269,6 +342,7 @@ const ProviderDashboardPage = () => {
               providerId: user?.provider_id,
               environment: import.meta.env.MODE,
               host: window.location.host,
+              activeCompanies: stats.activeCompanies,
               timestamp: new Date().toISOString()
             }, null, 2)}</pre>
           </div>

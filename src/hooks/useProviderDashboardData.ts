@@ -343,10 +343,13 @@ export const useProviderDashboardData = (providerId?: string) => {
         if (companiesError) throw companiesError;
         
         if (!companies || companies.length === 0) {
+          console.log("No companies found for provider, returning 0 for monthly revenue");
           return 0;
         }
         
         const companyIds = companies.map(c => c.id);
+        console.log(`Found ${companyIds.length} companies for revenue calculation`);
+        
         const { data, error } = await supabase
           .from('orders')
           .select('lunch_option_id')
@@ -357,6 +360,7 @@ export const useProviderDashboardData = (providerId?: string) => {
         if (error) throw error;
         
         if (!data || data.length === 0) {
+          console.log("No orders found for this month, returning 0 for monthly revenue");
           return 0;
         }
         
@@ -364,8 +368,8 @@ export const useProviderDashboardData = (providerId?: string) => {
         const averageMealPrice = 12.50;
         const orderCount = data.length;
         
-        // Explicitly convert to number types and perform calculation
-        const calculatedRevenue = parseFloat(averageMealPrice.toString()) * parseInt(orderCount.toString());
+        // Use Number() to explicitly convert strings to number types
+        const calculatedRevenue = Number(averageMealPrice) * Number(orderCount);
         console.log(`Calculated monthly revenue: ${calculatedRevenue} from ${orderCount} orders at $${averageMealPrice} each`);
         
         return calculatedRevenue;

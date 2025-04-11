@@ -43,8 +43,8 @@ export const useProviderOrderStats = (companyIds: string[] = []) => {
   const [currentDate] = useState(new Date().toISOString().split('T')[0]);
 
   useEffect(() => {
-    if (!user) {
-      setError("No authenticated user found");
+    // Helper function to safely end loading states
+    const finishLoading = () => {
       setLoadingOrdersToday(false);
       setLoadingMealsToday(false);
       setLoadingCompaniesOrders(false);
@@ -52,24 +52,27 @@ export const useProviderOrderStats = (companyIds: string[] = []) => {
       setLoadingPending(false);
       setLoadingMonthlyOrders(false);
       setLoadingMonthlyRevenue(false);
+    };
+
+    if (!user) {
+      console.warn("useProviderOrderStats: No authenticated user found");
+      setError("No authenticated user found");
+      finishLoading();
       return;
     }
     
     // If no companyIds, set default empty values but don't show error
     if (companyIds.length === 0) {
+      console.log("useProviderOrderStats: No company IDs provided");
       setStats(prev => ({ ...prev, companyIds: [] }));
-      setLoadingOrdersToday(false);
-      setLoadingMealsToday(false);
-      setLoadingCompaniesOrders(false);
-      setLoadingTopMeal(false);
-      setLoadingPending(false);
-      setLoadingMonthlyOrders(false);
-      setLoadingMonthlyRevenue(false);
+      finishLoading();
       return;
     }
     
     const fetchOrderStats = async () => {
       try {
+        console.log("useProviderOrderStats: Fetching order stats for companies:", companyIds);
+        
         // Get today's date in YYYY-MM-DD format
         const today = new Date().toISOString().split('T')[0];
         
@@ -81,7 +84,8 @@ export const useProviderOrderStats = (companyIds: string[] = []) => {
             lunch_option:lunch_option_id(*),
             user:user_id(*)
           `)
-          .in('company_id', companyIds);
+          .in('company_id', companyIds)
+          .throwOnError();
         
         if (ordersError) {
           console.error("Error fetching orders:", ordersError);
@@ -90,6 +94,8 @@ export const useProviderOrderStats = (companyIds: string[] = []) => {
         
         // Process orders data
         if (ordersData) {
+          console.log(`useProviderOrderStats: Processing ${ordersData.length} orders`);
+          
           // Count today's orders
           const todaysOrderCount = ordersData.filter(order => 
             order.date && order.date.startsWith(today)
@@ -168,19 +174,15 @@ export const useProviderOrderStats = (companyIds: string[] = []) => {
           
           // Store filtered orders
           setStats(prev => ({ ...prev, filteredOrders: ordersData }));
+          
+          console.log("useProviderOrderStats: Successfully processed orders data");
         }
       } catch (err) {
         console.error('Error fetching order stats:', err);
         setError(`Error fetching order stats: ${err instanceof Error ? err.message : String(err)}`);
         
         // Set loading states to false to avoid infinite loading
-        setLoadingOrdersToday(false);
-        setLoadingMealsToday(false);
-        setLoadingCompaniesOrders(false);
-        setLoadingTopMeal(false);
-        setLoadingPending(false);
-        setLoadingMonthlyOrders(false);
-        setLoadingMonthlyRevenue(false);
+        finishLoading();
       }
     };
     

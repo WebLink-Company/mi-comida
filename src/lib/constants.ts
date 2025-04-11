@@ -17,22 +17,73 @@ console.log(`Detected Supabase Project ID: ${SUPABASE_PROJECT_ID}`);
 // Test function to verify Supabase connection is working
 export const testSupabaseConnection = async () => {
   try {
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+      console.error("Missing Supabase environment variables");
+      return { 
+        success: false, 
+        error: new Error("Missing Supabase URL or key in environment variables") 
+      };
+    }
+
+    const currentTime = new Date().toISOString();
+    console.log(`[${currentTime}] Testing Supabase connection to: ${SUPABASE_URL}`);
+    
     // Import dynamically to prevent circular dependencies
     const { supabase } = await import('@/integrations/supabase/client');
     
-    // Simple test query to check connection
-    const { data, error } = await supabase.from('companies').select('count(*)', { count: 'exact', head: true });
+    // Try multiple tables to see if any query works
+    // First try companies table
+    console.log("Testing connection with companies table...");
+    const companiesTest = await supabase
+      .from('companies')
+      .select('count(*)', { count: 'exact', head: true })
+      .limit(1)
+      .timeout(5000); // Add timeout of 5 seconds
     
-    if (error) {
-      console.error("Supabase connection test failed:", error);
-      return { success: false, error };
+    if (companiesTest.error) {
+      console.warn("Companies table test failed, trying profiles...", companiesTest.error);
+      
+      // Try profiles table as fallback
+      const profilesTest = await supabase
+        .from('profiles')
+        .select('count(*)', { count: 'exact', head: true })
+        .limit(1)
+        .timeout(5000);
+        
+      if (profilesTest.error) {
+        console.error("All table queries failed", profilesTest.error);
+        return { 
+          success: false, 
+          error: profilesTest.error,
+          attempts: [
+            { table: 'companies', error: companiesTest.error },
+            { table: 'profiles', error: profilesTest.error }
+          ]
+        };
+      } else {
+        console.log("Profiles table connection succeeded");
+        return { 
+          success: true, 
+          data: profilesTest.data,
+          message: "Connected through profiles table"
+        };
+      }
     }
     
     console.log("Supabase connection test successful");
-    return { success: true };
+    return { 
+      success: true, 
+      data: companiesTest.data
+    };
   } catch (error) {
     console.error("Unexpected error testing Supabase connection:", error);
-    return { success: false, error };
+    return { 
+      success: false, 
+      error,
+      timestamp: new Date().toISOString(),
+      origin: window.location.origin,
+      mode: import.meta.env.MODE
+    };
   }
 };
 
@@ -63,8 +114,13 @@ export const validateOrigin = () => {
     approvedOrigins.push('http://localhost:5173', 'http://localhost:3000');
   }
   
-  // Check if current origin is in approved list
-  const isApproved = approvedOrigins.includes(currentOrigin);
+  // Add Lovable preview domains
+  approvedOrigins.push('.lovableproject.com');
+  
+  // Check if current origin is in approved list or contains an approved domain
+  const isApproved = approvedOrigins.some(origin => 
+    currentOrigin === origin || currentOrigin.includes(origin)
+  );
   
   if (!isApproved) {
     console.warn(`Current origin ${currentOrigin} is not in the approved origins list. You may need to add it to Supabase CORS settings.`);

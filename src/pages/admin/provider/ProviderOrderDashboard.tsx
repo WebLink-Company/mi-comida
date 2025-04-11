@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { format, isToday, isThisWeek, subDays } from 'date-fns';
 import { useAuth } from '@/context/AuthContext';
@@ -7,7 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, Filter, Package, PlusCircle, Search, Users } from 'lucide-react';
+import { Calendar, Filter, Package, PlusCircle, Search, Users, AlertTriangle } from 'lucide-react';
 import { DatePicker } from '@/components/ui/date-picker';
 import OrdersModal from '@/components/provider/orders/OrdersModal';
 import CompanyOrderCard from '@/components/provider/orders/CompanyOrderCard';
@@ -27,41 +26,69 @@ const ProviderOrderDashboard = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [companyOrders, setCompanyOrders] = useState<CompanyOrderSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedCompany, setSelectedCompany] = useState<CompanyOrderSummary | null>(null);
   const [isOrdersModalOpen, setIsOrdersModalOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
       fetchCompanyOrders();
+    } else {
+      setError("No user found. Please login again.");
+      setLoading(false);
     }
   }, [user, selectedDate]);
 
   const fetchCompanyOrders = async () => {
     setLoading(true);
+    setError(null);
+    
     try {
+      if (!user?.provider_id) {
+        setError("Provider ID not found in user profile");
+        setLoading(false);
+        return;
+      }
+      
+      console.log("Fetching companies for provider:", user.provider_id);
+      
       // First get companies for this provider
-      const { data: providerCompanies } = await supabase
+      const { data: providerCompanies, error: companiesError } = await supabase
         .from('companies')
         .select('id, name')
         .eq('provider_id', user?.provider_id);
 
+      if (companiesError) {
+        console.error("Error fetching companies:", companiesError);
+        setError(`Failed to load companies: ${companiesError.message}`);
+        setLoading(false);
+        return;
+      }
+
       if (!providerCompanies || providerCompanies.length === 0) {
+        console.log("No companies found for provider");
         setCompanyOrders([]);
         setLoading(false);
         return;
       }
 
+      console.log(`Found ${providerCompanies.length} companies for provider`);
       const selectedDateStr = format(selectedDate, 'yyyy-MM-dd');
       
       // For each company, get order stats
       const companiesWithOrders = await Promise.all(
         providerCompanies.map(async (company) => {
           // Get all orders for this company on the selected date
-          const { data: orders } = await supabase
+          const { data: orders, error: ordersError } = await supabase
             .from('orders')
             .select('id, user_id, status')
             .eq('company_id', company.id)
             .eq('date', selectedDateStr);
+
+          if (ordersError) {
+            console.error(`Error fetching orders for company ${company.id}:`, ordersError);
+            return null;
+          }
 
           if (!orders || orders.length === 0) {
             return null; // Skip companies with no orders
@@ -90,9 +117,11 @@ const ProviderOrderDashboard = () => {
 
       // Filter out null values and companies with no orders
       const filteredCompanies = companiesWithOrders.filter(Boolean) as CompanyOrderSummary[];
+      console.log(`Found ${filteredCompanies.length} companies with orders on ${selectedDateStr}`);
       setCompanyOrders(filteredCompanies);
     } catch (error) {
       console.error('Error fetching company orders:', error);
+      setError(`An unexpected error occurred: ${error instanceof Error ? error.message : String(error)}`);
       toast({
         title: 'Error',
         description: 'Failed to load company orders',
@@ -107,6 +136,27 @@ const ProviderOrderDashboard = () => {
     setSelectedCompany(company);
     setIsOrdersModalOpen(true);
   };
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <Card className="border-destructive">
+          <CardContent className="flex flex-col items-center justify-center py-10">
+            <AlertTriangle className="h-16 w-16 text-destructive mb-4" />
+            <h3 className="text-lg font-medium text-destructive">Error Loading Orders</h3>
+            <p className="text-muted-foreground text-center max-w-md mt-2">{error}</p>
+            <Button 
+              variant="outline" 
+              className="mt-4"
+              onClick={fetchCompanyOrders}
+            >
+              Try Again
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const filterCompanies = (companies: CompanyOrderSummary[], filterFn: (date: Date) => boolean) => {
     return companies.filter(company => {
@@ -150,52 +200,14 @@ const ProviderOrderDashboard = () => {
       ) : (
         <div className="space-y-6">
           {/* Today's Orders */}
-          {todayCompanies.length > 0 && (
+          {companyOrders.length > 0 && (
             <div>
               <h2 className="text-lg font-semibold mb-3 flex items-center">
                 <Calendar className="mr-2 h-5 w-5" />
-                Today's Orders
+                Orders for {format(selectedDate, 'PPP')}
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {todayCompanies.map(company => (
-                  <CompanyOrderCard 
-                    key={company.id} 
-                    company={company}
-                    onClick={() => handleCompanyClick(company)}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* This Week's Orders */}
-          {thisWeekCompanies.length > 0 && todayCompanies.length === 0 && (
-            <div>
-              <h2 className="text-lg font-semibold mb-3 flex items-center">
-                <Calendar className="mr-2 h-5 w-5" />
-                This Week's Orders
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {thisWeekCompanies.map(company => (
-                  <CompanyOrderCard 
-                    key={company.id} 
-                    company={company}
-                    onClick={() => handleCompanyClick(company)}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Earlier Orders */}
-          {earlierCompanies.length > 0 && todayCompanies.length === 0 && thisWeekCompanies.length === 0 && (
-            <div>
-              <h2 className="text-lg font-semibold mb-3 flex items-center">
-                <Calendar className="mr-2 h-5 w-5" />
-                Earlier
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {earlierCompanies.map(company => (
+                {companyOrders.map(company => (
                   <CompanyOrderCard 
                     key={company.id} 
                     company={company}

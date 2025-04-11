@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { ClockDisplay } from '@/components/admin/dashboard/ClockDisplay';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { Building, Package, Receipt, UserPlus, AlertTriangle } from 'lucide-react';
+import { Building, Package, Receipt, UserPlus, AlertTriangle, ExternalLink } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import DashboardMetrics from '@/components/admin/dashboard/DashboardMetrics';
 import '@/styles/dashboard.css';
@@ -13,7 +13,10 @@ import { UsersModal } from '@/components/admin/dashboard/UsersModal';
 import { CompaniesModal } from '@/components/admin/dashboard/CompaniesModal';
 import { OrdersModal } from '@/components/admin/dashboard/OrdersModal';
 import { InvoicesModal } from '@/components/admin/dashboard/InvoicesModal';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/lib/constants';
+import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
 
 const ProviderDashboardPage = () => {
   const navigate = useNavigate();
@@ -22,33 +25,70 @@ const ProviderDashboardPage = () => {
   const [activeDialog, setActiveDialog] = useState<string | null>(null);
   const [hasError, setHasError] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [showDebugInfo, setShowDebugInfo] = useState<boolean>(false);
+  const [debugInfo, setDebugInfo] = useState<any>({});
   
   console.log("Provider dashboard - Current user:", user);
   
   useEffect(() => {
+    // Check for missing environment variables
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+      console.error("Missing Supabase environment variables");
+      setHasError(true);
+      setErrorMessage("Supabase URL or Anon Key is missing. Please check your environment variables in Netlify.");
+      return;
+    }
+    
+    if (!user) {
+      console.error("No user found in auth context");
+      setHasError(true);
+      setErrorMessage("No user found. This could be caused by an authentication issue.");
+      return;
+    }
+    
     if (!user?.provider_id) {
       console.error("Missing provider_id in user profile", user);
       setHasError(true);
       setErrorMessage("No provider ID found in your profile. This could be caused by an authentication issue or missing environment variables.");
     }
+    
+    // Collect debug info
+    setDebugInfo({
+      hasSupabaseUrl: !!SUPABASE_URL,
+      hasSupabaseKey: !!SUPABASE_ANON_KEY,
+      userExists: !!user,
+      userHasProviderId: !!user?.provider_id,
+      currentEnv: import.meta.env.MODE,
+      baseUrl: window.location.origin,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Test Supabase connection
+    const testConnection = async () => {
+      try {
+        const { data, error } = await supabase.from('companies').select('count(*)', { count: 'exact', head: true });
+        if (error) {
+          console.error("Supabase connection test failed:", error);
+          setHasError(true);
+          setErrorMessage(`Supabase connection failed: ${error.message}`);
+          setDebugInfo(prev => ({ ...prev, supabaseTestError: error }));
+        } else {
+          console.log("Supabase connection successful");
+          setDebugInfo(prev => ({ ...prev, supabaseTestSuccess: true }));
+        }
+      } catch (error) {
+        console.error("Unexpected error testing Supabase connection:", error);
+        setHasError(true);
+        setErrorMessage(`Unexpected error: ${error instanceof Error ? error.message : String(error)}`);
+        setDebugInfo(prev => ({ ...prev, unexpectedError: error }));
+      }
+    };
+    
+    testConnection();
   }, [user]);
   
   // Fetch dashboard stats using our hook with the provider ID from user profile
   const stats = useProviderDashboardData(user?.provider_id);
-  
-  useEffect(() => {
-    // This will help debug if API requests are failing
-    const logErrors = async () => {
-      try {
-        console.log("Current environment:", import.meta.env.MODE);
-        console.log("Current base URL:", window.location.origin);
-      } catch (error) {
-        console.error("Error logging debug info:", error);
-      }
-    };
-    
-    logErrors();
-  }, []);
   
   // Quick actions for the provider
   const quickActions = [
@@ -92,15 +132,52 @@ const ProviderDashboardPage = () => {
     return (
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <Card className="border-destructive">
-          <CardContent className="p-6 space-y-4">
-            <div className="flex items-center space-x-2 text-destructive">
-              <AlertTriangle className="h-5 w-5" />
-              <h2 className="text-xl font-semibold">Connection Error</h2>
-            </div>
+          <CardHeader>
+            <CardTitle className="flex items-center text-destructive">
+              <AlertTriangle className="h-5 w-5 mr-2" />
+              Connection Error
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <p>{errorMessage}</p>
             <p className="text-muted-foreground text-sm">
               Please check your Netlify environment variables and ensure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set correctly.
+              Also make sure your Supabase project has your Netlify domain added to the allowed CORS origins.
             </p>
+            
+            <div className="mt-6">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setShowDebugInfo(!showDebugInfo)}
+              >
+                {showDebugInfo ? "Hide Debug Info" : "Show Debug Info"}
+              </Button>
+              
+              {showDebugInfo && (
+                <div className="mt-4 p-4 bg-muted rounded-md overflow-auto max-h-[400px]">
+                  <pre className="text-xs">{JSON.stringify(debugInfo, null, 2)}</pre>
+                </div>
+              )}
+            </div>
+            
+            <div className="flex flex-col gap-2 mt-4">
+              <h3 className="text-sm font-medium">How to fix:</h3>
+              <ol className="list-decimal list-inside text-sm space-y-2">
+                <li>
+                  Check if VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set in Netlify environment variables
+                </li>
+                <li>
+                  Verify that your Supabase project has CORS configured to allow requests from your Netlify domain
+                </li>
+                <li>
+                  Try logging out and logging back in
+                </li>
+                <li>
+                  Check browser console for more detailed error messages
+                </li>
+              </ol>
+            </div>
           </CardContent>
         </Card>
       </div>

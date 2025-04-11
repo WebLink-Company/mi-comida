@@ -32,14 +32,19 @@ const ProviderDashboardPage = () => {
   const [debugInfo, setDebugInfo] = useState<any>({});
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [corsError, setCorsError] = useState<boolean>(false);
   
   console.log("Provider dashboard - Current user:", user);
+  console.log("Current origin:", window.location.origin);
   
   // Function to manually refresh data
   const refreshData = () => {
     console.log("Manual refresh triggered");
     setRefreshTrigger(prev => prev + 1);
     setIsLoading(true);
+    setCorsError(false);
+    setHasError(false);
+    
     toast({
       title: "Actualizando panel",
       description: "Cargando la información más reciente del servidor...",
@@ -83,6 +88,7 @@ const ProviderDashboardPage = () => {
     }
     
     // Collect debug info
+    const currentOrigin = window.location.origin;
     setDebugInfo({
       hasSupabaseUrl: !!SUPABASE_URL,
       hasSupabaseKey: !!SUPABASE_ANON_KEY,
@@ -90,7 +96,7 @@ const ProviderDashboardPage = () => {
       userHasProviderId: !!user?.provider_id,
       providerId: user?.provider_id,
       currentEnv: import.meta.env.MODE,
-      baseUrl: window.location.origin,
+      baseUrl: currentOrigin,
       hostname: window.location.hostname,
       timestamp: new Date().toISOString()
     });
@@ -100,21 +106,64 @@ const ProviderDashboardPage = () => {
       try {
         console.log("Testing Supabase connection...");
         const { data, error } = await supabase.from('companies').select('count(*)', { count: 'exact', head: true });
+        
         if (error) {
           console.error("Supabase connection test failed:", error);
-          setHasError(true);
-          setErrorMessage(`Falló la conexión con Supabase: ${error.message}`);
-          setDebugInfo(prev => ({ ...prev, supabaseTestError: error }));
+          
+          // Check if this might be a CORS error
+          const possibleCorsError = 
+            error.message.includes('fetch failed') || 
+            error.message.includes('network error') ||
+            error.message.includes('Failed to fetch') ||
+            error.message.includes('NetworkError');
+          
+          if (possibleCorsError) {
+            setCorsError(true);
+            setErrorMessage(`Posible error de CORS: ${error.message}. Asegúrese de que ${currentOrigin} esté agregado a los orígenes permitidos en Supabase.`);
+          } else {
+            setHasError(true);
+            setErrorMessage(`Falló la conexión con Supabase: ${error.message}`);
+          }
+          
+          setDebugInfo(prev => ({ 
+            ...prev, 
+            supabaseTestError: error,
+            possibleCorsError: possibleCorsError,
+            currentOrigin
+          }));
         } else {
           console.log("Supabase connection successful");
           setDebugInfo(prev => ({ ...prev, supabaseTestSuccess: true }));
-          setIsLoading(false);
+          // Clear any previous error states
+          setCorsError(false);
+          setHasError(false);
         }
       } catch (error) {
         console.error("Unexpected error testing Supabase connection:", error);
         setHasError(true);
-        setErrorMessage(`Error inesperado: ${error instanceof Error ? error.message : String(error)}`);
-        setDebugInfo(prev => ({ ...prev, unexpectedError: error }));
+        
+        // Try to determine if this is a CORS error
+        const errorStr = String(error);
+        if (
+          errorStr.includes('CORS') || 
+          errorStr.includes('origin') || 
+          errorStr.includes('cross') ||
+          errorStr.includes('NetworkError')
+        ) {
+          setCorsError(true);
+          setErrorMessage(`Error de CORS detectado. Asegúrese de que ${currentOrigin} esté agregado a los orígenes permitidos en Supabase.`);
+        } else {
+          setErrorMessage(`Error inesperado: ${error instanceof Error ? error.message : errorStr}`);
+        }
+        
+        setDebugInfo(prev => ({ 
+          ...prev, 
+          unexpectedError: error,
+          possibleCorsError: errorStr.includes('CORS') || errorStr.includes('origin'),
+          currentOrigin
+        }));
+      } finally {
+        setIsLoading(false);
       }
     };
     
@@ -160,8 +209,8 @@ const ProviderDashboardPage = () => {
     {
       label: 'Gestionar Menú',
       icon: Utensils,
-      action: () => navigate('/provider/menus'),
-      path: '/provider/menus'
+      action: () => navigate('/provider/menu'),
+      path: '/provider/menu'
     },
     {
       label: 'Facturación',
@@ -178,14 +227,14 @@ const ProviderDashboardPage = () => {
     {
       label: 'Programar Menús',
       icon: Calendar,
-      action: () => navigate('/provider/schedule'),
-      path: '/provider/schedule'
+      action: () => navigate('/provider/assign-menus'),
+      path: '/provider/assign-menus'
     },
     {
       label: 'Gestionar Clientes',
       icon: Users,
-      action: () => navigate('/provider/clients'),
-      path: '/provider/clients'
+      action: () => navigate('/provider/companies'),
+      path: '/provider/companies'
     }
   ];
 
@@ -206,6 +255,27 @@ const ProviderDashboardPage = () => {
     if (hour < 18) return 'Buenas tardes';
     return 'Buenas noches';
   };
+
+  // Show CORS specific error state
+  if (corsError) {
+    return (
+      <DashboardErrorState 
+        errorMessage={`Error de CORS detectado. La URL actual (${window.location.origin}) no está configurada en Supabase para permitir solicitudes. 
+        
+        Es posible que tenga configurado 'micomida.online' como origen permitido pero este despliegue tiene una URL diferente.`} 
+        refreshData={refreshData} 
+        debugInfo={{
+          ...debugInfo,
+          currentUrl: window.location.href,
+          currentOrigin: window.location.origin,
+          possibleAllowedOrigins: [
+            "https://micomida.online",
+            window.location.origin
+          ]
+        }} 
+      />
+    );
+  }
 
   if (hasError) {
     return (

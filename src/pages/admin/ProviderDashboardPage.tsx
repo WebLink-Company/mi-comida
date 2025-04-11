@@ -8,17 +8,18 @@ import '@/styles/dashboard.css';
 import { useProviderDashboardData } from '@/hooks/useProviderDashboardData';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/lib/constants';
 import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button'; // Added missing Button import
+import { Button } from '@/components/ui/button';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { Badge } from '@/components/ui/badge';
 
 // Newly created components
 import { DashboardErrorState } from '@/components/admin/dashboard/DashboardErrorState';
 import { DashboardLoadingState } from '@/components/admin/dashboard/DashboardLoadingState';
-import { DashboardHeader } from '@/components/admin/dashboard/DashboardHeader';
-import { DebugSection } from '@/components/admin/dashboard/DebugSection';
-import { NoOrdersCard } from '@/components/admin/dashboard/NoOrdersCard';
 import { DashboardDialogs } from '@/components/admin/dashboard/DashboardDialogs';
 import DashboardMetrics from '@/components/admin/dashboard/DashboardMetrics';
-import { Badge } from '@/components/ui/badge';
+import { DebugSection } from '@/components/admin/dashboard/DebugSection';
+import { NoOrdersCard } from '@/components/admin/dashboard/NoOrdersCard';
 
 const ProviderDashboardPage = () => {
   const navigate = useNavigate();
@@ -30,6 +31,7 @@ const ProviderDashboardPage = () => {
   const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
   const [debugInfo, setDebugInfo] = useState<any>({});
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [currentTime, setCurrentTime] = useState(new Date());
   
   console.log("Provider dashboard - Current user:", user);
   
@@ -48,6 +50,15 @@ const ProviderDashboardPage = () => {
       setIsLoading(false);
     }, 1500);
   };
+  
+  // Update current time every minute
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000);
+    
+    return () => clearInterval(interval);
+  }, []);
   
   useEffect(() => {
     // Check for missing environment variables
@@ -188,6 +199,14 @@ const ProviderDashboardPage = () => {
     }, 50);
   };
 
+  // Get greeting based on time of day
+  const getGreeting = () => {
+    const hour = currentTime.getHours();
+    if (hour < 12) return 'Buenos días';
+    if (hour < 18) return 'Buenas tardes';
+    return 'Buenas noches';
+  };
+
   if (hasError) {
     return (
       <DashboardErrorState 
@@ -204,14 +223,46 @@ const ProviderDashboardPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
-      <DashboardHeader 
-        user={user} 
-        quickActions={quickActions} 
-        refreshData={refreshData}
-      />
+      {/* Dashboard Header with large name, time, and greeting */}
+      <div className="text-center mb-12 fade-up">
+        <h1 className="text-6xl font-extralight text-white mb-2">
+          {user?.first_name || 'Proveedor'}
+        </h1>
+        <div className="text-center mb-4">
+          <p className="text-4xl font-light text-white/90">
+            {format(currentTime, 'EEEE, d MMMM', { locale: es })}
+          </p>
+          <p className="text-5xl font-light text-white mt-2">
+            {format(currentTime, 'HH:mm')}
+          </p>
+        </div>
+        <p className="text-xl text-white/80 mt-4">
+          {getGreeting()}, {user?.first_name} 👋
+        </p>
+        <p className="text-white/70 mt-2">
+          ¿En qué te gustaría trabajar hoy?
+        </p>
+      </div>
       
-      {/* Dashboard metrics - Translated titles and improved styling */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8 fade-up" style={{ animationDelay: "0.3s" }}>
+      {/* Quick Actions */}
+      <div className="flex flex-wrap justify-center gap-4 mb-12 fade-up" style={{ animationDelay: "0.2s" }}>
+        {quickActions.map((action, index) => {
+          const Icon = action.icon;
+          return (
+            <Badge
+              key={index}
+              variant="outline"
+              onClick={action.action}
+              className="quick-action-badge glass-dark py-2 px-4 cursor-pointer"
+            >
+              <Icon className="h-4 w-4 mr-2" />
+              {action.label}
+            </Badge>
+          );
+        })}
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 fade-up" style={{ animationDelay: "0.3s" }}>
         <div className="dashboard-metric-card p-5">
           <h3 className="text-sm font-medium text-white/70 mb-1">Pedidos Hoy</h3>
           <p className="text-2xl font-semibold text-white">{stats.loadingOrdersToday ? '...' : stats.ordersToday || 0}</p>
@@ -233,10 +284,16 @@ const ProviderDashboardPage = () => {
         </div>
       </div>
       
-      {/* Secciones del Dashboard - Translated and rearranged for better organization */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-8">
+      {/* Main Dashboard Sections */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        {/* Platform Overview */}
         <div className="dashboard-metric-card p-5 lg:col-span-1 fade-up" style={{ animationDelay: "0.4s" }}>
-          <h3 className="text-lg font-medium text-white mb-3">Visión General</h3>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-medium text-white">Visión General</h3>
+            <Button variant="ghost" size="sm" className="text-white/80 hover:text-white" onClick={() => navigate('/provider/reports')}>
+              Ver Detalles
+            </Button>
+          </div>
           <div className="space-y-3">
             <div className="flex justify-between items-center">
               <span className="text-sm text-white/70">Usuarios</span>
@@ -254,19 +311,17 @@ const ProviderDashboardPage = () => {
               <span className="text-sm text-white/70">Plato Popular</span>
               <span className="font-medium text-white">{stats.topOrderedMeal?.name || 'N/A'}</span>
             </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="w-full mt-2 glass"
-              onClick={() => navigate('/provider/reports')}
-            >
-              Ver Detalles
-            </Button>
           </div>
         </div>
         
+        {/* Order Metrics */}
         <div className="dashboard-metric-card p-5 lg:col-span-1 fade-up" style={{ animationDelay: "0.5s" }}>
-          <h3 className="text-lg font-medium text-white mb-3">Métricas de Pedidos</h3>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-medium text-white">Métricas de Pedidos</h3>
+            <Button variant="ghost" size="sm" className="text-white/80 hover:text-white" onClick={() => navigate('/provider/orders')}>
+              Ver Detalles
+            </Button>
+          </div>
           <div className="space-y-3">
             <div className="flex justify-between items-center">
               <span className="text-sm text-white/70">Pedidos Hoy</span>
@@ -288,19 +343,17 @@ const ProviderDashboardPage = () => {
               <span className="text-sm text-white/70">Pendientes</span>
               <span className="font-medium text-white">{stats.pendingOrders || 0}</span>
             </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="w-full mt-2 glass"
-              onClick={() => navigate('/provider/orders')}
-            >
-              Ver Detalles
-            </Button>
           </div>
         </div>
         
+        {/* Finance Insights */}
         <div className="dashboard-metric-card p-5 lg:col-span-1 fade-up" style={{ animationDelay: "0.6s" }}>
-          <h3 className="text-lg font-medium text-white mb-3">Finanzas</h3>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-medium text-white">Finanzas</h3>
+            <Button variant="ghost" size="sm" className="text-white/80 hover:text-white" onClick={() => navigate('/provider/billing')}>
+              Ver Detalles
+            </Button>
+          </div>
           <div className="space-y-3">
             <div className="flex justify-between items-center">
               <span className="text-sm text-white/70">Ingresos Mensuales</span>
@@ -324,14 +377,6 @@ const ProviderDashboardPage = () => {
               <span className="text-sm text-white/70">Próximo Pago</span>
               <span className="font-medium text-white">30/04</span>
             </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="w-full mt-2 glass"
-              onClick={() => navigate('/provider/billing')}
-            >
-              Ver Detalles
-            </Button>
           </div>
         </div>
       </div>
@@ -349,6 +394,17 @@ const ProviderDashboardPage = () => {
           stats={stats}
         />
       )}
+
+      {/* Refresh Button */}
+      <div className="flex justify-center mt-8 fade-up" style={{ animationDelay: "0.7s" }}>
+        <Button 
+          variant="outline" 
+          onClick={refreshData} 
+          className="glass"
+        >
+          Actualizar Datos
+        </Button>
+      </div>
 
       {/* Modals */}
       <DashboardDialogs 

@@ -9,7 +9,14 @@ export interface TopMeal {
   count: number;
 }
 
-export const useProviderDashboardStats = () => {
+// Añadimos la interfaz para el rango de fechas
+export interface DateRange {
+  startDate: string; // formato YYYY-MM-DD
+  endDate: string;   // formato YYYY-MM-DD
+  label: 'hoy' | 'semana' | 'mes' | 'personalizado';
+}
+
+export const useProviderDashboardStats = (dateRange?: DateRange) => {
   const { user } = useAuth();
   const providerId = user?.provider_id;
   const companyId = user?.company_id; // Usar company_id para supervisores
@@ -25,12 +32,16 @@ export const useProviderDashboardStats = () => {
     }
     
     const today = new Date().toISOString().split('T')[0];
-    const currentMonth = new Date().toISOString().substring(0, 7); // YYYY-MM
+    
+    // Si no se proporciona un rango de fechas, usamos el día actual
+    const startDate = dateRange?.startDate || today;
+    const endDate = dateRange?.endDate || today;
     
     let companyIds = [];
     
     try {
       console.log("Iniciando fetchStats para providerId:", providerId, "companyId:", companyId);
+      console.log("Rango de fechas:", startDate, "hasta", endDate);
       
       // Si es supervisor, solo trabajar con su empresa asignada
       if (isSupervisor) {
@@ -88,8 +99,8 @@ export const useProviderDashboardStats = () => {
       // Construcción de la consulta para depuración
       const queryInfo = {
         companyIds: companyIds,
-        month: currentMonth,
-        today: today,
+        startDate: startDate,
+        endDate: endDate,
         provider: providerId,
         filters: "estado='approved', 'prepared', 'delivered'"
       };
@@ -97,7 +108,7 @@ export const useProviderDashboardStats = () => {
       
       // Fetch orders and lunch options in a single request with inner joins
       // This reduces the number of requests significantly
-      console.log(`QUERY EXACTA: Buscando órdenes para companyIds: [${companyIds.join(', ')}], en el mes: ${currentMonth}, con estados: approved, prepared, delivered`);
+      console.log(`QUERY EXACTA: Buscando órdenes para companyIds: [${companyIds.join(', ')}], desde: ${startDate}, hasta: ${endDate}, con estados: approved, prepared, delivered`);
       const { data: orders, error: ordersError } = await supabase
         .from('orders')
         .select(`
@@ -109,8 +120,9 @@ export const useProviderDashboardStats = () => {
           lunch_options:lunch_option_id(id, name, price)
         `)
         .in('company_id', companyIds)
-        .gte('date', `${currentMonth}-01`)
-        .lte('date', today);
+        .gte('date', startDate)
+        .lte('date', endDate)
+        .in('status', ['approved', 'prepared', 'delivered']);
         
       if (ordersError) {
         console.error("Error al obtener órdenes:", ordersError);
@@ -118,50 +130,66 @@ export const useProviderDashboardStats = () => {
       }
       
       console.log(`Se encontraron ${orders?.length || 0} órdenes en total`);
-      console.log("Primeras 5 órdenes de muestra:", orders?.slice(0, 5));
+      if (orders && orders.length > 0) {
+        console.log("Primeras 5 órdenes de muestra:", orders.slice(0, 5));
+      } else {
+        console.log("No se encontraron órdenes para el rango de fechas seleccionado");
+      }
       
-      // Filter today's orders - only include approved, prepared, and delivered status
+      // Filtrar por órdenes de hoy para métricas específicas de hoy
       const todayOrders = orders?.filter(order => 
-        order.date === today && 
-        ['approved', 'prepared', 'delivered'].includes(order.status)
+        order.date === today
       ) || [];
       
       console.log(`Órdenes para hoy (aprobadas/preparadas/entregadas): ${todayOrders.length}`);
       
-      // Filter approved or beyond orders for metrics
-      const approvedOrders = orders?.filter(order => 
-        ['approved', 'prepared', 'delivered'].includes(order.status)
-      ) || [];
+      // Todas las órdenes en el rango seleccionado (ya filtradas por estado en la consulta)
+      const rangeOrders = orders || [];
       
-      console.log(`Total de órdenes aprobadas o más: ${approvedOrders.length}`);
+      console.log(`Total de órdenes en el rango seleccionado: ${rangeOrders.length}`);
       
       // Calculate statistics
       const ordersToday = todayOrders.length;
-      const totalMealsToday = todayOrders.length; // Only count approved/prepared/delivered as "meals"
+      const totalMealsToday = todayOrders.length; 
+      
+      // Empresas con órdenes hoy
       const uniqueCompanies = [...new Set(todayOrders.map(order => order.company_id))];
       const companiesWithOrdersToday = uniqueCompanies.length;
-      const pendingOrdersCount = orders?.filter(order => 
-        order.date === today && order.status === 'pending'
-      ).length || 0;
       
-      const monthlyOrders = approvedOrders.length || 0;
+      // Órdenes pendientes (siempre buscar las pendientes del día actual)
+      const { data: pendingOrdersData, error: pendingError } = await supabase
+        .from('orders')
+        .select('id')
+        .in('company_id', companyIds)
+        .eq('date', today)
+        .eq('status', 'pending');
+        
+      if (pendingError) {
+        console.error("Error al obtener órdenes pendientes:", pendingError);
+      }
       
-      // Calculate revenue from approved, prepared, or delivered orders only
-      let monthlyRevenue = 0;
-      approvedOrders.forEach(order => {
+      const pendingOrdersCount = pendingOrdersData?.length || 0;
+      console.log(`Órdenes pendientes para hoy: ${pendingOrdersCount}`);
+      
+      // Conteo de órdenes en el rango
+      const rangeOrdersCount = rangeOrders.length;
+      
+      // Calculate revenue from approved, prepared, or delivered orders
+      let rangeRevenue = 0;
+      rangeOrders.forEach(order => {
         if (order.lunch_options && order.lunch_options.price) {
-          monthlyRevenue += Number(order.lunch_options.price);
+          rangeRevenue += Number(order.lunch_options.price);
         }
       });
       
-      // Calculate most ordered dish today - only from approved orders
+      // Calculate most ordered dish in the range
       let topOrderedMeal: TopMeal = { name: 'No hay datos', count: 0 };
       
-      if (todayOrders.length > 0) {
+      if (rangeOrders.length > 0) {
         const mealCount: {[key: string]: {count: number, name: string}} = {};
         
         // Count occurrences of each dish
-        todayOrders.forEach(order => {
+        rangeOrders.forEach(order => {
           if (order.lunch_options) {
             const id = order.lunch_option_id;
             const name = order.lunch_options.name;
@@ -197,8 +225,8 @@ export const useProviderDashboardStats = () => {
         totalMealsToday,
         companiesWithOrdersToday,
         pendingOrders: pendingOrdersCount,
-        monthlyOrders,
-        monthlyRevenue
+        monthlyOrders: rangeOrdersCount,
+        monthlyRevenue: rangeRevenue
       });
       
       return {
@@ -207,8 +235,8 @@ export const useProviderDashboardStats = () => {
         companiesWithOrdersToday,
         topOrderedMeal,
         pendingOrders: pendingOrdersCount,
-        monthlyOrders,
-        monthlyRevenue
+        monthlyOrders: rangeOrdersCount,
+        monthlyRevenue: rangeRevenue
       };
     } catch (error) {
       console.error("Error en fetchStats:", error);
@@ -218,7 +246,7 @@ export const useProviderDashboardStats = () => {
 
   // Use React Query with caching to prevent excessive requests
   const { data, isLoading, error } = useQuery({
-    queryKey: ['providerStats', providerId, companyId],
+    queryKey: ['providerStats', providerId, companyId, dateRange?.startDate, dateRange?.endDate],
     queryFn: fetchStats,
     enabled: !!(providerId || companyId),
     staleTime: 300000, // 5 minutes

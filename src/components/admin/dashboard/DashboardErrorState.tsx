@@ -1,8 +1,9 @@
 
-import React, { useState } from 'react';
-import { AlertTriangle, InfoIcon, RefreshCw, ExternalLink } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { AlertTriangle, InfoIcon, RefreshCw, ExternalLink, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { testSupabaseConnection, SUPABASE_URL, SUPABASE_ANON_KEY } from '@/lib/constants';
 
 interface DashboardErrorStateProps {
   errorMessage: string;
@@ -16,11 +17,40 @@ export const DashboardErrorState: React.FC<DashboardErrorStateProps> = ({
   debugInfo
 }) => {
   const [showDebugInfo, setShowDebugInfo] = useState<boolean>(false);
-  const isCorsError = errorMessage.includes('CORS') || (debugInfo?.possibleCorsError === true);
+  const [isTesting, setIsTesting] = useState<boolean>(false);
+  const [testResult, setTestResult] = useState<any>(null);
+  
+  const isCorsError = errorMessage.includes('CORS') || 
+                       errorMessage.includes('NetworkError') ||
+                       errorMessage.includes('fetch failed') || 
+                       (debugInfo?.possibleCorsError === true) || 
+                       (testResult?.error?.message && (
+                         testResult.error.message.includes('fetch failed') || 
+                         testResult.error.message.includes('NetworkError') ||
+                         testResult.error.message.includes('Failed to fetch')
+                       ));
+                       
   const currentOrigin = window.location.origin;
-  const projectId = (debugInfo?.supabaseUrl || "").includes("supabase.co") 
-    ? (debugInfo?.supabaseUrl || "").split('.')[0].split('//')[1]
+  const projectId = (SUPABASE_URL || "").includes("supabase.co") 
+    ? (SUPABASE_URL || "").split('.')[0].split('//')[1]
     : "su-proyecto";
+    
+  const runConnectionTest = async () => {
+    setIsTesting(true);
+    const result = await testSupabaseConnection();
+    setTestResult(result);
+    setIsTesting(false);
+    
+    if (result.success) {
+      // If test succeeds, try the original refresh
+      refreshData();
+    }
+  };
+
+  // Automatic connection test when component mounts
+  useEffect(() => {
+    runConnectionTest();
+  }, []);
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
@@ -51,8 +81,9 @@ export const DashboardErrorState: React.FC<DashboardErrorStateProps> = ({
                     <li>Navegue a Configuración del Proyecto &gt; API</li>
                     <li>Desplácese hasta "Orígenes CORS"</li>
                     <li>Añada su dominio actual: <strong className="font-mono bg-amber-200/30 px-1 rounded">{currentOrigin}</strong></li>
+                    <li>Si solo tiene configurado 'micomida.online', añada también este dominio de vista previa</li>
                     <li>Guarde los cambios</li>
-                    <li>Haga clic en "Reintentar Conexión" a continuación</li>
+                    <li>Haga clic en "Probar Conexión" a continuación</li>
                   </ol>
                   <div className="mt-4">
                     <Button 
@@ -91,6 +122,9 @@ export const DashboardErrorState: React.FC<DashboardErrorStateProps> = ({
                   currentUrl: window.location.href,
                   currentOrigin: window.location.origin,
                   currentHostname: window.location.hostname,
+                  supabaseUrl: SUPABASE_URL,
+                  hasSupabaseKey: !!SUPABASE_ANON_KEY,
+                  connectionTestResult: testResult,
                   timestamp: new Date().toISOString()
                 }, null, 2)}</pre>
               </div>
@@ -118,14 +152,40 @@ export const DashboardErrorState: React.FC<DashboardErrorStateProps> = ({
             </ol>
           </div>
           
-          <div className="mt-6">
+          <div className="mt-6 flex gap-2">
             <Button 
               variant="default" 
               onClick={refreshData}
-              className="mt-2"
             >
               <RefreshCw className="h-4 w-4 mr-2" />
               Reintentar Conexión
+            </Button>
+            
+            <Button
+              variant="outline"
+              onClick={runConnectionTest}
+              disabled={isTesting}
+            >
+              {isTesting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Probando...
+                </>
+              ) : (
+                <>
+                  {testResult?.success ? (
+                    <>
+                      <InfoIcon className="h-4 w-4 mr-2" />
+                      Prueba Exitosa
+                    </>
+                  ) : (
+                    <>
+                      <AlertTriangle className="h-4 w-4 mr-2" />
+                      Probar Conexión
+                    </>
+                  )}
+                </>
+              )}
             </Button>
           </div>
         </CardContent>

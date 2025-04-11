@@ -14,6 +14,28 @@ console.log(`Supabase URL configured: ${SUPABASE_URL ? "Yes" : "No"}`);
 console.log(`Supabase Key configured: ${SUPABASE_ANON_KEY ? "Yes (length: " + SUPABASE_ANON_KEY.length + ")" : "No"}`);
 console.log(`Detected Supabase Project ID: ${SUPABASE_PROJECT_ID}`);
 
+// Test function to verify Supabase connection is working
+export const testSupabaseConnection = async () => {
+  try {
+    // Import dynamically to prevent circular dependencies
+    const { supabase } = await import('@/integrations/supabase/client');
+    
+    // Simple test query to check connection
+    const { data, error } = await supabase.from('companies').select('count(*)', { count: 'exact', head: true });
+    
+    if (error) {
+      console.error("Supabase connection test failed:", error);
+      return { success: false, error };
+    }
+    
+    console.log("Supabase connection test successful");
+    return { success: true };
+  } catch (error) {
+    console.error("Unexpected error testing Supabase connection:", error);
+    return { success: false, error };
+  }
+};
+
 // Detailed CORS instructions for Supabase
 console.log("==== CORS CONFIGURATION GUIDE ====");
 console.log(`Your current domain is: ${window.location.origin}`);
@@ -21,7 +43,7 @@ console.log("To properly configure CORS in Supabase:");
 console.log(`1. Go to https://supabase.com/dashboard/project/${SUPABASE_PROJECT_ID}/settings/api`);
 console.log("2. Scroll down to 'CORS (Cross-Origin Resource Sharing)'");
 console.log(`3. Add your domain: ${window.location.origin} to the list`);
-console.log("4. If you have production URLs, add those too (e.g., https://micomida.online)");
+console.log("4. Add both your preview domain and production domains (e.g., https://micomida.online)");
 console.log("5. Save changes");
 console.log("==============================");
 
@@ -31,4 +53,25 @@ if (import.meta.env.MODE === 'production') {
   console.log(`Also verify that CORS is properly configured in Supabase to allow requests from your domain: ${window.location.origin}`);
 }
 
-// Other app constants can go here
+// Validate current origin is in the approved origins list
+export const validateOrigin = () => {
+  const currentOrigin = window.location.origin;
+  const approvedOrigins = ['https://micomida.online']; // Production domain
+  
+  // In development, add localhost origins
+  if (import.meta.env.MODE === 'development') {
+    approvedOrigins.push('http://localhost:5173', 'http://localhost:3000');
+  }
+  
+  // Check if current origin is in approved list
+  const isApproved = approvedOrigins.includes(currentOrigin);
+  
+  if (!isApproved) {
+    console.warn(`Current origin ${currentOrigin} is not in the approved origins list. You may need to add it to Supabase CORS settings.`);
+  }
+  
+  return isApproved;
+};
+
+// Call validation on load
+validateOrigin();

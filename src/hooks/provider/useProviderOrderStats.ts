@@ -43,7 +43,30 @@ export const useProviderOrderStats = (companyIds: string[] = []) => {
   const [currentDate] = useState(new Date().toISOString().split('T')[0]);
 
   useEffect(() => {
-    if (!user || companyIds.length === 0) return;
+    if (!user) {
+      setError("No authenticated user found");
+      setLoadingOrdersToday(false);
+      setLoadingMealsToday(false);
+      setLoadingCompaniesOrders(false);
+      setLoadingTopMeal(false);
+      setLoadingPending(false);
+      setLoadingMonthlyOrders(false);
+      setLoadingMonthlyRevenue(false);
+      return;
+    }
+    
+    // If no companyIds, set default empty values but don't show error
+    if (companyIds.length === 0) {
+      setStats(prev => ({ ...prev, companyIds: [] }));
+      setLoadingOrdersToday(false);
+      setLoadingMealsToday(false);
+      setLoadingCompaniesOrders(false);
+      setLoadingTopMeal(false);
+      setLoadingPending(false);
+      setLoadingMonthlyOrders(false);
+      setLoadingMonthlyRevenue(false);
+      return;
+    }
     
     const fetchOrderStats = async () => {
       try {
@@ -60,7 +83,10 @@ export const useProviderOrderStats = (companyIds: string[] = []) => {
           `)
           .in('company_id', companyIds);
         
-        if (ordersError) throw ordersError;
+        if (ordersError) {
+          console.error("Error fetching orders:", ordersError);
+          throw ordersError;
+        }
         
         // Process orders data
         if (ordersData) {
@@ -145,7 +171,16 @@ export const useProviderOrderStats = (companyIds: string[] = []) => {
         }
       } catch (err) {
         console.error('Error fetching order stats:', err);
-        setError('Error fetching order stats. Please try again later.');
+        setError(`Error fetching order stats: ${err instanceof Error ? err.message : String(err)}`);
+        
+        // Set loading states to false to avoid infinite loading
+        setLoadingOrdersToday(false);
+        setLoadingMealsToday(false);
+        setLoadingCompaniesOrders(false);
+        setLoadingTopMeal(false);
+        setLoadingPending(false);
+        setLoadingMonthlyOrders(false);
+        setLoadingMonthlyRevenue(false);
       }
     };
     

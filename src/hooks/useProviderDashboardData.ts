@@ -1,11 +1,24 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useProviderCompanies } from './provider/useProviderCompanies';
 import { useProviderOrderStats } from './provider/useProviderOrderStats';
 import { useProviderUserStats } from './provider/useProviderUserStats';
 import { useCompanyOrdersSummary } from './provider/useCompanyOrdersSummary';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/lib/constants';
 
 export const useProviderDashboardData = () => {
+  // State for connection status
+  const [connectionError, setConnectionError] = useState<string | null>(null);
+  
+  // Ensure Supabase connection is valid before proceeding
+  useEffect(() => {
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+      setConnectionError('Missing Supabase configuration. Please check your environment variables.');
+    } else {
+      setConnectionError(null);
+    }
+  }, []);
+
   // Get companies for current provider
   const { 
     companies, 
@@ -15,7 +28,7 @@ export const useProviderDashboardData = () => {
   } = useProviderCompanies();
   
   // Get company IDs for other hooks
-  const companyIds = companies.map(company => company.id);
+  const companyIds = companies?.map(company => company.id) || [];
   
   // Get order statistics
   const {
@@ -56,13 +69,16 @@ export const useProviderDashboardData = () => {
   const [companyFilter, setCompanyFilter] = useState<string>('');
   
   // Combine all errors
-  const error = companiesError || orderStatsError || userStatsError || companyOrdersError;
+  const error = connectionError || companiesError || orderStatsError || userStatsError || companyOrdersError;
   
   // Loading state for the overall hook
   const loading = loadingCompanies || 
     (loadingOrdersToday && loadingMealsToday && loadingCompaniesOrders && loadingTopMeal);
 
   return {
+    // Connection status
+    connectionError,
+    
     // Companies data
     companies,
     activeCompanies,

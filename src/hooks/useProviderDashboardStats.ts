@@ -56,7 +56,7 @@ export const useProviderDashboardStats = () => {
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
     refetchInterval: false,
-    refetchOnMount: "always"
+    refetchOnMount: false
   });
 
   // Log the monthly order count for debugging

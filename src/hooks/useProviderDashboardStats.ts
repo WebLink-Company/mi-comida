@@ -1,7 +1,8 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
+import { useQuery } from '@tanstack/react-query';
 
 // Exportamos la interfaz para el plato más pedido
 export interface TopMeal {
@@ -11,207 +12,153 @@ export interface TopMeal {
 
 export const useProviderDashboardStats = () => {
   const { user } = useAuth();
-  const [ordersToday, setOrdersToday] = useState<number>(0);
-  const [totalMealsToday, setTotalMealsToday] = useState<number>(0);
-  const [companiesWithOrdersToday, setCompaniesWithOrdersToday] = useState<number>(0);
-  const [topOrderedMeal, setTopOrderedMeal] = useState<string | null>(null);
-  const [pendingOrders, setPendingOrders] = useState<number>(0);
-  const [monthlyOrders, setMonthlyOrders] = useState<number>(0);
-  const [monthlyRevenue, setMonthlyRevenue] = useState<number>(0);
-  
-  // Estados de carga
-  const [loadingOrdersToday, setLoadingOrdersToday] = useState<boolean>(true);
-  const [loadingMealsToday, setLoadingMealsToday] = useState<boolean>(true);
-  const [loadingCompaniesOrders, setLoadingCompaniesOrders] = useState<boolean>(true);
-  const [loadingTopMeal, setLoadingTopMeal] = useState<boolean>(true);
-  const [loadingPending, setLoadingPending] = useState<boolean>(true);
-  const [loadingMonthlyOrders, setLoadingMonthlyOrders] = useState<boolean>(true);
-  const [loadingMonthlyRevenue, setLoadingMonthlyRevenue] = useState<boolean>(true);
-  
-  // Estado para errores
-  const [error, setError] = useState<string | null>(null);
+  const providerId = user?.provider_id;
 
-  useEffect(() => {
-    if (!user || !user.provider_id) return;
+  // Función para obtener las estadísticas
+  const fetchStats = async () => {
+    if (!providerId) throw new Error("No provider ID available");
     
-    const fetchStats = async () => {
-      try {
-        const providerId = user.provider_id;
-        const today = new Date().toISOString().split('T')[0];
-        const currentMonth = new Date().toISOString().substring(0, 7); // YYYY-MM
+    const today = new Date().toISOString().split('T')[0];
+    const currentMonth = new Date().toISOString().substring(0, 7); // YYYY-MM
+    
+    // 1. Obtener empresas asociadas a este proveedor
+    const { data: companies, error: companiesError } = await supabase
+      .from('companies')
+      .select('id')
+      .eq('provider_id', providerId);
+      
+    if (companiesError) throw companiesError;
+    
+    if (!companies || companies.length === 0) {
+      // No hay empresas, devolvemos valores predeterminados
+      return {
+        ordersToday: 0,
+        totalMealsToday: 0,
+        companiesWithOrdersToday: 0,
+        topOrderedMeal: 'No hay datos',
+        pendingOrders: 0,
+        monthlyOrders: 0,
+        monthlyRevenue: 0
+      };
+    }
+    
+    const companyIds = companies.map(company => company.id);
+    
+    // 2. Obtener pedidos para hoy
+    const { data: todayOrders, error: todayOrdersError } = await supabase
+      .from('orders')
+      .select('id, company_id, lunch_option_id, status')
+      .in('company_id', companyIds)
+      .eq('date', today);
+      
+    if (todayOrdersError) throw todayOrdersError;
+    
+    // Calcular estadísticas de pedidos hoy
+    const ordersToday = todayOrders?.length || 0;
+    const totalMealsToday = todayOrders?.length || 0;
+    const uniqueCompanies = [...new Set(todayOrders?.map(order => order.company_id) || [])];
+    const companiesWithOrdersToday = uniqueCompanies.length;
+    const pendingOrdersCount = todayOrders?.filter(order => order.status === 'pending').length || 0;
+    
+    // 3. Obtener pedidos del mes actual
+    const { data: monthOrders, error: monthOrdersError } = await supabase
+      .from('orders')
+      .select('id, lunch_option_id')
+      .in('company_id', companyIds)
+      .gte('date', `${currentMonth}-01`)
+      .lte('date', today);
+      
+    if (monthOrdersError) throw monthOrdersError;
+    
+    const monthlyOrders = monthOrders?.length || 0;
+    
+    // 4. Calcular ingresos y plato más pedido
+    let monthlyRevenue = 0;
+    let topOrderedMeal = 'No hay datos';
+    
+    if (monthOrders && monthOrders.length > 0) {
+      const lunchOptionIds = monthOrders.map(order => order.lunch_option_id);
+      const { data: lunchOptions, error: lunchOptionsError } = await supabase
+        .from('lunch_options')
+        .select('id, name, price')
+        .in('id', lunchOptionIds);
         
-        // 1. Obtener empresas asociadas a este proveedor
-        const { data: companies, error: companiesError } = await supabase
-          .from('companies')
-          .select('id')
-          .eq('provider_id', providerId);
-          
-        if (companiesError) throw companiesError;
+      if (lunchOptionsError) throw lunchOptionsError;
+      
+      // Crear un mapa de id -> precio para facilitar el cálculo
+      const priceMap = new Map();
+      const nameMap = new Map();
+      lunchOptions?.forEach(option => {
+        priceMap.set(option.id, option.price);
+        nameMap.set(option.id, option.name);
+      });
+      
+      // Calcular ingresos totales
+      monthOrders.forEach(order => {
+        const price = priceMap.get(order.lunch_option_id) || 0;
+        monthlyRevenue += Number(price);
+      });
+      
+      // Calcular el plato más pedido
+      if (todayOrders && todayOrders.length > 0) {
+        const mealCount = {};
         
-        if (!companies || companies.length === 0) {
-          // No hay empresas, establecemos valores predeterminados
-          setOrdersToday(0);
-          setTotalMealsToday(0);
-          setCompaniesWithOrdersToday(0);
-          setPendingOrders(0);
-          setMonthlyOrders(0);
-          setMonthlyRevenue(0);
-          
-          // Finalizamos todos los estados de carga
-          setLoadingOrdersToday(false);
-          setLoadingMealsToday(false);
-          setLoadingCompaniesOrders(false);
-          setLoadingTopMeal(false);
-          setLoadingPending(false);
-          setLoadingMonthlyOrders(false);
-          setLoadingMonthlyRevenue(false);
-          return;
-        }
+        // Contar apariciones de cada plato
+        todayOrders.forEach(order => {
+          const id = order.lunch_option_id;
+          mealCount[id] = (mealCount[id] || 0) + 1;
+        });
         
-        const companyIds = companies.map(company => company.id);
+        // Encontrar el ID del plato más pedido
+        let topMealId = null;
+        let maxCount = 0;
         
-        // 2. Obtener pedidos para hoy
-        const { data: todayOrders, error: todayOrdersError } = await supabase
-          .from('orders')
-          .select('id, company_id, lunch_option_id, status')
-          .in('company_id', companyIds)
-          .eq('date', today);
-          
-        if (todayOrdersError) throw todayOrdersError;
-        
-        // Actualizar ordersToday
-        setOrdersToday(todayOrders?.length || 0);
-        setLoadingOrdersToday(false);
-        
-        // Actualizar totalMealsToday (asumiendo 1 meal por orden)
-        setTotalMealsToday(todayOrders?.length || 0);
-        setLoadingMealsToday(false);
-        
-        // Actualizar companiesWithOrdersToday
-        const uniqueCompanies = [...new Set(todayOrders?.map(order => order.company_id) || [])];
-        setCompaniesWithOrdersToday(uniqueCompanies.length);
-        setLoadingCompaniesOrders(false);
-        
-        // Actualizar pendingOrders
-        const pendingOrdersCount = todayOrders?.filter(order => order.status === 'pending').length || 0;
-        setPendingOrders(pendingOrdersCount);
-        setLoadingPending(false);
-        
-        // 3. Obtener pedidos del mes actual para calcular ingresos
-        const { data: monthOrders, error: monthOrdersError } = await supabase
-          .from('orders')
-          .select('id, lunch_option_id')
-          .in('company_id', companyIds)
-          .gte('date', `${currentMonth}-01`)
-          .lte('date', today);
-          
-        if (monthOrdersError) throw monthOrdersError;
-        
-        // Actualizar monthlyOrders
-        setMonthlyOrders(monthOrders?.length || 0);
-        setLoadingMonthlyOrders(false);
-        
-        // 4. Obtener los precios de los platos para calcular ingresos
-        if (monthOrders && monthOrders.length > 0) {
-          const lunchOptionIds = monthOrders.map(order => order.lunch_option_id);
-          const { data: lunchOptions, error: lunchOptionsError } = await supabase
-            .from('lunch_options')
-            .select('id, name, price')
-            .in('id', lunchOptionIds);
-            
-          if (lunchOptionsError) throw lunchOptionsError;
-          
-          // Crear un mapa de id -> precio para facilitar el cálculo
-          const priceMap = new Map();
-          lunchOptions?.forEach(option => priceMap.set(option.id, option.price));
-          
-          // Calcular ingresos totales
-          let totalRevenue = 0;
-          monthOrders.forEach(order => {
-            const price = priceMap.get(order.lunch_option_id) || 0;
-            totalRevenue += Number(price);
-          });
-          
-          setMonthlyRevenue(totalRevenue);
-          
-          // Calcular el plato más pedido
-          if (todayOrders && todayOrders.length > 0) {
-            const mealCount = {};
-            const mealNames = {};
-            
-            // Contar apariciones de cada plato
-            todayOrders.forEach(order => {
-              const id = order.lunch_option_id;
-              mealCount[id] = (mealCount[id] || 0) + 1;
-              
-              // Guardar el nombre del plato si ya lo tenemos
-              const option = lunchOptions?.find(opt => opt.id === id);
-              if (option) {
-                mealNames[id] = option.name;
-              }
-            });
-            
-            // Encontrar el ID del plato más pedido
-            let topMealId = null;
-            let maxCount = 0;
-            
-            Object.keys(mealCount).forEach(id => {
-              if (mealCount[id] > maxCount) {
-                maxCount = mealCount[id];
-                topMealId = id;
-              }
-            });
-            
-            // Establecer el nombre del plato más pedido
-            if (topMealId && mealNames[topMealId]) {
-              setTopOrderedMeal(mealNames[topMealId]);
-            } else {
-              setTopOrderedMeal('No hay datos');
-            }
-          } else {
-            setTopOrderedMeal('No hay pedidos hoy');
+        Object.keys(mealCount).forEach(id => {
+          if (mealCount[id] > maxCount) {
+            maxCount = mealCount[id];
+            topMealId = id;
           }
-        } else {
-          setMonthlyRevenue(0);
-          setTopOrderedMeal('No hay datos');
+        });
+        
+        // Establecer el nombre del plato más pedido
+        if (topMealId && nameMap.get(topMealId)) {
+          topOrderedMeal = nameMap.get(topMealId);
         }
-        
-        setLoadingMonthlyRevenue(false);
-        setLoadingTopMeal(false);
-        
-      } catch (err) {
-        console.error('Error al obtener estadísticas del proveedor:', err);
-        setError('Error al obtener estadísticas del proveedor');
-        
-        // Finalizamos todos los estados de carga en caso de error
-        setLoadingOrdersToday(false);
-        setLoadingMealsToday(false);
-        setLoadingCompaniesOrders(false);
-        setLoadingTopMeal(false);
-        setLoadingPending(false);
-        setLoadingMonthlyOrders(false);
-        setLoadingMonthlyRevenue(false);
       }
-    };
+    }
     
-    fetchStats();
-  }, [user]);
+    return {
+      ordersToday,
+      totalMealsToday,
+      companiesWithOrdersToday,
+      topOrderedMeal,
+      pendingOrders: pendingOrdersCount,
+      monthlyOrders,
+      monthlyRevenue
+    };
+  };
+
+  // Usar React Query para gestionar la solicitud y el estado
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['providerStats', providerId],
+    queryFn: fetchStats,
+    enabled: !!providerId, // Solo ejecutar si hay un provider_id
+    staleTime: 300000, // 5 minutos
+    refetchOnWindowFocus: false,
+  });
 
   return {
-    ordersToday,
-    loadingOrdersToday,
-    totalMealsToday,
-    loadingMealsToday,
-    companiesWithOrdersToday,
-    loadingCompaniesOrders,
-    topOrderedMeal,
-    loadingTopMeal,
-    pendingOrders,
-    loadingPending,
-    monthlyOrders,
-    loadingMonthlyOrders,
-    monthlyRevenue,
-    loadingMonthlyRevenue,
+    // Datos
+    ordersToday: data?.ordersToday || 0,
+    totalMealsToday: data?.totalMealsToday || 0,
+    companiesWithOrdersToday: data?.companiesWithOrdersToday || 0,
+    topOrderedMeal: data?.topOrderedMeal || null,
+    pendingOrders: data?.pendingOrders || 0,
+    monthlyOrders: data?.monthlyOrders || 0,
+    monthlyRevenue: data?.monthlyRevenue || 0,
+    
+    // Estado
+    isLoading,
     error
   };
 };

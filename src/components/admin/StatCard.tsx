@@ -22,7 +22,9 @@ interface StatCardProps {
   linkTo?: string;
   lastUpdated?: string;
   quickViewComponent?: ReactNode;
-  borderColor?: string; // Nueva prop para color de borde
+  borderColor?: string; // Propiedad para color de borde
+  hoverEffect?: string; // Nueva propiedad para efecto hover personalizado
+  accentColor?: string; // Color de acento para el borde superior
 }
 
 const StatCard = ({ 
@@ -36,7 +38,9 @@ const StatCard = ({
   linkTo,
   lastUpdated,
   quickViewComponent,
-  borderColor = "border-white/20" // Color predeterminado
+  borderColor = "border-white/20", // Color predeterminado
+  hoverEffect,
+  accentColor
 }: StatCardProps) => {
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
   const navigate = useNavigate();
@@ -56,7 +60,10 @@ const StatCard = ({
     if (val === undefined || val === null) return "Sin datos";
     
     if (typeof val === 'number') {
-      if (title.toLowerCase().includes('ingreso') || title.toLowerCase().includes('facturación')) {
+      if (title.toLowerCase().includes('ingreso') || 
+          title.toLowerCase().includes('facturación') || 
+          title.toLowerCase().includes('facturado') ||
+          title.toLowerCase().includes('pagado')) {
         return `$${val.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
       }
       return val.toLocaleString('es-ES');
@@ -76,13 +83,22 @@ const StatCard = ({
     return String(val);
   };
 
+  // Concatenamos la clase de borde estándar con una posible clase de borde de acento
+  const borderClasses = accentColor 
+    ? `${borderColor} border-t-4 ${accentColor}`
+    : borderColor;
+
+  // Efecto hover mejorado
+  const defaultHoverEffect = "hover:shadow-lg hover:scale-105 hover:border-opacity-100";
+  const hoverClasses = hoverEffect || (linkTo ? defaultHoverEffect : "");
+
   return (
     <>
       <Card 
         className={cn(
           "overflow-hidden transition-all duration-300", 
-          linkTo && "hover:shadow-lg hover:scale-105 hover:border-opacity-100 cursor-pointer backdrop-blur-md bg-white/10",
-          borderColor, // Aplicamos el color de borde personalizado
+          linkTo && `${hoverClasses} cursor-pointer backdrop-blur-md bg-white/10`,
+          borderClasses,
           className
         )}
         onClick={handleCardClick}

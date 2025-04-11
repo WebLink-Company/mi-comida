@@ -1,8 +1,7 @@
 
-import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
-import { useQuery } from '@tanstack/react-query';
 
 // Exportamos la interfaz para el plato más pedido
 export interface TopMeal {
@@ -75,89 +74,78 @@ export const useProviderDashboardStats = () => {
       };
     }
     
-    // 2. Obtener pedidos para hoy
-    const { data: todayOrders, error: todayOrdersError } = await supabase
+    // Fetch orders and lunch options in a single request with inner joins
+    // This reduces the number of requests significantly
+    const { data: orders, error: ordersError } = await supabase
       .from('orders')
-      .select('id, company_id, lunch_option_id, status')
-      .in('company_id', companyIds)
-      .eq('date', today);
-      
-    if (todayOrdersError) throw todayOrdersError;
-    
-    // Calcular estadísticas de pedidos hoy
-    const ordersToday = todayOrders?.length || 0;
-    const totalMealsToday = todayOrders?.length || 0;
-    const uniqueCompanies = [...new Set(todayOrders?.map(order => order.company_id) || [])];
-    const companiesWithOrdersToday = uniqueCompanies.length;
-    const pendingOrdersCount = todayOrders?.filter(order => order.status === 'pending').length || 0;
-    
-    // 3. Obtener pedidos del mes actual
-    const { data: monthOrders, error: monthOrdersError } = await supabase
-      .from('orders')
-      .select('id, lunch_option_id')
+      .select(`
+        id, 
+        company_id, 
+        lunch_option_id, 
+        status, 
+        date,
+        lunch_options:lunch_option_id(id, name, price)
+      `)
       .in('company_id', companyIds)
       .gte('date', `${currentMonth}-01`)
       .lte('date', today);
       
-    if (monthOrdersError) throw monthOrdersError;
+    if (ordersError) throw ordersError;
     
-    const monthlyOrders = monthOrders?.length || 0;
+    // Filter today's orders
+    const todayOrders = orders?.filter(order => order.date === today) || [];
     
-    // 4. Calcular ingresos y plato más pedido
+    // Calculate statistics
+    const ordersToday = todayOrders.length;
+    const totalMealsToday = todayOrders.length;
+    const uniqueCompanies = [...new Set(todayOrders.map(order => order.company_id))];
+    const companiesWithOrdersToday = uniqueCompanies.length;
+    const pendingOrdersCount = todayOrders.filter(order => order.status === 'pending').length;
+    const monthlyOrders = orders?.length || 0;
+    
+    // Calculate revenue
     let monthlyRevenue = 0;
+    orders?.forEach(order => {
+      if (order.lunch_options && order.lunch_options.price) {
+        monthlyRevenue += Number(order.lunch_options.price);
+      }
+    });
+    
+    // Calculate most ordered dish today
     let topOrderedMeal: TopMeal = { name: 'No hay datos', count: 0 };
     
-    if (monthOrders && monthOrders.length > 0) {
-      const lunchOptionIds = monthOrders.map(order => order.lunch_option_id);
-      const { data: lunchOptions, error: lunchOptionsError } = await supabase
-        .from('lunch_options')
-        .select('id, name, price')
-        .in('id', lunchOptionIds);
-        
-      if (lunchOptionsError) throw lunchOptionsError;
+    if (todayOrders.length > 0) {
+      const mealCount: {[key: string]: {count: number, name: string}} = {};
       
-      // Crear un mapa de id -> precio para facilitar el cálculo
-      const priceMap = new Map();
-      const nameMap = new Map();
-      lunchOptions?.forEach(option => {
-        priceMap.set(option.id, option.price);
-        nameMap.set(option.id, option.name);
-      });
-      
-      // Calcular ingresos totales
-      monthOrders.forEach(order => {
-        const price = priceMap.get(order.lunch_option_id) || 0;
-        monthlyRevenue += Number(price);
-      });
-      
-      // Calcular el plato más pedido
-      if (todayOrders && todayOrders.length > 0) {
-        const mealCount = {};
-        
-        // Contar apariciones de cada plato
-        todayOrders.forEach(order => {
+      // Count occurrences of each dish
+      todayOrders.forEach(order => {
+        if (order.lunch_options) {
           const id = order.lunch_option_id;
-          mealCount[id] = (mealCount[id] || 0) + 1;
-        });
-        
-        // Encontrar el ID del plato más pedido
-        let topMealId = null;
-        let maxCount = 0;
-        
-        Object.keys(mealCount).forEach(id => {
-          if (mealCount[id] > maxCount) {
-            maxCount = mealCount[id];
-            topMealId = id;
+          const name = order.lunch_options.name;
+          
+          if (!mealCount[id]) {
+            mealCount[id] = { count: 0, name };
           }
-        });
-        
-        // Establecer el nombre del plato más pedido
-        if (topMealId && nameMap.get(topMealId)) {
-          topOrderedMeal = {
-            name: nameMap.get(topMealId),
-            count: maxCount
-          };
+          mealCount[id].count += 1;
         }
+      });
+      
+      // Find the most popular dish
+      let maxCount = 0;
+      let topMealId = null;
+      
+      Object.entries(mealCount).forEach(([id, data]) => {
+        if (data.count > maxCount) {
+          maxCount = data.count;
+          topMealId = id;
+        }
+      });
+      
+      if (topMealId && mealCount[topMealId]) {
+        topOrderedMeal = {
+          name: mealCount[topMealId].name,
+          count: mealCount[topMealId].count
+        };
       }
     }
     
@@ -172,13 +160,16 @@ export const useProviderDashboardStats = () => {
     };
   };
 
-  // Usar React Query para gestionar la solicitud y el estado
+  // Use React Query with caching to prevent excessive requests
   const { data, isLoading, error } = useQuery({
-    queryKey: ['providerStats', providerId, companyId], // Añadir companyId como dependencia
+    queryKey: ['providerStats', providerId, companyId],
     queryFn: fetchStats,
-    enabled: !!(providerId || companyId), // Ejecutar si hay provider_id o company_id
-    staleTime: 300000, // 5 minutos
+    enabled: !!(providerId || companyId),
+    staleTime: 300000, // 5 minutes
     refetchOnWindowFocus: false,
+    // Prevent excessive refetching
+    refetchInterval: false,
+    refetchOnMount: false,
   });
 
   // Return all the individual loading states that the ProviderDashboard expects

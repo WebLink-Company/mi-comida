@@ -39,9 +39,9 @@ const StatCard: React.FC<StatCardProps> = ({
     
     if (value === null || value === undefined) return "Sin datos";
     
-    // Handle TopMeal object type
+    // Handle TopMeal object type - convert it to string for rendering
     if (typeof value === 'object' && value !== null && 'name' in value) {
-      return value.name;
+      return String(value.name);
     }
     
     // Handle currency-related titles

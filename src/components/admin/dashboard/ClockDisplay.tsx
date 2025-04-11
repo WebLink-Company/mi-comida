@@ -56,8 +56,6 @@ export const ClockDisplay: React.FC<ClockDisplayProps> = ({ user, quickActions }
         <div className="mt-2 text-white/60 text-base font-light fade-up" style={{ animationDelay: "0.4s" }}>
           ¿En qué te gustaría trabajar hoy?
         </div>
-
-        {/* Quick action badges - moved to main dashboard page for better spacing */}
       </div>
     </div>
   );

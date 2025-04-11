@@ -56,17 +56,89 @@ const ProviderDashboard = () => {
 
         setProviderName(providerData?.business_name || '');
         
-        // Fetch essential stats in a single query (significantly reduced payload)
-        // We'll do this later based on user interaction to avoid excessive queries
+        // Get company IDs for this provider
+        const { data: companies, error: companiesError } = await supabase
+          .from('companies')
+          .select('id')
+          .eq('provider_id', user.provider_id);
         
+        if (companiesError) {
+          throw companiesError;
+        }
+        
+        const companyIds = companies?.map(company => company.id) || [];
+        
+        // Get current month information
+        const today = new Date();
+        const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        const formattedToday = today.toISOString().split('T')[0];
+        const formattedFirstDay = firstDayOfMonth.toISOString().split('T')[0];
+        
+        // Fetch monthly orders - look for orders in the current month with status of approved or delivered
+        const { data: monthlyOrders, error: monthlyOrdersError } = await supabase
+          .from('orders')
+          .select(`
+            id,
+            lunch_option:lunch_option_id(price)
+          `)
+          .in('company_id', companyIds)
+          .gte('date', formattedFirstDay)
+          .lte('date', formattedToday)
+          .in('status', ['approved', 'delivered']);
+        
+        if (monthlyOrdersError) {
+          throw monthlyOrdersError;
+        }
+        
+        console.log(`Found ${monthlyOrders?.length || 0} monthly orders for provider ${user.provider_id}`);
+        console.log('Monthly orders:', monthlyOrders);
+        
+        // Calculate monthly revenue
+        let totalRevenue = 0;
+        if (monthlyOrders && monthlyOrders.length > 0) {
+          totalRevenue = monthlyOrders.reduce((sum, order) => {
+            const price = order.lunch_option?.price || 0;
+            return sum + Number(price);
+          }, 0);
+        }
+        
+        // Fetch today's orders
+        const { data: todayOrders, error: todayOrdersError } = await supabase
+          .from('orders')
+          .select('id')
+          .in('company_id', companyIds)
+          .eq('date', formattedToday)
+          .in('status', ['approved', 'delivered']);
+        
+        if (todayOrdersError) {
+          throw todayOrdersError;
+        }
+        
+        // Fetch pending orders
+        const { data: pendingOrders, error: pendingOrdersError } = await supabase
+          .from('orders')
+          .select('id')
+          .in('company_id', companyIds)
+          .eq('status', 'pending');
+        
+        if (pendingOrdersError) {
+          throw pendingOrdersError;
+        }
+        
+        // Update dashboard stats
         setDashboardStats({
-          ordersToday: 0,
-          totalMealsToday: 0,
+          ordersToday: todayOrders?.length || 0,
+          totalMealsToday: todayOrders?.length || 0,
           activeCompanies: activeCompanies,
-          pendingOrders: 0,
-          monthlyOrders: 0,
-          monthlyRevenue: 0,
+          pendingOrders: pendingOrders?.length || 0,
+          monthlyOrders: monthlyOrders?.length || 0, 
+          monthlyRevenue: totalRevenue,
           newUsers: 0
+        });
+        
+        console.log('Dashboard stats updated:', {
+          monthlyOrders: monthlyOrders?.length || 0,
+          monthlyRevenue: totalRevenue
         });
       } catch (error) {
         console.error('Error al obtener datos del proveedor:', error);
@@ -133,10 +205,10 @@ const ProviderDashboard = () => {
   // Display a simple message about the dashboard metrics being temporarily disabled
   const dashboardInfo = () => (
     <div className="glass p-6 rounded-lg border border-orange-500/30 mb-6">
-      <h3 className="text-lg font-medium text-white mb-2">Métricas en Mantenimiento</h3>
+      <h3 className="text-lg font-medium text-white mb-2">Métricas en Tiempo Real</h3>
       <p className="text-white/70">
-        Las métricas del panel están temporalmente deshabilitadas para optimización.
-        Por favor, utilice las páginas específicas para ver información detallada.
+        Las métricas del panel muestran datos actualizados del mes en curso.
+        Para ver información más detallada, utilice las páginas específicas.
       </p>
     </div>
   );

@@ -53,9 +53,9 @@ const CompaniesPage = () => {
   const fetchCompanies = async () => {
     setLoading(true);
     try {
-      console.log(`Fetching companies for provider_id: ${user?.provider_id}`);
+      console.log(`Buscando empresas para provider_id: ${user?.provider_id}`);
       
-      // Debug: print the query being made
+      // Debug: imprimir la consulta que se está haciendo
       console.log(`QUERY: SELECT * FROM companies WHERE provider_id = '${user?.provider_id}'`);
       
       const { data, error } = await supabase
@@ -65,17 +65,17 @@ const CompaniesPage = () => {
         .order('name');
 
       if (error) {
-        console.error('Error in companies query:', error);
+        console.error('Error en consulta de empresas:', error);
         throw error;
       }
       
-      console.log('Companies fetched:', data);
+      console.log('Empresas encontradas:', data);
       setCompanies(data || []);
     } catch (error) {
-      console.error('Error fetching companies:', error);
+      console.error('Error al buscar empresas:', error);
       toast({
         title: 'Error',
-        description: 'Failed to fetch companies',
+        description: 'No se pudieron cargar las empresas',
         variant: 'destructive',
       });
     } finally {
@@ -86,8 +86,8 @@ const CompaniesPage = () => {
   const handleCreateOrUpdate = async () => {
     if (!currentCompany.name) {
       toast({
-        title: 'Missing fields',
-        description: 'Company name is required.',
+        title: 'Campos faltantes',
+        description: 'El nombre de la empresa es obligatorio.',
         variant: 'destructive',
       });
       return;
@@ -95,8 +95,8 @@ const CompaniesPage = () => {
 
     if (!user?.provider_id) {
       toast({
-        title: 'Authentication error',
-        description: 'You must be logged in as a provider to create companies.',
+        title: 'Error de autenticación',
+        description: 'Debe iniciar sesión como proveedor para crear empresas.',
         variant: 'destructive',
       });
       return;
@@ -105,58 +105,58 @@ const CompaniesPage = () => {
     try {
       const isNew = !currentCompany.id;
       
-      // For provider users, we'll ALWAYS use their own provider_id
-      // This is crucial to satisfy the RLS policy
+      // Para usuarios proveedores, SIEMPRE usamos su propio provider_id
+      // Esto es crucial para satisfacer la política RLS
       const companyData = {
         name: currentCompany.name,
-        provider_id: user.provider_id, // Always use the authenticated provider's ID
+        provider_id: user.provider_id, // Siempre use el ID del proveedor autenticado
         subsidy_percentage: currentCompany.subsidy_percentage || 0,
         fixed_subsidy_amount: currentCompany.fixed_subsidy_amount || 0,
       };
 
-      console.log('Creating/updating company with data:', companyData);
+      console.log('Creando/actualizando empresa con datos:', companyData);
 
       if (isNew) {
-        // For new companies, insert with the provider's ID
+        // Para nuevas empresas, insertar con el ID del proveedor
         const { data, error } = await supabase
           .from('companies')
           .insert(companyData);
 
         if (error) {
-          console.error('Error in company operation:', error);
+          console.error('Error en operación de empresa:', error);
           throw error;
         }
 
-        console.log('Company operation successful:', data);
+        console.log('Operación de empresa exitosa:', data);
       } else {
-        // For updates, we still ensure provider_id is set correctly
-        // and we're only updating the company if it belongs to this provider (RLS will enforce this)
+        // Para actualizaciones, aseguramos que provider_id esté configurado correctamente
+        // y solo estamos actualizando la empresa si pertenece a este proveedor (RLS aplicará esto)
         const { data, error } = await supabase
           .from('companies')
           .update(companyData)
           .eq('id', currentCompany.id);
 
         if (error) {
-          console.error('Error in company operation:', error);
+          console.error('Error en operación de empresa:', error);
           throw error;
         }
 
-        console.log('Company operation successful:', data);
+        console.log('Operación de empresa exitosa:', data);
       }
       
       toast({
-        title: isNew ? 'Company created' : 'Company updated',
-        description: `Successfully ${isNew ? 'created' : 'updated'} company "${currentCompany.name}".`,
+        title: isNew ? 'Empresa creada' : 'Empresa actualizada',
+        description: `${isNew ? 'Creada' : 'Actualizada'} exitosamente la empresa "${currentCompany.name}".`,
       });
 
       fetchCompanies();
       setIsDialogOpen(false);
       resetCompanyForm();
     } catch (error) {
-      console.error('Error saving company:', error);
+      console.error('Error al guardar empresa:', error);
       toast({
         title: 'Error',
-        description: 'Failed to save company',
+        description: 'No se pudo guardar la empresa',
         variant: 'destructive',
       });
     }
@@ -174,18 +174,18 @@ const CompaniesPage = () => {
       if (error) throw error;
 
       toast({
-        title: 'Company deleted',
-        description: `Successfully deleted company "${currentCompany.name}".`,
+        title: 'Empresa eliminada',
+        description: `Se eliminó exitosamente la empresa "${currentCompany.name}".`,
       });
 
       fetchCompanies();
       setIsDeleteDialogOpen(false);
       resetCompanyForm();
     } catch (error) {
-      console.error('Error deleting company:', error);
+      console.error('Error al eliminar empresa:', error);
       toast({
         title: 'Error',
-        description: 'Failed to delete company',
+        description: 'No se pudo eliminar la empresa',
         variant: 'destructive',
       });
     }
@@ -226,21 +226,21 @@ const CompaniesPage = () => {
     <div className="container mx-auto px-4 py-8 max-w-7xl">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold mb-2 text-white">Company Management</h1>
-          <p className="text-white/70">Manage your companies and their settings</p>
+          <h1 className="text-3xl font-bold mb-2 text-white">Gestión de Empresas</h1>
+          <p className="text-white/70">Administre sus empresas y su configuración</p>
         </div>
-        <Button className="mt-4 md:mt-0" onClick={openCreateDialog}>
+        <Button className="mt-4 md:mt-0 glass-dark" onClick={openCreateDialog}>
           <Plus className="mr-2 h-4 w-4" />
-          Add Company
+          Agregar Empresa
         </Button>
       </div>
 
-      <Card className="bg-white/10 border-white/20 text-white">
+      <Card className="neo-blur text-white">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Your Companies</CardTitle>
+          <CardTitle>Sus Empresas</CardTitle>
           <div className="w-72">
             <Input
-              placeholder="Search companies..."
+              placeholder="Buscar empresas..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="bg-white/20 border-white/20"
@@ -252,24 +252,24 @@ const CompaniesPage = () => {
             <Table>
               <TableHeader>
                 <TableRow className="border-white/10 hover:bg-white/5">
-                  <TableHead className="text-white/70">Company Name</TableHead>
-                  <TableHead className="text-white/70">Subsidy %</TableHead>
-                  <TableHead className="text-white/70">Fixed Subsidy</TableHead>
-                  <TableHead className="text-white/70">Created</TableHead>
-                  <TableHead className="text-right text-white/70">Actions</TableHead>
+                  <TableHead className="text-white/70">Nombre de Empresa</TableHead>
+                  <TableHead className="text-white/70">Subsidio %</TableHead>
+                  <TableHead className="text-white/70">Subsidio Fijo</TableHead>
+                  <TableHead className="text-white/70">Creada</TableHead>
+                  <TableHead className="text-right text-white/70">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center py-8 text-white/70">
-                      Loading companies...
+                      Cargando empresas...
                     </TableCell>
                   </TableRow>
                 ) : filteredCompanies.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center py-8 text-white/70">
-                      {searchTerm ? 'No companies matching your search' : 'No companies found. Add your first company!'}
+                      {searchTerm ? 'No hay empresas que coincidan con su búsqueda' : 'No se encontraron empresas. ¡Agregue su primera empresa!'}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -308,19 +308,19 @@ const CompaniesPage = () => {
         </CardContent>
       </Card>
 
-      {/* Create/Edit Dialog */}
+      {/* Diálogo Crear/Editar */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="bg-white/10 border-white/20 text-white max-w-md">
+        <DialogContent className="neo-blur text-white max-w-md">
           <DialogHeader>
-            <DialogTitle>{currentCompany.id ? 'Edit Company' : 'Create Company'}</DialogTitle>
+            <DialogTitle className="text-gradient">{currentCompany.id ? 'Editar Empresa' : 'Crear Empresa'}</DialogTitle>
             <DialogDescription className="text-white/70">
-              {currentCompany.id ? 'Update company information' : 'Add a new company to your portfolio'}
+              {currentCompany.id ? 'Actualizar información de la empresa' : 'Agregar una nueva empresa a su portafolio'}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <label htmlFor="name" className="text-right text-white/70">
-                Name
+                Nombre
               </label>
               <Input
                 id="name"
@@ -331,7 +331,7 @@ const CompaniesPage = () => {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <label htmlFor="subsidy" className="text-right text-white/70">
-                Subsidy %
+                Subsidio %
               </label>
               <Input
                 id="subsidy"
@@ -348,7 +348,7 @@ const CompaniesPage = () => {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <label htmlFor="fixed" className="text-right text-white/70">
-                Fixed $
+                Subsidio Fijo $
               </label>
               <Input
                 id="fixed"
@@ -365,31 +365,31 @@ const CompaniesPage = () => {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-              Cancel
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="glass-dark">
+              Cancelar
             </Button>
-            <Button onClick={handleCreateOrUpdate}>
-              {currentCompany.id ? 'Update' : 'Create'}
+            <Button onClick={handleCreateOrUpdate} className="glass">
+              {currentCompany.id ? 'Actualizar' : 'Crear'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
+      {/* Diálogo de Confirmación de Eliminación */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent className="bg-white/10 border-white/20 text-white max-w-md">
+        <DialogContent className="neo-blur text-white max-w-md">
           <DialogHeader>
-            <DialogTitle>Delete Company</DialogTitle>
+            <DialogTitle className="text-gradient">Eliminar Empresa</DialogTitle>
             <DialogDescription className="text-white/70">
-              Are you sure you want to delete "{currentCompany.name}"? This action cannot be undone.
+              ¿Está seguro que desea eliminar "{currentCompany.name}"? Esta acción no se puede deshacer.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
-              Cancel
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} className="glass-dark">
+              Cancelar
             </Button>
             <Button variant="destructive" onClick={handleDelete}>
-              Delete
+              Eliminar
             </Button>
           </DialogFooter>
         </DialogContent>

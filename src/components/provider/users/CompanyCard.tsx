@@ -14,7 +14,7 @@ interface CompanyCardProps {
 const CompanyCard: React.FC<CompanyCardProps> = ({ company, onClick }) => {
   return (
     <Card 
-      className="bg-blue-600 text-white rounded-lg shadow-lg transition-all duration-200 cursor-pointer hover:shadow-xl"
+      className="neo-blur text-white rounded-lg shadow-lg transition-all duration-200 cursor-pointer hover:shadow-xl"
       onClick={onClick}
     >
       <CardContent className="p-6 flex items-center justify-between">

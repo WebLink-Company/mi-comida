@@ -9,7 +9,7 @@ import {
   ToastViewport,
 } from "@/components/ui/toast"
 import { motion, AnimatePresence } from "framer-motion"
-import { useRef, memo } from "react"
+import { memo, useRef } from "react"
 
 // Memoize individual toast to prevent unnecessary re-renders
 const MemoizedToast = memo(({ 
@@ -25,11 +25,10 @@ const MemoizedToast = memo(({
     animate={{ opacity: 1, y: 0, scale: 1 }}
     exit={{ opacity: 0, y: 10, scale: 0.9 }}
     transition={{ 
-      duration: 0.4, 
+      duration: 0.3, 
       ease: "easeOut"
     }}
     className="z-[100]"
-    layout
   >
     <Toast key={id} {...props}>
       <div className="grid gap-1">
@@ -48,14 +47,14 @@ MemoizedToast.displayName = 'MemoizedToast';
 
 export function Toaster() {
   const { toasts } = useToast()
-  const renderedToastsRef = useRef(new Set<string>())
-
+  const processedToastsRef = useRef(new Set<string>())
+  
   return (
     <ToastProvider>
-      <AnimatePresence>
-        {toasts.map(function ({ id, title, description, action, ...props }) {
-          // Mark this toast as rendered to avoid flicker during re-renders
-          renderedToastsRef.current.add(id)
+      <AnimatePresence mode="sync">
+        {toasts.map(({ id, title, description, action, ...props }) => {
+          // Mark this toast as processed
+          processedToastsRef.current.add(id)
           
           return (
             <MemoizedToast

@@ -164,22 +164,22 @@ function dispatch(action: Action) {
 
 type Toast = Omit<ToasterToast, "id">
 
-// Keep track of recently shown toasts to prevent duplicates
-const recentToasts = new Map<string, number>();
-const TOAST_DEBOUNCE_MS = 3000; // 3 seconds
+// Add a debounce mechanism to prevent multiple toasts with the same content
+const toastHistory = new Map<string, number>();
+const TOAST_COOLDOWN_MS = 3000; // 3 seconds cooldown between identical toasts
 
 function toast({ ...props }: Toast) {
   const id = genId()
   
-  // Create a hash key based on toast content to identify duplicates
-  const contentKey = `${props.title}-${props.description}`;
+  // Create a simple hash based on toast content
+  const contentKey = `${props.title || ''}-${props.description || ''}`;
   const now = Date.now();
   
-  // Check if this toast was recently shown (debounce)
-  if (recentToasts.has(contentKey)) {
-    const lastShown = recentToasts.get(contentKey) || 0;
-    if (now - lastShown < TOAST_DEBOUNCE_MS) {
-      // Don't show duplicate toast within debounce period
+  // Check if this exact toast was shown recently
+  if (contentKey.length > 0 && toastHistory.has(contentKey)) {
+    const lastShown = toastHistory.get(contentKey) || 0;
+    if (now - lastShown < TOAST_COOLDOWN_MS) {
+      // Skip showing duplicate toast during cooldown
       return {
         id,
         dismiss: () => {},
@@ -188,13 +188,15 @@ function toast({ ...props }: Toast) {
     }
   }
   
-  // Record this toast as recently shown
-  recentToasts.set(contentKey, now);
-  
-  // Clean up old entries from recentToasts map
-  setTimeout(() => {
-    recentToasts.delete(contentKey);
-  }, TOAST_DEBOUNCE_MS);
+  // Record this toast
+  if (contentKey.length > 0) {
+    toastHistory.set(contentKey, now);
+    
+    // Clean up old entries after cooldown period
+    setTimeout(() => {
+      toastHistory.delete(contentKey);
+    }, TOAST_COOLDOWN_MS);
+  }
 
   const update = (props: ToasterToast) =>
     dispatch({
@@ -203,17 +205,10 @@ function toast({ ...props }: Toast) {
     })
   const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id })
 
-  // Ensure duration is set
-  const finalProps = { 
-    ...props,
-    // Default to 5s duration if none provided
-    duration: props.duration || 5000,
-  };
-
   dispatch({
     type: "ADD_TOAST",
     toast: {
-      ...finalProps,
+      ...props,
       id,
       open: true,
       onOpenChange: (open) => {

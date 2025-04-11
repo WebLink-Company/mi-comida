@@ -19,6 +19,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [authChecked, setAuthChecked] = useState(false); 
   const { toast } = useToast();
   const refreshInProgress = useRef(false);
+  const lastRefreshAttempt = useRef(0);
+  const MIN_REFRESH_INTERVAL = 2000; // 2 seconds
 
   // Add function to update JWT claims for admin users
   const updateJwtClaimsIfAdmin = async () => {
@@ -40,6 +42,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Prevent concurrent refresh calls
     if (refreshInProgress.current) return;
     
+    // Check if we're trying to refresh too frequently
+    const now = Date.now();
+    if (now - lastRefreshAttempt.current < MIN_REFRESH_INTERVAL) {
+      console.log('Refresh attempted too soon, skipping...');
+      return;
+    }
+    
+    lastRefreshAttempt.current = now;
+    
     try {
       refreshInProgress.current = true;
       setIsLoading(true);
@@ -59,7 +70,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
         
         if (profile) {
-          console.log('User profile loaded:', profile);
           setUser({
             id: profile.id,
             first_name: profile.first_name,
@@ -75,7 +85,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           
           // If the user is an admin, update their JWT claims
           if (profile.role === 'admin') {
-            updateJwtClaimsIfAdmin();
+            setTimeout(() => {
+              updateJwtClaimsIfAdmin();
+            }, 100);
           }
         }
       } else {
@@ -106,47 +118,63 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     // Create a flag to prevent multiple initializations
     let isMounted = true;
+    let authSubscription: { unsubscribe: () => void } | null = null;
     
-    // Only fetch the initial session once to prevent loops
-    if (!authChecked) {
-      supabase.auth.getSession().then(({ data }) => {
-        if (!isMounted) return;
-        
-        if (data.session) {
-          refreshUser();
-        } else {
-          setUser(null);
-          setIsLoading(false);
-          setAuthChecked(true);
+    // Handle the initial session check and set up the auth listener
+    const setupAuth = async () => {
+      try {
+        // Only fetch the initial session once to prevent loops
+        if (!authChecked) {
+          const { data } = await supabase.auth.getSession();
+          
+          if (!isMounted) return;
+          
+          if (data.session) {
+            refreshUser();
+          } else {
+            setUser(null);
+            setIsLoading(false);
+            setAuthChecked(true);
+          }
         }
-      }).catch(error => {
-        console.error("Initial auth check failed:", error);
+        
+        // Set up auth listener only once with better error handling
+        const { data } = supabase.auth.onAuthStateChange((event, session) => {
+          if (!isMounted) return;
+          
+          console.log("Auth state change:", event);
+          
+          // Prevent handling the same events multiple times
+          if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && !refreshInProgress.current) {
+            // Use setTimeout to prevent potential deadlocks with Supabase client
+            setTimeout(() => {
+              refreshUser();
+            }, 0);
+          } else if (event === 'SIGNED_OUT') {
+            setUser(null);
+            setAuthChecked(true);
+            setIsLoading(false);
+          }
+        });
+        
+        authSubscription = data.subscription;
+      } catch (error) {
+        console.error("Auth setup error:", error);
         if (isMounted) {
           setIsLoading(false);
           setAuthChecked(true);
           setUser(null);
         }
-      });
-    }
-    
-    // Set up auth listener only once with better error handling
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!isMounted) return;
-      
-      console.log("Auth state change:", event);
-      // Prevent handling the same events multiple times
-      if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && !refreshInProgress.current) {
-        refreshUser();
-      } else if (event === 'SIGNED_OUT') {
-        setUser(null);
-        setAuthChecked(true);
-        setIsLoading(false);
       }
-    });
-
+    };
+    
+    setupAuth();
+    
     return () => {
       isMounted = false;
-      subscription.unsubscribe();
+      if (authSubscription) {
+        authSubscription.unsubscribe();
+      }
     };
   }, [authChecked]); 
 

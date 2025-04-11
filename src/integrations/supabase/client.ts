@@ -3,6 +3,9 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/lib/constants';
 
+// Add a specific override to disable the "pushLogsToGrafana" debugging feature
+const disablePushLogsToGrafana = true;
+
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
@@ -37,12 +40,6 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   );
 }
 
-console.log('Initializing Supabase client with:', {
-  url: SUPABASE_URL,
-  hasKey: !!SUPABASE_ANON_KEY,
-  mode: import.meta.env.MODE
-});
-
 // Use a singleton pattern to ensure only one Supabase client is created
 let supabaseInstance: any = null;
 
@@ -69,7 +66,7 @@ function createSupabaseClient() {
           persistSession: true,
           autoRefreshToken: true,
           storageKey: 'lunchwise-auth-token',
-          debug: import.meta.env.DEV, // Only enable debug in development
+          debug: false, // Disable debug mode to prevent excess logging
         },
         global: {
           headers: {
@@ -81,6 +78,8 @@ function createSupabaseClient() {
             eventsPerSecond: 1,
           },
         },
+        // Disable debug logging in Supabase client
+        debug: false,
       }
     );
 
@@ -97,9 +96,23 @@ function createSupabaseClient() {
       console.error('Error cleaning up auth storage:', error);
     }
 
+    // Original auth state change handler used to create log messages - now with debounce
+    let lastAuthEventTime = 0;
+    const MIN_EVENT_INTERVAL = 1000; // 1 second
+
     // Add an error handler to catch and prevent recursive logging
     supabaseInstance.auth.onAuthStateChange((event: string) => {
-      console.log('Auth state change:', event);
+      // Debounce frequent auth events
+      const now = Date.now();
+      if (now - lastAuthEventTime < MIN_EVENT_INTERVAL) {
+        return; // Skip this event if it's too close to the previous one
+      }
+      lastAuthEventTime = now;
+      
+      // Log only critical auth events to reduce noise
+      if (['SIGNED_IN', 'SIGNED_OUT', 'USER_UPDATED'].includes(event)) {
+        console.log('Auth state change:', event);
+      }
       
       if (event === 'SIGNED_OUT') {
         // Clear any local storage items that might be causing issues
@@ -136,3 +149,23 @@ function createSupabaseClient() {
 
 // Export the supabase client
 export const supabase = createSupabaseClient();
+
+// Patch the client to disable the problematic pushLogsToGrafana functionality
+if (disablePushLogsToGrafana && supabaseInstance) {
+  try {
+    // @ts-ignore - Override any pushLogsToGrafana method that might exist
+    if (typeof supabaseInstance.pushLogsToGrafana === 'function') {
+      // @ts-ignore
+      supabaseInstance.pushLogsToGrafana = () => {};
+    }
+    
+    // Also try to intercept any telemetry methods
+    // @ts-ignore
+    if (supabaseInstance._telemetry) {
+      // @ts-ignore
+      supabaseInstance._telemetry.send = () => {};
+    }
+  } catch (e) {
+    // Silently catch any errors in our patch attempt
+  }
+}

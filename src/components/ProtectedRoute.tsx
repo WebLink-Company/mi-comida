@@ -1,6 +1,6 @@
 
 import { Navigate, useLocation } from 'react-router-dom';
-import { useEffect, useState, memo } from 'react';
+import { useEffect, useState, memo, useMemo } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { UserRole } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -16,38 +16,46 @@ const ProtectedRoute = memo(({ children, allowedRoles }: ProtectedRouteProps) =>
   const location = useLocation();
   const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
 
-  // Only calculate redirect URL once when needed
-  useEffect(() => {
-    if (!isLoading && !user) {
-      setRedirectUrl("/auth");
-    } else if (!isLoading && user && !allowedRoles.includes(user.role)) {
-      // Determine redirect path based on user role
-      switch (user.role) {
-        case 'admin':
-          setRedirectUrl("/admin");
-          break;
-        case 'provider':
-          setRedirectUrl("/provider");
-          break;
-        case 'company':
-          setRedirectUrl("/company");
-          break;
-        case 'supervisor':
-          setRedirectUrl("/supervisor");
-          break;
-        case 'employee':
-          setRedirectUrl("/employee");
-          break;
-        default:
-          setRedirectUrl("/");
-          break;
-      }
-    } else {
-      setRedirectUrl(null);
-    }
-  }, [isLoading, user, allowedRoles]);
+  // Memoize allowed roles check to prevent recalculations
+  const isRoleAllowed = useMemo(() => {
+    if (!user) return false;
+    return allowedRoles.includes(user.role);
+  }, [user, allowedRoles]);
 
-  // Add max loading time
+  // Only calculate redirect URL once when needed and only if values change
+  useEffect(() => {
+    if (!isLoading) {
+      if (!user) {
+        setRedirectUrl("/auth");
+      } else if (!isRoleAllowed) {
+        // Determine redirect path based on user role - only runs when role or allowedRoles change
+        switch (user.role) {
+          case 'admin':
+            setRedirectUrl("/admin");
+            break;
+          case 'provider':
+            setRedirectUrl("/provider");
+            break;
+          case 'company':
+            setRedirectUrl("/company");
+            break;
+          case 'supervisor':
+            setRedirectUrl("/supervisor");
+            break;
+          case 'employee':
+            setRedirectUrl("/employee");
+            break;
+          default:
+            setRedirectUrl("/");
+            break;
+        }
+      } else {
+        setRedirectUrl(null);
+      }
+    }
+  }, [isLoading, user, isRoleAllowed]);
+
+  // Add max loading time with cleanup
   useEffect(() => {
     let timeoutId: number | null = null;
     

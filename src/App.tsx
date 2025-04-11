@@ -3,6 +3,7 @@ import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { Toaster } from "./components/ui/toaster";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -34,6 +35,9 @@ import OrdersPage from "./pages/admin/provider/OrdersPage";
 import DeliverySettingsPage from "./pages/admin/provider/DeliverySettingsPage";
 import BillingPage from "./pages/admin/provider/BillingPage";
 import UsersProviderPage from "./pages/admin/provider/UsersPage";
+
+// Create a client
+const queryClient = new QueryClient();
 
 const AppRoutes: React.FC = () => {
   const { user } = useAuth();
@@ -101,12 +105,14 @@ const AppRoutes: React.FC = () => {
 
 function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <AppRoutes />
-        <Toaster />
-      </BrowserRouter>
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <BrowserRouter>
+          <AppRoutes />
+          <Toaster />
+        </BrowserRouter>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
 

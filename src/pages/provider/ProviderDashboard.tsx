@@ -74,16 +74,11 @@ const ProviderDashboard = () => {
         const formattedToday = today.toISOString().split('T')[0];
         const formattedFirstDay = firstDayOfMonth.toISOString().split('T')[0];
         
-        console.log('Fetching orders for companies:', companyIds);
-        console.log('Date range:', formattedFirstDay, 'to', formattedToday);
-        
-        // Fetch orders directly for tenant_id (provider_id) as a more direct approach
-        const { data: monthlyOrdersData, error: monthlyOrdersError } = await supabase
+        // Fetch monthly orders - look for orders in the current month with status of approved or delivered
+        const { data: monthlyOrders, error: monthlyOrdersError } = await supabase
           .from('orders')
           .select(`
             id,
-            status,
-            company_id,
             lunch_option:lunch_option_id(price)
           `)
           .in('company_id', companyIds)
@@ -91,74 +86,20 @@ const ProviderDashboard = () => {
           .lte('date', formattedToday)
           .in('status', ['approved', 'delivered']);
         
-        // Log the SQL query parameter values to help diagnose the issue
-        console.log('Query parameters:', {
-          companyIds: companyIds,
-          dateRange: `${formattedFirstDay} to ${formattedToday}`,
-          statuses: ['approved', 'delivered']
-        });
-        
         if (monthlyOrdersError) {
           throw monthlyOrdersError;
         }
         
-        console.log(`Found ${monthlyOrdersData?.length || 0} monthly orders for provider ${user.provider_id}`);
-        console.log('Monthly orders:', monthlyOrdersData);
+        console.log(`Found ${monthlyOrders?.length || 0} monthly orders for provider ${user.provider_id}`);
+        console.log('Monthly orders:', monthlyOrders);
         
         // Calculate monthly revenue
         let totalRevenue = 0;
-        if (monthlyOrdersData && monthlyOrdersData.length > 0) {
-          totalRevenue = monthlyOrdersData.reduce((sum, order) => {
+        if (monthlyOrders && monthlyOrders.length > 0) {
+          totalRevenue = monthlyOrders.reduce((sum, order) => {
             const price = order.lunch_option?.price || 0;
             return sum + Number(price);
           }, 0);
-        }
-        
-        // Try a more direct approach - fetch all approved/delivered orders without date filtering
-        // to see if we can get any results
-        let updatedMonthlyOrdersData = monthlyOrdersData || [];
-        
-        if (!monthlyOrdersData || monthlyOrdersData.length === 0) {
-          console.log('No monthly orders found with date filtering. Trying without date filters...');
-          
-          const { data: allOrders, error: allOrdersError } = await supabase
-            .from('orders')
-            .select(`
-              id,
-              status,
-              date,
-              company_id,
-              lunch_option:lunch_option_id(price)
-            `)
-            .in('company_id', companyIds)
-            .in('status', ['approved', 'delivered']);
-            
-          if (!allOrdersError && allOrders && allOrders.length > 0) {
-            console.log('Found some orders without date filtering:', allOrders.length);
-            console.log('Order dates:', allOrders.map(o => o.date));
-            
-            // Filter orders for current month in memory
-            const currentMonthOrders = allOrders.filter(order => {
-              const orderDate = new Date(order.date);
-              return orderDate >= firstDayOfMonth && orderDate <= today;
-            });
-            
-            console.log('Current month orders after manual filtering:', currentMonthOrders.length);
-            
-            if (currentMonthOrders.length > 0) {
-              // Update totalRevenue with manual filtered orders
-              totalRevenue = currentMonthOrders.reduce((sum, order) => {
-                const price = order.lunch_option?.price || 0;
-                return sum + Number(price);
-              }, 0);
-              
-              console.log('Updated monthly orders count:', currentMonthOrders.length);
-              console.log('Updated monthly revenue:', totalRevenue);
-              
-              // Update the orders reference for the rest of the function
-              updatedMonthlyOrdersData = currentMonthOrders;
-            }
-          }
         }
         
         // Fetch today's orders
@@ -190,13 +131,13 @@ const ProviderDashboard = () => {
           totalMealsToday: todayOrders?.length || 0,
           activeCompanies: activeCompanies,
           pendingOrders: pendingOrders?.length || 0,
-          monthlyOrders: updatedMonthlyOrdersData.length || 0, 
+          monthlyOrders: monthlyOrders?.length || 0, 
           monthlyRevenue: totalRevenue,
           newUsers: 0
         });
         
         console.log('Dashboard stats updated:', {
-          monthlyOrders: updatedMonthlyOrdersData.length || 0,
+          monthlyOrders: monthlyOrders?.length || 0,
           monthlyRevenue: totalRevenue
         });
       } catch (error) {
@@ -288,7 +229,7 @@ const ProviderDashboard = () => {
           value={dashboardStats.ordersToday}
           icon={<ShoppingBag size={20} />}
           description="Pedidos recibidos para hoy"
-          loading={loading}
+          loading={false}
           linkTo="/provider/orders"
           className="glass"
           borderColor="border-blue-500/40" 
@@ -310,7 +251,7 @@ const ProviderDashboard = () => {
           value={dashboardStats.monthlyOrders}
           icon={<CalendarDays size={20} />}
           description="Total de pedidos este mes"
-          loading={loading}
+          loading={false}
           linkTo="/provider/orders"
           className="glass"
           borderColor="border-purple-400/40"
@@ -321,7 +262,7 @@ const ProviderDashboard = () => {
           value={dashboardStats.monthlyRevenue}
           icon={<DollarSign size={20} />}
           description="Ingresos totales del mes"
-          loading={loading}
+          loading={false}
           linkTo="/provider/billing"
           className="glass"
           borderColor="border-green-500/40"

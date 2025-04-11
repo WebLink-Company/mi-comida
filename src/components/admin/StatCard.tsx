@@ -46,7 +46,7 @@ const StatCard: React.FC<StatCardProps> = ({
     
     if (typeof val === 'number') {
       if (val === 0) return '0';
-      if (title.toLowerCase().includes('facturación') || title.toLowerCase().includes('revenue')) {
+      if (title.toLowerCase().includes('revenue') || title.toLowerCase().includes('facturación')) {
         return new Intl.NumberFormat('es-ES', {
           style: 'currency',
           currency: 'USD',

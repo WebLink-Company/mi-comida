@@ -54,7 +54,7 @@ export const DashboardErrorState: React.FC<DashboardErrorStateProps> = ({
         toast({
           title: "Prueba exitosa",
           description: "La conexión a Supabase funciona correctamente",
-          variant: "success"
+          // Fixed: removed 'success' variant that isn't supported
         });
         // If test succeeds, try the original refresh
         refreshData();

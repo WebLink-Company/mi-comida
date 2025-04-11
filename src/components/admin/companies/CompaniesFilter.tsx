@@ -26,7 +26,7 @@ export const CompaniesFilter: React.FC<CompaniesFilterProps> = ({
       <div className="relative flex-1 max-w-sm">
         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Search companies..."
+          placeholder="Buscar empresas..."
           className="pl-9"
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
@@ -42,7 +42,7 @@ export const CompaniesFilter: React.FC<CompaniesFilterProps> = ({
               value={selectedProvider}
               onChange={(e) => onProviderFilterChange(e.target.value)}
             >
-              <option value="">All Providers</option>
+              <option value="">Todos los Proveedores</option>
               {providers.map((provider) => (
                 <option key={provider.id} value={provider.id}>
                   {provider.business_name}

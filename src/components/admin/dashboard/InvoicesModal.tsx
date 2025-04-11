@@ -29,15 +29,15 @@ export const InvoicesModal: React.FC<InvoicesModalProps> = ({ onClose }) => {
       onEscapeKeyDown={handleClose}
     >
       <DialogHeader>
-        <DialogTitle className="text-gradient">Review Invoices</DialogTitle>
+        <DialogTitle className="text-gradient">Revisar Facturas</DialogTitle>
         <DialogDescription className="text-white/70">
-          Manage billing and payments
+          Gestionar facturación y pagos
         </DialogDescription>
       </DialogHeader>
 
       <div className="space-y-4 my-4">
-        <p className="text-sm text-white">This will redirect you to the finance section where you can review and manage invoices.</p>
-        <p className="text-xs text-white/70">You can track payments, generate reports, and manage billing cycles.</p>
+        <p className="text-sm text-white">Esto te redirigirá a la sección de finanzas donde podrás revisar y gestionar facturas.</p>
+        <p className="text-xs text-white/70">Puedes realizar seguimiento de pagos, generar informes y gestionar ciclos de facturación.</p>
         
         <div className="flex justify-end gap-2">
           <Button 
@@ -48,7 +48,7 @@ export const InvoicesModal: React.FC<InvoicesModalProps> = ({ onClose }) => {
             }}
             className="modal-button modal-button-cancel"
           >
-            Cancel
+            Cancelar
           </Button>
           <Button 
             onClick={(e) => {
@@ -57,7 +57,7 @@ export const InvoicesModal: React.FC<InvoicesModalProps> = ({ onClose }) => {
             }}
             className="modal-button modal-button-primary"
           >
-            Go to Invoices
+            Ir a Facturas
           </Button>
         </div>
       </div>
@@ -72,7 +72,7 @@ export const InvoicesModal: React.FC<InvoicesModalProps> = ({ onClose }) => {
           }}
         >
           <DollarSign size={14} className="mr-1" />
-          Finance
+          Finanzas
         </Badge>
         <Badge 
           variant="secondary"
@@ -83,7 +83,7 @@ export const InvoicesModal: React.FC<InvoicesModalProps> = ({ onClose }) => {
           }}
         >
           <Building size={14} className="mr-1" />
-          Companies
+          Empresas
         </Badge>
       </DialogFooter>
     </DialogContent>

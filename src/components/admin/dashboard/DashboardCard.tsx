@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,12 +25,12 @@ export const DashboardCard: React.FC<DashboardCardProps> = ({
   const navigate = useNavigate();
 
   const formatValue = (value: string | number | null | undefined, label: string): string => {
-    if (value === undefined || value === null) return "No data";
+    if (value === undefined || value === null) return "Sin datos";
     
-    const isCurrency = label.toLowerCase().includes('revenue') || 
-                      label.toLowerCase().includes('billing') || 
-                      label.toLowerCase().includes('amount') ||
-                      label.toLowerCase().includes('invoice');
+    const isCurrency = label.toLowerCase().includes('ingreso') || 
+                      label.toLowerCase().includes('facturación') || 
+                      label.toLowerCase().includes('monto') ||
+                      label.toLowerCase().includes('factura');
     
     if (isCurrency) {
       if (typeof value === 'number') {
@@ -86,7 +87,7 @@ export const DashboardCard: React.FC<DashboardCardProps> = ({
         </div>
         <div className="flex justify-end mt-3">
           <Button variant="link" size="sm" className="text-white p-0 hover:text-white/80 font-medium">
-            View Details <ChevronRight size={14} className="ml-1" />
+            Ver Detalles <ChevronRight size={14} className="ml-1" />
           </Button>
         </div>
       </div>

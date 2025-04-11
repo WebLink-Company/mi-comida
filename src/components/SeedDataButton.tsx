@@ -16,14 +16,14 @@ const SeedDataButton = () => {
       const result = await seedTestData();
       setCredentials(result);
       toast({
-        title: 'Test data created',
-        description: 'Test users, provider, and company have been created successfully.',
+        title: 'Datos de prueba creados',
+        description: 'Usuarios de prueba, proveedor y empresa han sido creados correctamente.',
       });
     } catch (error) {
-      console.error('Error seeding data:', error);
+      console.error('Error al crear datos:', error);
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to seed test data',
+        description: error instanceof Error ? error.message : 'Error al crear datos de prueba',
         variant: 'destructive',
       });
     } finally {
@@ -33,9 +33,9 @@ const SeedDataButton = () => {
 
   return (
     <div className="rounded-lg border border-border p-4 mb-4">
-      <h2 className="text-xl font-semibold mb-2">Test Data Seeding</h2>
+      <h2 className="text-xl font-semibold mb-2">Creación de Datos de Prueba</h2>
       <p className="text-sm text-muted-foreground mb-4">
-        Create test users for each role with @lunchwise.app email domain. This will also create a provider and company.
+        Crea usuarios de prueba para cada rol con dominio @lunchwise.app. También se creará un proveedor y una empresa.
       </p>
       
       <Button 
@@ -47,16 +47,16 @@ const SeedDataButton = () => {
         {isSeeding ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Creating test data...
+            Creando datos de prueba...
           </>
         ) : (
-          'Create Test Data'
+          'Crear Datos de Prueba'
         )}
       </Button>
       
       {credentials && (
         <div className="mt-4 p-3 bg-muted rounded-md">
-          <h3 className="font-medium mb-2">Test User Credentials:</h3>
+          <h3 className="font-medium mb-2">Credenciales de Usuarios de Prueba:</h3>
           <div className="space-y-2 text-sm">
             {Object.entries(credentials).map(([role, creds]: [string, any]) => (
               <div key={role} className="flex justify-between">

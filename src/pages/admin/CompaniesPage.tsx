@@ -41,13 +41,13 @@ const CompaniesPage = () => {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Companies</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Empresas</h1>
           <p className="text-muted-foreground mt-2">
-            Manage all client companies registered in the platform.
+            Gestiona todas las empresas cliente registradas en la plataforma.
           </p>
         </div>
         <Button onClick={openCreateDialog} className="self-start">
-          <Plus className="mr-2 h-4 w-4" /> Create New Company
+          <Plus className="mr-2 h-4 w-4" /> Crear Nueva Empresa
         </Button>
       </div>
 
@@ -63,7 +63,7 @@ const CompaniesPage = () => {
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center">
             <Building className="mr-2 h-5 w-5" />
-            Companies Management
+            Gestión de Empresas
           </CardTitle>
           <CompaniesFilter
             search={search}

@@ -5,26 +5,26 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 const ReportsPage = () => {
   const reportTypes = [
     {
-      title: 'User Activity',
-      description: 'User registrations, logins, and activity over time',
+      title: 'Actividad de Usuarios',
+      description: 'Registros de usuarios, inicios de sesión y actividad a lo largo del tiempo',
       icon: LineChart,
       formats: ['CSV', 'PDF', 'Excel']
     },
     {
-      title: 'Order Analytics',
-      description: 'Order volumes, popular meals, and trends',
+      title: 'Análisis de Pedidos',
+      description: 'Volumen de pedidos, comidas populares y tendencias',
       icon: BarChart4,
       formats: ['CSV', 'PDF', 'Excel']
     },
     {
-      title: 'Company Engagement',
-      description: 'Company participation and subsidy utilization',
+      title: 'Participación de Empresas',
+      description: 'Participación de empresas y utilización de subsidios',
       icon: PieChart,
       formats: ['CSV', 'PDF', 'Excel']
     },
     {
-      title: 'Provider Performance',
-      description: 'Provider order fulfillment and ratings',
+      title: 'Rendimiento de Proveedores',
+      description: 'Cumplimiento de pedidos y calificaciones de proveedores',
       icon: LineChart,
       formats: ['CSV', 'PDF', 'Excel']
     }
@@ -33,9 +33,9 @@ const ReportsPage = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Reports</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Informes</h1>
         <p className="text-muted-foreground mt-2">
-          Generate and export reports for platform analytics and insights.
+          Genera y exporta informes para análisis e información de la plataforma.
         </p>
       </div>
 
@@ -55,14 +55,14 @@ const ReportsPage = () => {
                   <Calendar className="h-5 w-5 text-muted-foreground" />
                   <div className="grid grid-cols-2 gap-2 w-full">
                     <div className="flex items-center space-x-2">
-                      <span className="text-sm font-medium">From</span>
+                      <span className="text-sm font-medium">Desde</span>
                       <input 
                         type="date" 
                         className="border rounded px-2 py-1 text-sm"
                       />
                     </div>
                     <div className="flex items-center space-x-2">
-                      <span className="text-sm font-medium">To</span>
+                      <span className="text-sm font-medium">Hasta</span>
                       <input 
                         type="date" 
                         className="border rounded px-2 py-1 text-sm"
@@ -90,9 +90,9 @@ const ReportsPage = () => {
       
       <Card>
         <CardHeader>
-          <CardTitle>Report Under Construction</CardTitle>
+          <CardTitle>Informe en Construcción</CardTitle>
           <CardDescription>
-            Advanced reporting features are currently being developed.
+            Las funciones avanzadas de informes están en desarrollo.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -100,7 +100,7 @@ const ReportsPage = () => {
             <div className="text-center">
               <BarChart4 className="mx-auto h-16 w-16 text-muted-foreground/60" />
               <p className="mt-4 text-muted-foreground">
-                This section is under construction. More advanced reporting features will be available soon.
+                Esta sección está en construcción. Más funciones avanzadas de informes estarán disponibles pronto.
               </p>
             </div>
           </div>

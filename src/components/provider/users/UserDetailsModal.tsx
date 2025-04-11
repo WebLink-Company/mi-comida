@@ -67,12 +67,12 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, orders, onClo
 
       {/* Adding description for accessibility */}
       <AlertDialogDescription className="sr-only">
-        User details and recent orders for {user.first_name} {user.last_name}
+        Detalles de usuario y pedidos recientes para {user.first_name} {user.last_name}
       </AlertDialogDescription>
 
       <div className="my-3">
         <h3 className="text-sm font-medium text-white/90 mb-3 flex items-center">
-          <Package className="h-4 w-4 mr-1" /> Recent Orders
+          <Package className="h-4 w-4 mr-1" /> Pedidos Recientes
         </h3>
 
         {orders.length > 0 ? (
@@ -87,19 +87,22 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, orders, onClo
                     <div className="flex flex-col">
                       <div className="flex items-center space-x-2">
                         <span className="text-xs text-white/70">
-                          Order #{order.id.substring(0, 8)}
+                          Pedido #{order.id.substring(0, 8)}
                         </span>
                         <Badge 
                           variant={order.status === 'delivered' ? 'success' : 
                                   order.status === 'approved' ? 'secondary' : 'default'} 
                           className="capitalize text-xs bg-white/20 text-white border-white/30"
                         >
-                          {order.status}
+                          {order.status === 'delivered' ? 'Entregado' : 
+                           order.status === 'approved' ? 'Aprobado' : 
+                           order.status === 'pending' ? 'Pendiente' : 
+                           order.status === 'rejected' ? 'Rechazado' : order.status}
                         </Badge>
                       </div>
                       <div className="flex items-center mt-1 text-sm text-white/80">
                         <Calendar className="h-3 w-3 mr-1" />
-                        {format(new Date(order.date), 'MMMM d, yyyy')}
+                        {format(new Date(order.date), 'd MMMM, yyyy')}
                       </div>
                     </div>
                     <div className="flex items-center font-medium text-white">
@@ -115,7 +118,7 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, orders, onClo
           <div className="flex flex-col items-center justify-center py-8 text-center bg-white/5 rounded-lg">
             <Package className="h-8 w-8 text-white/40 mb-2" />
             <p className="text-sm text-white/70">
-              No orders found for this user
+              No se encontraron pedidos para este usuario
             </p>
           </div>
         )}
@@ -132,7 +135,7 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, orders, onClo
           }} 
           className="bg-white/10 text-white hover:bg-white/20 border-white/30"
         >
-          Close
+          Cerrar
         </Button>
       </AlertDialogFooter>
     </AlertDialogContent>

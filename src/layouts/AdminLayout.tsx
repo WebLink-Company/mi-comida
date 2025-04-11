@@ -18,7 +18,17 @@ const AdminLayout = () => {
   useEffect(() => {
     const path = location.pathname.split('/').pop() || 'dashboard';
     const title = path.charAt(0).toUpperCase() + path.slice(1);
-    document.title = `${userRole === 'admin' ? 'Admin' : 'Provider'} | ${title}`;
+    
+    // Spanish translation of role and section title
+    const roleMap = {
+      'admin': 'Administrador',
+      'provider': 'Proveedor',
+      'supervisor': 'Supervisor',
+      'employee': 'Empleado'
+    };
+    
+    const translatedRole = roleMap[userRole as keyof typeof roleMap] || 'Administrador';
+    document.title = `${translatedRole} | ${title}`;
   }, [location, userRole]);
 
   // Redirect to correct section based on user role

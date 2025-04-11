@@ -26,13 +26,13 @@ export const ClockDisplay: React.FC<ClockDisplayProps> = ({ user, quickActions }
 
   const getGreeting = () => {
     const hour = time.getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 18) return 'Good afternoon';
-    return 'Good evening';
+    if (hour < 12) return 'Buenos días';
+    if (hour < 18) return 'Buenas tardes';
+    return 'Buenas noches';
   };
 
   const getFirstName = () => {
-    return user?.first_name || 'Provider';
+    return user?.first_name || 'Proveedor';
   };
 
   return (
@@ -42,7 +42,7 @@ export const ClockDisplay: React.FC<ClockDisplayProps> = ({ user, quickActions }
         <div className="win11-clock fade-up">{getFirstName()}</div>
         
         {/* Display the date */}
-        <div className="win11-date fade-up">{format(time, 'EEEE, MMMM d')}</div>
+        <div className="win11-date fade-up">{format(time, 'EEEE, d MMMM')}</div>
         
         {/* Display the time in a smaller size under the date */}
         <div className="text-white/80 text-xl font-light mt-1 fade-up">{format(time, 'h:mm a')}</div>
@@ -51,7 +51,7 @@ export const ClockDisplay: React.FC<ClockDisplayProps> = ({ user, quickActions }
           {getGreeting()}, {getFirstName()} 👋
         </div>
         <div className="mt-2 text-white/60 text-base font-light fade-up">
-          What would you like to work on today?
+          ¿En qué te gustaría trabajar hoy?
         </div>
 
         {/* Quick action badges */}

@@ -35,15 +35,15 @@ export const ProviderSummaryCards: React.FC<ProviderSummaryCardsProps> = ({
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-semibold text-lg">{summary.name}</h3>
-              <Badge>{summary.companyCount} Companies</Badge>
+              <Badge>{summary.companyCount} Empresas</Badge>
             </div>
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div>
-                <p className="text-muted-foreground">Avg. Subsidy</p>
+                <p className="text-muted-foreground">Subsidio Prom.</p>
                 <p className="font-medium">{summary.avgSubsidy.toFixed(1)}%</p>
               </div>
               <div>
-                <p className="text-muted-foreground">Total Fixed</p>
+                <p className="text-muted-foreground">Total Fijo</p>
                 <p className="font-medium">${summary.totalFixedAmount.toFixed(2)}</p>
               </div>
             </div>

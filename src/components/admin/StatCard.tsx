@@ -51,22 +51,22 @@ const StatCard = ({
   };
 
   const formatValue = (val: string | number | undefined): string => {
-    if (val === undefined || val === null) return "No data";
+    if (val === undefined || val === null) return "Sin datos";
     
     if (typeof val === 'number') {
-      if (title.toLowerCase().includes('revenue') || title.toLowerCase().includes('billing')) {
-        return `$${val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      if (title.toLowerCase().includes('ingreso') || title.toLowerCase().includes('facturación')) {
+        return `$${val.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
       }
-      return val.toLocaleString();
+      return val.toLocaleString('es-ES');
     }
     
     // If value already has formatting (like "$X" or "X x Y")
     if (typeof val === 'string') {
-      if (val === "Loading...") return val;
+      if (val === "Loading...") return "Cargando...";
       if (val.startsWith('$')) {
         const numericPart = parseFloat(val.substring(1));
         if (!isNaN(numericPart)) {
-          return `$${numericPart.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+          return `$${numericPart.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
         }
       }
     }
@@ -118,7 +118,7 @@ const StatCard = ({
                 <p className="mt-1 text-xs text-white/70">{description}</p>
               )}
               {lastUpdated && (
-                <p className="mt-2 text-xs text-white/50">Updated {lastUpdated}</p>
+                <p className="mt-2 text-xs text-white/50">Actualizado {lastUpdated}</p>
               )}
             </div>
             
@@ -133,9 +133,9 @@ const StatCard = ({
         <Dialog open={isQuickViewOpen} onOpenChange={setIsQuickViewOpen}>
           <DialogContent className="max-w-3xl modal-glassmorphism">
             <DialogHeader>
-              <DialogTitle>{title} Preview</DialogTitle>
+              <DialogTitle>Vista previa de {title}</DialogTitle>
               <DialogDescription>
-                Recent {title.toLowerCase()} on the platform
+                {title.toLowerCase()} recientes en la plataforma
               </DialogDescription>
             </DialogHeader>
             {quickViewComponent}
@@ -147,7 +147,7 @@ const StatCard = ({
                 }}
                 className="modal-button-primary"
                 >
-                  View All
+                  Ver Todo
                 </Button>
               </div>
             )}

@@ -24,14 +24,14 @@ const DebugPoliciesButton = () => {
       }
 
       setResults(policiesData);
-      console.log('Policies data:', policiesData);
+      console.log('Datos de políticas:', policiesData);
       
       toast({
-        title: 'Policies retrieved',
-        description: 'Check the console for detailed information about the policies',
+        title: 'Políticas recuperadas',
+        description: 'Consulta la consola para obtener información detallada sobre las políticas',
       });
     } catch (error) {
-      console.error('Error debugging policies:', error);
+      console.error('Error al depurar políticas:', error);
       
       // Try a simple query to see if we can get any response
       try {
@@ -41,19 +41,19 @@ const DebugPoliciesButton = () => {
           .limit(1);
           
         if (testError) {
-          console.error('Test query error:', testError);
-          setResults({ error: 'Test query failed', details: testError });
+          console.error('Error en consulta de prueba:', testError);
+          setResults({ error: 'La consulta de prueba falló', details: testError });
         } else {
-          setResults({ message: 'Test query succeeded but policy query failed', data });
+          setResults({ message: 'La consulta de prueba tuvo éxito pero la consulta de política falló', data });
         }
       } catch (testError) {
-        console.error('Test query exception:', testError);
-        setResults({ error: 'All queries failed', original_error: error });
+        console.error('Excepción en consulta de prueba:', testError);
+        setResults({ error: 'Todas las consultas fallaron', original_error: error });
       }
       
       toast({
-        title: 'Error debugging policies',
-        description: error instanceof Error ? error.message : 'Error retrieving policy information',
+        title: 'Error al depurar políticas',
+        description: error instanceof Error ? error.message : 'Error al recuperar información de políticas',
         variant: 'destructive',
       });
     } finally {
@@ -63,9 +63,9 @@ const DebugPoliciesButton = () => {
 
   return (
     <div className="rounded-lg border border-border p-4 mb-4">
-      <h2 className="text-xl font-semibold mb-2">Debug RLS Policies</h2>
+      <h2 className="text-xl font-semibold mb-2">Depurar Políticas RLS</h2>
       <p className="text-sm text-muted-foreground mb-4">
-        This tool will help identify problematic RLS policies in the database.
+        Esta herramienta ayudará a identificar políticas RLS problemáticas en la base de datos.
       </p>
       
       <Button 
@@ -77,16 +77,16 @@ const DebugPoliciesButton = () => {
         {isLoading ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Debugging policies...
+            Depurando políticas...
           </>
         ) : (
-          'Debug RLS Policies'
+          'Depurar Políticas RLS'
         )}
       </Button>
       
       {results && (
         <div className="mt-4 p-3 bg-muted rounded-md overflow-auto max-h-[400px]">
-          <h3 className="font-medium mb-2">Policy Information:</h3>
+          <h3 className="font-medium mb-2">Información de Políticas:</h3>
           <pre className="text-xs whitespace-pre-wrap">
             {JSON.stringify(results, null, 2)}
           </pre>

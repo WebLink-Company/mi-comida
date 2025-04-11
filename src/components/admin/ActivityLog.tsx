@@ -37,36 +37,36 @@ const SAMPLE_ACTIVITIES: Activity[] = [
   {
     id: "1",
     type: "signup",
-    user: "Maria González",
-    action: "joined as a new company user",
+    user: "María González",
+    action: "se unió como nuevo usuario de empresa",
     timestamp: new Date(Date.now() - 12 * 60000)
   },
   {
     id: "2",
     type: "update",
     user: "Admin",
-    action: "updated provider 'Restaurante El Jardín' details",
+    action: "actualizó los detalles del proveedor 'Restaurante El Jardín'",
     timestamp: new Date(Date.now() - 45 * 60000)
   },
   {
     id: "3",
     type: "login",
     user: "Carlos López",
-    action: "logged in",
+    action: "inició sesión",
     timestamp: new Date(Date.now() - 120 * 60000)
   },
   {
     id: "4",
     type: "order",
     user: "Elena Martínez",
-    action: "placed a new lunch order",
+    action: "realizó un nuevo pedido de almuerzo",
     timestamp: new Date(Date.now() - 180 * 60000)
   },
   {
     id: "5",
     type: "delete",
     user: "Admin",
-    action: "removed a deactivated account",
+    action: "eliminó una cuenta desactivada",
     timestamp: new Date(Date.now() - 300 * 60000)
   }
 ];
@@ -76,21 +76,21 @@ const formatTimeAgo = (date: Date): string => {
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
   
   if (diffInSeconds < 60) {
-    return `${diffInSeconds} seconds ago`;
+    return `hace ${diffInSeconds} segundos`;
   }
   
   const diffInMinutes = Math.floor(diffInSeconds / 60);
   if (diffInMinutes < 60) {
-    return `${diffInMinutes} ${diffInMinutes === 1 ? 'minute' : 'minutes'} ago`;
+    return `hace ${diffInMinutes} ${diffInMinutes === 1 ? 'minuto' : 'minutos'}`;
   }
   
   const diffInHours = Math.floor(diffInMinutes / 60);
   if (diffInHours < 24) {
-    return `${diffInHours} ${diffInHours === 1 ? 'hour' : 'hours'} ago`;
+    return `hace ${diffInHours} ${diffInHours === 1 ? 'hora' : 'horas'}`;
   }
   
   const diffInDays = Math.floor(diffInHours / 24);
-  return `${diffInDays} ${diffInDays === 1 ? 'day' : 'days'} ago`;
+  return `hace ${diffInDays} ${diffInDays === 1 ? 'día' : 'días'}`;
 };
 
 const ActivityLog = () => {
@@ -99,7 +99,7 @@ const ActivityLog = () => {
   return (
     <Card className="h-full">
       <CardHeader className="pb-3">
-        <CardTitle>Recent Activity</CardTitle>
+        <CardTitle>Actividad Reciente</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4 overflow-auto max-h-[350px]">
         {activities.map((activity) => (

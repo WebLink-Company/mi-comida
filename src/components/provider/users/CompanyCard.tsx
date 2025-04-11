@@ -20,10 +20,10 @@ const CompanyCard: React.FC<CompanyCardProps> = ({ company, onClick }) => {
       <CardContent className="p-6 flex items-center justify-between">
         <div className="flex flex-col">
           <h3 className="font-medium text-lg text-white">
-            {company.name || `Company ${company.id.substring(0, 6)}`}
+            {company.name || `Compañía ${company.id.substring(0, 6)}`}
           </h3>
           <p className="text-sm text-white/70 mt-1">
-            Click to view users
+            Clic para ver usuarios
           </p>
         </div>
         

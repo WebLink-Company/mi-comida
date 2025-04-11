@@ -26,19 +26,19 @@ export const CompanyForm: React.FC<CompanyFormProps> = ({
       <div className="grid gap-4 py-4">
         <div className="grid gap-2">
           <Label htmlFor="company-name" className="text-white">
-            Company Name
+            Nombre de Empresa
           </Label>
           <Input
             id="company-name"
             value={currentCompany.name || ''}
             onChange={(e) => onUpdateCompany('name', e.target.value)}
-            placeholder="Enter company name"
+            placeholder="Ingrese nombre de empresa"
             className="modal-input"
           />
         </div>
         <div className="grid gap-2">
           <Label htmlFor="company-provider" className="text-white">
-            Provider
+            Proveedor
           </Label>
           <select
             id="company-provider"
@@ -46,7 +46,7 @@ export const CompanyForm: React.FC<CompanyFormProps> = ({
             value={currentCompany.provider_id || ''}
             onChange={(e) => onUpdateCompany('provider_id', e.target.value)}
           >
-            <option value="">Select a provider</option>
+            <option value="">Seleccione un proveedor</option>
             {providers.map((provider) => (
               <option key={provider.id} value={provider.id}>
                 {provider.business_name}
@@ -57,7 +57,7 @@ export const CompanyForm: React.FC<CompanyFormProps> = ({
         <div className="grid grid-cols-2 gap-4">
           <div className="grid gap-2">
             <Label htmlFor="subsidy-percentage" className="text-white">
-              Subsidy Percentage (%)
+              Porcentaje de Subsidio (%)
             </Label>
             <Input
               id="subsidy-percentage"
@@ -71,7 +71,7 @@ export const CompanyForm: React.FC<CompanyFormProps> = ({
           </div>
           <div className="grid gap-2">
             <Label htmlFor="fixed-amount" className="text-white">
-              Fixed Amount ($)
+              Monto Fijo ($)
             </Label>
             <Input
               id="fixed-amount"
@@ -86,10 +86,10 @@ export const CompanyForm: React.FC<CompanyFormProps> = ({
       </div>
       <DialogFooter>
         <Button variant="outline" onClick={onCancel} className="modal-button-cancel">
-          Cancel
+          Cancelar
         </Button>
         <Button onClick={onSave} className="modal-button-primary">
-          {currentCompany.id ? 'Save Changes' : 'Create Company'}
+          {currentCompany.id ? 'Guardar Cambios' : 'Crear Empresa'}
         </Button>
       </DialogFooter>
     </>

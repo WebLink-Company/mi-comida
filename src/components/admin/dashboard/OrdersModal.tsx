@@ -31,15 +31,15 @@ export const OrdersModal: React.FC<OrdersModalProps> = ({ onClose }) => {
       onEscapeKeyDown={handleClose}
     >
       <DialogHeader>
-        <DialogTitle className="text-gradient">View Orders</DialogTitle>
+        <DialogTitle className="text-gradient">Ver Pedidos</DialogTitle>
         <DialogDescription className="text-white/70">
-          Monitor and manage all orders
+          Monitorea y gestiona todos los pedidos
         </DialogDescription>
       </DialogHeader>
 
       <div className="space-y-4 my-4">
-        <p className="text-sm text-white">This will redirect you to the reports page where you can view all order activity.</p>
-        <p className="text-xs text-white/70">You can filter orders by date, company, provider, and status.</p>
+        <p className="text-sm text-white">Esto te redirigirá a la página de informes donde podrás ver toda la actividad de pedidos.</p>
+        <p className="text-xs text-white/70">Puedes filtrar pedidos por fecha, empresa, proveedor y estado.</p>
         
         <div className="flex justify-end gap-2">
           <Button 
@@ -50,7 +50,7 @@ export const OrdersModal: React.FC<OrdersModalProps> = ({ onClose }) => {
             }}
             className="modal-button modal-button-cancel"
           >
-            Cancel
+            Cancelar
           </Button>
           <Button 
             onClick={(e) => {
@@ -59,7 +59,7 @@ export const OrdersModal: React.FC<OrdersModalProps> = ({ onClose }) => {
             }}
             className="modal-button modal-button-primary"
           >
-            Go to Orders
+            Ir a Pedidos
           </Button>
         </div>
       </div>
@@ -74,7 +74,7 @@ export const OrdersModal: React.FC<OrdersModalProps> = ({ onClose }) => {
           }}
         >
           <ShoppingBag size={14} className="mr-1" />
-          Orders
+          Pedidos
         </Badge>
         <Badge 
           variant="secondary"
@@ -85,7 +85,7 @@ export const OrdersModal: React.FC<OrdersModalProps> = ({ onClose }) => {
           }}
         >
           <ChefHat size={14} className="mr-1" />
-          Providers
+          Proveedores
         </Badge>
       </DialogFooter>
     </DialogContent>

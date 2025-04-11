@@ -113,36 +113,35 @@ const DishCard: React.FC<DishCardProps> = ({ dish, subsidizedPrice, onSelect }) 
                   className="w-full py-2 px-4 rounded-md bg-primary/70 hover:bg-primary/90 border border-white/30 flex items-center justify-center transition-all duration-200 backdrop-blur-sm text-white shadow-sm text-sm"
                   aria-label="Seleccionar"
                 >
-                  <Check className="h-4 w-4 mr-2" /> Seleccionar
+                  Seleccionar
                 </motion.button>
               </motion.div>
             )}
           </AnimatePresence>
           
-          <div className="mt-auto flex items-center justify-between">
+          <div className="mt-auto flex items-end justify-between pt-2">
             <div className="flex flex-col">
-              <span className="text-xs text-white/60 line-through">
-                ${dish.price.toFixed(2)}
-              </span>
-              <span className="text-sm font-bold text-white">
-                ${subsidizedPrice.toFixed(2)}
-              </span>
+              <span className="text-xs text-white/60">Precio:</span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-bold text-white">${subsidizedPrice.toFixed(2)}</span>
+                {subsidizedPrice < dish.price && (
+                  <span className="text-xs line-through text-white/50">${dish.price.toFixed(2)}</span>
+                )}
+              </div>
             </div>
+            
+            {!isMobile && (
+              <motion.button
+                onClick={handleSelectClick}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="text-xs px-3 py-1 rounded-full bg-white/20 hover:bg-white/30 text-white backdrop-blur-sm border border-white/30 transition-all duration-200"
+              >
+                Seleccionar
+              </motion.button>
+            )}
           </div>
         </div>
-
-        {/* Floating action button for selection (only shown when not expanded) */}
-        {!isExpanded && (
-          <motion.button
-            onClick={handleSelectClick}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
-            className="absolute bottom-2 right-2 w-8 h-8 rounded-full bg-primary/70 hover:bg-primary border border-white/30 flex items-center justify-center transition-all duration-200 backdrop-blur-sm text-white shadow-sm"
-            aria-label="Seleccionar"
-          >
-            <Check className="h-4 w-4" />
-          </motion.button>
-        )}
       </motion.div>
     </>
   );

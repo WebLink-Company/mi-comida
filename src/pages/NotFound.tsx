@@ -10,7 +10,7 @@ const NotFound = () => {
 
   useEffect(() => {
     console.error(
-      "404 Error: User attempted to access non-existent route:",
+      "404 Error: Usuario intentó acceder a una ruta inexistente:",
       location.pathname
     );
   }, [location.pathname]);
@@ -30,15 +30,15 @@ const NotFound = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.5 }}
           >
-            <h2 className="text-2xl font-semibold mb-4">Page Not Found</h2>
+            <h2 className="text-2xl font-semibold mb-4">Página No Encontrada</h2>
             <p className="text-muted-foreground mb-8">
-              Sorry, the page you are looking for doesn't exist or has been moved.
+              Lo sentimos, la página que estás buscando no existe o ha sido movida.
             </p>
             
             <Link to="/">
               <Button size="lg" className="group">
                 <ArrowLeft className="mr-2 w-4 h-4 transition-transform group-hover:-translate-x-1" />
-                Back to Home
+                Volver al Inicio
               </Button>
             </Link>
           </motion.div>

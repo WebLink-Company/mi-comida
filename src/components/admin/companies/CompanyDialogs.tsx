@@ -33,9 +33,9 @@ export const CompanyDialogs: React.FC<CompanyDialogsProps> = ({
       <Dialog open={isDialogOpen} onOpenChange={onCloseDialog}>
         <DialogContent className="sm:max-w-md modal-glassmorphism">
           <DialogHeader>
-            <DialogTitle className="text-gradient">{currentCompany.id ? 'Edit Company' : 'Create New Company'}</DialogTitle>
+            <DialogTitle className="text-gradient">{currentCompany.id ? 'Editar Empresa' : 'Crear Nueva Empresa'}</DialogTitle>
             <DialogDescription className="text-white/70">
-              Fill in the company details below
+              Completa los detalles de la empresa a continuación
             </DialogDescription>
           </DialogHeader>
           <CompanyForm
@@ -51,20 +51,20 @@ export const CompanyDialogs: React.FC<CompanyDialogsProps> = ({
       <Dialog open={isDeleteDialogOpen} onOpenChange={onCloseDeleteDialog}>
         <DialogContent className="sm:max-w-md modal-glassmorphism">
           <DialogHeader>
-            <DialogTitle className="text-gradient">Delete Company</DialogTitle>
+            <DialogTitle className="text-gradient">Eliminar Empresa</DialogTitle>
           </DialogHeader>
           <div className="py-4">
-            <p className="text-white">Are you sure you want to delete <strong>{currentCompany.name}</strong>?</p>
+            <p className="text-white">¿Estás seguro de que deseas eliminar <strong>{currentCompany.name}</strong>?</p>
             <p className="text-sm text-white/70 mt-2">
-              This action cannot be undone. All data associated with this company will be permanently removed.
+              Esta acción no se puede deshacer. Todos los datos asociados con esta empresa se eliminarán permanentemente.
             </p>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={onCloseDeleteDialog} className="modal-button-cancel">
-              Cancel
+              Cancelar
             </Button>
             <Button variant="destructive" onClick={onDelete}>
-              Delete Company
+              Eliminar Empresa
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -37,7 +37,7 @@ const CompanyDashboard = ({ activeTab = 'dashboard' }: CompanyDashboardProps) =>
           }
         }
       } catch (error) {
-        console.error('Error fetching company data:', error);
+        console.error('Error al cargar datos de la empresa:', error);
         toast({
           title: 'Error',
           description: 'No se pudo cargar la información de la empresa.',

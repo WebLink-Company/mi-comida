@@ -23,18 +23,18 @@ export const CompaniesTable: React.FC<CompaniesTableProps> = ({
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Company Name</TableHead>
-          <TableHead>Subsidy %</TableHead>
-          <TableHead>Fixed Amount</TableHead>
-          <TableHead>Provider</TableHead>
-          <TableHead>Added Date</TableHead>
-          <TableHead className="text-right">Actions</TableHead>
+          <TableHead>Nombre de Empresa</TableHead>
+          <TableHead>Subsidio %</TableHead>
+          <TableHead>Monto Fijo</TableHead>
+          <TableHead>Proveedor</TableHead>
+          <TableHead>Fecha de Registro</TableHead>
+          <TableHead className="text-right">Acciones</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {loading ? (
           <TableRow>
-            <TableCell colSpan={6} className="text-center">Loading companies...</TableCell>
+            <TableCell colSpan={6} className="text-center">Cargando empresas...</TableCell>
           </TableRow>
         ) : companies.length > 0 ? (
           companies.map((company) => (
@@ -80,7 +80,7 @@ export const CompaniesTable: React.FC<CompaniesTableProps> = ({
           ))
         ) : (
           <TableRow>
-            <TableCell colSpan={6} className="text-center">No companies found</TableCell>
+            <TableCell colSpan={6} className="text-center">No se encontraron empresas</TableCell>
           </TableRow>
         )}
       </TableBody>

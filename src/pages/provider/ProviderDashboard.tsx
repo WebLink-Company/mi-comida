@@ -78,7 +78,7 @@ const ProviderDashboard = () => {
         console.log('Date range:', formattedFirstDay, 'to', formattedToday);
         
         // Fetch orders directly for tenant_id (provider_id) as a more direct approach
-        const { data: monthlyOrders, error: monthlyOrdersError } = await supabase
+        const { data: monthlyOrdersData, error: monthlyOrdersError } = await supabase
           .from('orders')
           .select(`
             id,
@@ -102,13 +102,13 @@ const ProviderDashboard = () => {
           throw monthlyOrdersError;
         }
         
-        console.log(`Found ${monthlyOrders?.length || 0} monthly orders for provider ${user.provider_id}`);
-        console.log('Monthly orders:', monthlyOrders);
+        console.log(`Found ${monthlyOrdersData?.length || 0} monthly orders for provider ${user.provider_id}`);
+        console.log('Monthly orders:', monthlyOrdersData);
         
         // Calculate monthly revenue
         let totalRevenue = 0;
-        if (monthlyOrders && monthlyOrders.length > 0) {
-          totalRevenue = monthlyOrders.reduce((sum, order) => {
+        if (monthlyOrdersData && monthlyOrdersData.length > 0) {
+          totalRevenue = monthlyOrdersData.reduce((sum, order) => {
             const price = order.lunch_option?.price || 0;
             return sum + Number(price);
           }, 0);
@@ -116,7 +116,9 @@ const ProviderDashboard = () => {
         
         // Try a more direct approach - fetch all approved/delivered orders without date filtering
         // to see if we can get any results
-        if (!monthlyOrders || monthlyOrders.length === 0) {
+        let updatedMonthlyOrdersData = monthlyOrdersData || [];
+        
+        if (!monthlyOrdersData || monthlyOrdersData.length === 0) {
           console.log('No monthly orders found with date filtering. Trying without date filters...');
           
           const { data: allOrders, error: allOrdersError } = await supabase
@@ -154,7 +156,7 @@ const ProviderDashboard = () => {
               console.log('Updated monthly revenue:', totalRevenue);
               
               // Update the orders reference for the rest of the function
-              monthlyOrders = currentMonthOrders;
+              updatedMonthlyOrdersData = currentMonthOrders;
             }
           }
         }
@@ -188,13 +190,13 @@ const ProviderDashboard = () => {
           totalMealsToday: todayOrders?.length || 0,
           activeCompanies: activeCompanies,
           pendingOrders: pendingOrders?.length || 0,
-          monthlyOrders: monthlyOrders?.length || 0, 
+          monthlyOrders: updatedMonthlyOrdersData.length || 0, 
           monthlyRevenue: totalRevenue,
           newUsers: 0
         });
         
         console.log('Dashboard stats updated:', {
-          monthlyOrders: monthlyOrders?.length || 0,
+          monthlyOrders: updatedMonthlyOrdersData.length || 0,
           monthlyRevenue: totalRevenue
         });
       } catch (error) {

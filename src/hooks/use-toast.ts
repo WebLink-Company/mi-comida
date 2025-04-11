@@ -148,16 +148,17 @@ export const reducer = (state: State, action: Action): State => {
   }
 }
 
-// Use a stable reference that doesn't cause re-renders
-const memoryState: State = { toasts: [] }
+// Use a variable that we can update instead of a constant
+let memoryStateValue: State = { toasts: [] }
 
 // Use a single dispatcher function
 const listeners = new Set<(state: State) => void>()
 
 function dispatch(action: Action) {
-  memoryState = reducer(memoryState, action)
+  // Update the memoryStateValue by calling reducer with existing state and action
+  memoryStateValue = reducer(memoryStateValue, action)
   listeners.forEach((listener) => {
-    listener(memoryState)
+    listener(memoryStateValue)
   })
 }
 
@@ -229,7 +230,7 @@ function toast({ ...props }: Toast) {
 }
 
 function useToast() {
-  const [state, setState] = React.useState<State>(memoryState)
+  const [state, setState] = React.useState<State>(memoryStateValue)
 
   React.useEffect(() => {
     // Use a stable function reference to prevent unnecessary re-renders

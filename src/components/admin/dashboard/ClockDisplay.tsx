@@ -4,9 +4,11 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
 import { LucideIcon } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ClockDisplayProps {
-  user: { first_name?: string } | null;
+  user: { first_name?: string; provider_id?: string } | null;
   quickActions: Array<{
     label: string;
     icon: LucideIcon;
@@ -17,6 +19,28 @@ interface ClockDisplayProps {
 
 export const ClockDisplay: React.FC<ClockDisplayProps> = ({ user, quickActions }) => {
   const [time, setTime] = useState(new Date());
+
+  // Fetch the provider business name
+  const { data: providerData } = useQuery({
+    queryKey: ['provider', user?.provider_id],
+    queryFn: async () => {
+      if (!user?.provider_id) return null;
+      
+      const { data, error } = await supabase
+        .from('providers')
+        .select('business_name')
+        .eq('id', user.provider_id)
+        .single();
+        
+      if (error) {
+        console.error('Error fetching provider data:', error);
+        return null;
+      }
+      
+      return data;
+    },
+    enabled: !!user?.provider_id,
+  });
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -40,6 +64,12 @@ export const ClockDisplay: React.FC<ClockDisplayProps> = ({ user, quickActions }
     <div className="win11-clock-container flex-grow flex flex-col items-center justify-center pb-4">
       <div className="text-center">
         <div className="win11-clock text-gradient fade-up">{getFirstName()}</div>
+        
+        {providerData?.business_name && (
+          <div className="text-primary text-lg mt-1 fade-up" style={{ animationDelay: "0.15s" }}>
+            {providerData.business_name}
+          </div>
+        )}
         
         <div className="win11-date fade-up" style={{ animationDelay: "0.1s" }}>
           {format(time, 'EEEE, d MMMM', { locale: es })}

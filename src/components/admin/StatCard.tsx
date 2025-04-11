@@ -18,6 +18,7 @@ interface StatCardProps {
   linkTo?: string;
   className?: string;
   borderColor?: string;
+  lastUpdated?: string;
 }
 
 const StatCard: React.FC<StatCardProps> = ({
@@ -29,7 +30,8 @@ const StatCard: React.FC<StatCardProps> = ({
   loading = false,
   linkTo,
   className,
-  borderColor
+  borderColor,
+  lastUpdated
 }) => {
   // Format value for display
   const displayValue = () => {
@@ -89,6 +91,12 @@ const StatCard: React.FC<StatCardProps> = ({
       {trend && !loading && (
         <div className={`text-sm mt-2 ${trend.isPositive ? 'text-green-400' : 'text-red-400'}`}>
           {trend.isPositive ? '+' : '-'}{trend.value}% desde el mes pasado
+        </div>
+      )}
+      
+      {lastUpdated && (
+        <div className="text-xs text-white/50 mt-3">
+          Actualizado: {lastUpdated}
         </div>
       )}
     </div>

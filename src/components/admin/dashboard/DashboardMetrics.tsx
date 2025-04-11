@@ -79,7 +79,6 @@ const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
         className="bg-white/10 border-blue-400/20 border text-white backdrop-blur-md"
         loading={loadingOrdersToday}
         linkTo="/provider/orders"
-        lastUpdated="just now"
       />
       
       {/* Total Meals Today */}
@@ -90,7 +89,6 @@ const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
         className="bg-white/10 border-green-400/20 border text-white backdrop-blur-md"
         loading={loadingMealsToday}
         linkTo="/provider/orders"
-        lastUpdated="just now"
       />
       
       {/* Companies with Orders Today */}
@@ -101,7 +99,6 @@ const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
         className="bg-white/10 border-yellow-400/20 border text-white backdrop-blur-md"
         loading={loadingCompaniesOrders}
         linkTo="/provider/companies"
-        lastUpdated="just now"
       />
       
       {/* Top Ordered Meal Today */}
@@ -112,7 +109,6 @@ const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
         className="bg-white/10 border-purple-400/20 border text-white backdrop-blur-md"
         loading={loadingTopMeal}
         linkTo="/provider/menu"
-        lastUpdated="just now"
       />
       
       {/* Pending Orders */}
@@ -123,7 +119,6 @@ const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
         className="bg-white/10 border-red-400/20 border text-white backdrop-blur-md"
         loading={loadingPending}
         linkTo="/provider/orders?status=pending"
-        lastUpdated="just now"
       />
       
       {/* Active Companies Total */}
@@ -134,7 +129,6 @@ const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
         className="bg-white/10 border-orange-400/20 border text-white backdrop-blur-md"
         loading={loadingActiveCompanies}
         linkTo="/provider/companies"
-        lastUpdated="just now"
       />
       
       {/* New Users This Week */}
@@ -145,7 +139,6 @@ const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
         className="bg-white/10 border-amber-400/20 border text-white backdrop-blur-md"
         loading={loadingNewUsers}
         linkTo="/provider/users?filter=new"
-        lastUpdated="just now"
       />
       
       {/* Monthly Orders Total */}
@@ -156,7 +149,6 @@ const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
         className="bg-white/10 border-blue-400/20 border text-white backdrop-blur-md"
         loading={loadingMonthlyOrders}
         linkTo="/provider/orders"
-        lastUpdated="just now"
       />
       
       {/* Total Revenue This Month */}
@@ -167,7 +159,6 @@ const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
         className="bg-white/10 border-green-400/20 border text-white backdrop-blur-md"
         loading={loadingMonthlyRevenue}
         linkTo="/provider/invoices"
-        lastUpdated="just now"
       />
     </div>
   );

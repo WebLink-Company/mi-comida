@@ -50,6 +50,21 @@ interface SupervisorDashboardProps {
   activeTab?: string;
 }
 
+// Extended Order type to include lunch_option and user relations
+interface ExtendedOrder extends Order {
+  lunch_option?: {
+    id: string;
+    name: string;
+    price: number;
+  };
+  user?: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+  };
+}
+
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
 const RADIAN = Math.PI / 180;
@@ -68,7 +83,7 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
 const SupervisorDashboard = ({ activeTab = 'dashboard' }: SupervisorDashboardProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [pendingOrders, setPendingOrders] = useState<Order[]>([]);
+  const [pendingOrders, setPendingOrders] = useState<ExtendedOrder[]>([]);
   const [employeeUsers, setEmployeeUsers] = useState<any[]>([]);
   const [lunchOptions, setLunchOptions] = useState<LunchOption[]>([]);
   const [company, setCompany] = useState<Company | null>(null);

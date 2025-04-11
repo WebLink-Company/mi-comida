@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ClockDisplay } from '@/components/admin/dashboard/ClockDisplay';
 
@@ -8,7 +8,7 @@ interface DashboardHeaderProps {
   user: { first_name?: string } | null;
   quickActions: Array<{
     label: string;
-    icon: React.ComponentType;
+    icon: LucideIcon;
     action: () => void;
     path: string;
   }>;

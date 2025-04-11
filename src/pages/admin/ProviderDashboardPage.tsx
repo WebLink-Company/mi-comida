@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -124,7 +123,7 @@ const ProviderDashboardPage = () => {
   // Fetch dashboard stats using our hook with the provider ID from user profile
   const stats = useProviderDashboardData();
   
-  // Quick actions for the provider
+  // Quick actions for the provider - make sure to use Lucide icons directly
   const quickActions = [
     {
       label: 'Agregar Empresa',

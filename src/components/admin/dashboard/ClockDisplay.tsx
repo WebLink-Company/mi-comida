@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
-import { LucideIcon, PlusCircle, Users, Package, Receipt } from 'lucide-react';
+import { LucideIcon } from 'lucide-react';
 
 interface ClockDisplayProps {
   user: { first_name?: string } | null;

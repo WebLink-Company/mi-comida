@@ -44,7 +44,7 @@ const ProviderDashboard = () => {
     loadingOrdersToday,
     totalMealsToday,
     loadingMealsToday,
-    companiesWithOrdersToday,
+    companiesWithOrdersToday: orderingCompanies,
     loadingCompaniesOrders,
     topOrderedMeal,
     loadingTopMeal,
@@ -215,7 +215,7 @@ const ProviderDashboard = () => {
 
           <StatCard
             title="Plato Más Pedido"
-            value={topOrderedMeal.name}
+            value={topOrderedMeal}
             icon={<ChefHat size={20} />}
             description={`${topOrderedMeal.count} ordenes`}
             loading={loadingTopMeal}
@@ -251,10 +251,10 @@ const ProviderDashboard = () => {
 
               <StatCard
                 title="Empresas con Pedidos"
-                value={companiesWithOrdersToday}
+                value={orderingCompanies}
                 icon={<Package size={20} />}
                 description="Empresas con pedidos para hoy"
-                loading={loadingCompanyStats}
+                loading={loadingCompaniesOrders}
                 linkTo="/provider/companies"
                 className="glass"
                 borderColor="border-orange-400/40"

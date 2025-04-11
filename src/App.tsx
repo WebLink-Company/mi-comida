@@ -7,7 +7,6 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import CompanyDashboard from "./pages/CompanyDashboard";
-import ProviderDashboard from "./pages/ProviderDashboard";
 import EmployeeDashboard from "./pages/EmployeeDashboard";
 import EmployeeDashboardNew from "./pages/EmployeeDashboardNew";
 import EmployeeOrdersPage from "./pages/EmployeeOrdersPage";
@@ -24,7 +23,6 @@ import CompaniesPage from "./pages/admin/CompaniesPage";
 import ProvidersPage from "./pages/admin/ProvidersPage";
 import ReportsPage from "./pages/admin/ReportsPage";
 import SettingsPage from "./pages/admin/SettingsPage";
-import ProviderDashboardPage from "./pages/admin/ProviderDashboardPage";
 
 // Provider Pages
 import ProviderOrderDashboard from "./pages/admin/provider/ProviderOrderDashboard";
@@ -71,13 +69,12 @@ const AppRoutes: React.FC = () => {
         <Route path="providers" element={<ProtectedRoute allowedRoles={['admin']}><ProvidersPage /></ProtectedRoute>} />
         <Route path="reports" element={<ProtectedRoute allowedRoles={['admin']}><ReportsPage /></ProtectedRoute>} />
         <Route path="settings" element={<ProtectedRoute allowedRoles={['admin']}><SettingsPage /></ProtectedRoute>} />
-        <Route path="provider/:id" element={<ProtectedRoute allowedRoles={['admin']}><ProviderDashboardPage /></ProtectedRoute>} />
       </Route>
       
-      {/* Provider routes */}
+      {/* Provider routes - Modified to use OrdersPage as the dashboard temporarily */}
       <Route path="/provider" element={<AdminLayout />}>
-        <Route index element={<ProtectedRoute allowedRoles={['provider']}><ProviderDashboardPage /></ProtectedRoute>} />
-        <Route path="orders" element={<ProtectedRoute allowedRoles={['provider']}><ProviderOrderDashboard /></ProtectedRoute>} />
+        <Route index element={<ProtectedRoute allowedRoles={['provider']}><ProviderOrderDashboard /></ProtectedRoute>} />
+        <Route path="orders" element={<ProtectedRoute allowedRoles={['provider']}><OrdersPage /></ProtectedRoute>} />
         <Route path="menu" element={<ProtectedRoute allowedRoles={['provider']}><MenuManagementPage /></ProtectedRoute>} />
         <Route path="companies" element={<ProtectedRoute allowedRoles={['provider']}><CompaniesProviderPage /></ProtectedRoute>} />
         <Route path="assign-menus" element={<ProtectedRoute allowedRoles={['provider']}><AssignMenusPage /></ProtectedRoute>} />

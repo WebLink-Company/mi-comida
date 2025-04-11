@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { AlertTriangle, InfoIcon, RefreshCw, ExternalLink, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -54,7 +53,6 @@ export const DashboardErrorState: React.FC<DashboardErrorStateProps> = ({
         toast({
           title: "Prueba exitosa",
           description: "La conexión a Supabase funciona correctamente",
-          // Fixed: removed 'success' variant that isn't supported
         });
         // If test succeeds, try the original refresh
         refreshData();
@@ -170,7 +168,6 @@ export const DashboardErrorState: React.FC<DashboardErrorStateProps> = ({
     }
   };
 
-  // Automatic connection test when component mounts
   useEffect(() => {
     runConnectionTest();
   }, []);

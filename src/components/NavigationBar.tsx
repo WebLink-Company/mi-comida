@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface NavigationBarProps {
   userRole: UserRole;
@@ -24,11 +25,12 @@ interface NavigationBarProps {
 }
 
 const NavigationBar = ({ userRole, userName }: NavigationBarProps) => {
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [tenantName, setTenantName] = useState<string>("");
   const location = useLocation();
 
   // Handle scroll for transparent to solid transition
@@ -44,6 +46,46 @@ const NavigationBar = ({ userRole, userName }: NavigationBarProps) => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Fetch tenant name
+  useEffect(() => {
+    const fetchTenantInfo = async () => {
+      if (!user) return;
+      
+      try {
+        if (userRole === 'admin') {
+          // For admin, we can set a default tenant name
+          setTenantName("Administrador del Sistema");
+        } else if (userRole === 'provider' && user.provider_id) {
+          // For provider, get the provider business name
+          const { data, error } = await supabase
+            .from('providers')
+            .select('business_name')
+            .eq('id', user.provider_id)
+            .single();
+            
+          if (!error && data) {
+            setTenantName(data.business_name);
+          }
+        } else if (user.company_id) {
+          // For company users (employee, supervisor), get the company name
+          const { data, error } = await supabase
+            .from('companies')
+            .select('name')
+            .eq('id', user.company_id)
+            .single();
+            
+          if (!error && data) {
+            setTenantName(data.name);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching tenant info:", error);
+      }
+    };
+    
+    fetchTenantInfo();
+  }, [user, userRole]);
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
@@ -139,8 +181,15 @@ const NavigationBar = ({ userRole, userName }: NavigationBarProps) => {
             </Link>
           ))}
           <div className="h-6 border-l border-muted-foreground/20 mx-2"></div>
-          <div className="text-sm font-medium text-muted-foreground">
-            {userName}
+          <div className="flex flex-col">
+            <div className="text-sm font-medium text-muted-foreground">
+              {userName}
+            </div>
+            {tenantName && (
+              <div className="text-xs text-muted-foreground/70 -mt-0.5">
+                {tenantName}
+              </div>
+            )}
           </div>
           <Button variant="ghost" size="icon" onClick={handleLogout}>
             <LogOut className="w-5 h-5" />
@@ -182,15 +231,20 @@ const NavigationBar = ({ userRole, userName }: NavigationBarProps) => {
             </Link>
           ))}
           <div className="border-t border-border my-4 pt-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col mb-3">
               <div className="text-sm font-medium text-muted-foreground">
                 {userName}
               </div>
-              <Button variant="ghost" size="sm" onClick={handleLogout}>
-                <LogOut className="w-4 h-4 mr-2" />
-                Cerrar Sesión
-              </Button>
+              {tenantName && (
+                <div className="text-xs text-muted-foreground/70">
+                  {tenantName}
+                </div>
+              )}
             </div>
+            <Button variant="ghost" size="sm" onClick={handleLogout}>
+              <LogOut className="w-4 h-4 mr-2" />
+              Cerrar Sesión
+            </Button>
           </div>
         </div>
       </div>

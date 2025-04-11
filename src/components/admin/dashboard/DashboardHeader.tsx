@@ -48,7 +48,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         </Button>
       </div>
 
-      {/* Acciones rápidas como badges */}
+      {/* Acciones rápidas como badges con mejor contraste */}
       <div className="flex flex-wrap justify-center gap-3 mb-8 fade-up" style={{ animationDelay: "0.2s" }}>
         {quickActions.slice(0, 6).map((action, index) => {
           const Icon = action.icon;
@@ -57,7 +57,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
               key={index}
               variant="outline"
               onClick={action.action}
-              className="quick-action-badge glass-dark"
+              className="quick-action-badge glass-dark hover:bg-primary/20 hover:border-primary/40 text-white border-white/30"
             >
               <Icon className="h-4 w-4 mr-1" />
               {action.label}

@@ -85,27 +85,16 @@ export const useProviderDashboardStats = () => {
         };
       }
       
-      // Construcción de la consulta para depuración
-      const queryInfo = {
-        companyIds: companyIds,
-        month: currentMonth,
-        today: today,
-        provider: providerId,
-        filters: "estado='approved', 'prepared', 'delivered'"
-      };
-      console.log("⚡ DEBUG QUERY PARAMETERS:", JSON.stringify(queryInfo, null, 2));
-      
-      // Fetch orders and lunch options in a single request with inner joins
-      // This reduces the number of requests significantly
-      console.log(`QUERY EXACTA: Buscando órdenes para companyIds: [${companyIds.join(', ')}], en el mes: ${currentMonth}, con estados: approved, prepared, delivered`);
+      // Optimizar consultando solo los datos necesarios en una única solicitud
+      console.log(`QUERY OPTIMIZADA: Buscando órdenes para companyIds: [${companyIds.join(', ')}]`);
       const { data: orders, error: ordersError } = await supabase
         .from('orders')
         .select(`
           id, 
-          company_id, 
-          lunch_option_id, 
           status, 
           date,
+          company_id, 
+          user_id,
           lunch_options:lunch_option_id(id, name, price)
         `)
         .in('company_id', companyIds)
@@ -118,35 +107,26 @@ export const useProviderDashboardStats = () => {
       }
       
       console.log(`Se encontraron ${orders?.length || 0} órdenes en total`);
-      console.log("Primeras 5 órdenes de muestra:", orders?.slice(0, 5));
       
-      // Filter today's orders - only include approved, prepared, and delivered status
-      const todayOrders = orders?.filter(order => 
-        order.date === today && 
-        ['approved', 'prepared', 'delivered'].includes(order.status)
-      ) || [];
-      
-      console.log(`Órdenes para hoy (aprobadas/preparadas/entregadas): ${todayOrders.length}`);
-      
-      // Filter approved or beyond orders for metrics
+      // Filtrar y contar por una sola vez en lugar de múltiples iteraciones
+      const todayOrders = orders?.filter(order => order.date === today) || [];
       const approvedOrders = orders?.filter(order => 
         ['approved', 'prepared', 'delivered'].includes(order.status)
       ) || [];
+      const todayApprovedOrders = todayOrders.filter(order => 
+        ['approved', 'prepared', 'delivered'].includes(order.status)
+      );
+      const pendingTodayOrders = todayOrders.filter(order => order.status === 'pending');
       
-      console.log(`Total de órdenes aprobadas o más: ${approvedOrders.length}`);
-      
-      // Calculate statistics
-      const ordersToday = todayOrders.length;
-      const totalMealsToday = todayOrders.length; // Only count approved/prepared/delivered as "meals"
-      const uniqueCompanies = [...new Set(todayOrders.map(order => order.company_id))];
+      // Calcular estadísticas de forma eficiente
+      const ordersToday = todayApprovedOrders.length;
+      const totalMealsToday = todayApprovedOrders.length;
+      const uniqueCompanies = [...new Set(todayApprovedOrders.map(order => order.company_id))];
       const companiesWithOrdersToday = uniqueCompanies.length;
-      const pendingOrdersCount = orders?.filter(order => 
-        order.date === today && order.status === 'pending'
-      ).length || 0;
+      const pendingOrdersCount = pendingTodayOrders.length;
+      const monthlyOrders = approvedOrders.length;
       
-      const monthlyOrders = approvedOrders.length || 0;
-      
-      // Calculate revenue from approved, prepared, or delivered orders only
+      // Calcular ingresos totales del mes
       let monthlyRevenue = 0;
       approvedOrders.forEach(order => {
         if (order.lunch_options && order.lunch_options.price) {
@@ -154,52 +134,38 @@ export const useProviderDashboardStats = () => {
         }
       });
       
-      // Calculate most ordered dish today - only from approved orders
+      // Calcular el plato más pedido hoy
       let topOrderedMeal: TopMeal = { name: 'No hay datos', count: 0 };
       
-      if (todayOrders.length > 0) {
-        const mealCount: {[key: string]: {count: number, name: string}} = {};
+      if (todayApprovedOrders.length > 0) {
+        const mealCounter = {};
         
-        // Count occurrences of each dish
-        todayOrders.forEach(order => {
+        // Contar ocurrencias de cada plato de forma más eficiente
+        todayApprovedOrders.forEach(order => {
           if (order.lunch_options) {
-            const id = order.lunch_option_id;
-            const name = order.lunch_options.name;
+            const mealId = order.lunch_options.id;
+            const mealName = order.lunch_options.name;
             
-            if (!mealCount[id]) {
-              mealCount[id] = { count: 0, name };
+            if (!mealCounter[mealId]) {
+              mealCounter[mealId] = { count: 0, name: mealName };
             }
-            mealCount[id].count += 1;
+            mealCounter[mealId].count++;
           }
         });
         
-        // Find the most popular dish
-        let maxCount = 0;
-        let topMealId = null;
+        // Encontrar el plato más pedido
+        const topMeal = Object.values(mealCounter).reduce((max, current) => 
+          current.count > max.count ? current : max, 
+          { count: 0, name: 'No hay datos' }
+        );
         
-        Object.entries(mealCount).forEach(([id, data]) => {
-          if (data.count > maxCount) {
-            maxCount = data.count;
-            topMealId = id;
-          }
-        });
-        
-        if (topMealId && mealCount[topMealId]) {
-          topOrderedMeal = {
-            name: mealCount[topMealId].name,
-            count: mealCount[topMealId].count
-          };
-        }
+        topOrderedMeal = {
+          name: topMeal.name,
+          count: topMeal.count
+        };
       }
       
-      console.log("Estadísticas calculadas:", {
-        ordersToday,
-        totalMealsToday,
-        companiesWithOrdersToday,
-        pendingOrders: pendingOrdersCount,
-        monthlyOrders,
-        monthlyRevenue
-      });
+      console.log("Estadísticas calculadas de forma eficiente");
       
       return {
         ordersToday,
@@ -216,19 +182,17 @@ export const useProviderDashboardStats = () => {
     }
   };
 
-  // Use React Query with caching to prevent excessive requests
+  // Use React Query with optimized caching and reduced requests
   const { data, isLoading, error } = useQuery({
     queryKey: ['providerStats', providerId, companyId],
     queryFn: fetchStats,
     enabled: !!(providerId || companyId),
-    staleTime: 300000, // 5 minutes
+    staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
-    // Prevent excessive refetching
     refetchInterval: false,
-    refetchOnMount: false,
+    refetchOnMount: "always"
   });
 
-  // Return all the individual loading states that the ProviderDashboard expects
   return {
     // Datos
     ordersToday: data?.ordersToday || 0,
@@ -239,7 +203,7 @@ export const useProviderDashboardStats = () => {
     monthlyOrders: data?.monthlyOrders || 0,
     monthlyRevenue: data?.monthlyRevenue || 0,
     
-    // We'll use the single isLoading state for all individual loading states
+    // Estados
     loadingOrdersToday: isLoading,
     loadingMealsToday: isLoading,
     loadingCompaniesOrders: isLoading,
@@ -248,7 +212,7 @@ export const useProviderDashboardStats = () => {
     loadingMonthlyOrders: isLoading,
     loadingMonthlyRevenue: isLoading,
     
-    // Original state properties
+    // Estado original
     isLoading,
     error
   };

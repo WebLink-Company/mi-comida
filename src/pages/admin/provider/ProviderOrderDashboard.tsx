@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
@@ -34,16 +33,8 @@ const ProviderOrderDashboard = () => {
   const [selectedCompany, setSelectedCompany] = useState<CompanyOrderSummary | null>(null);
   const [isOrdersModalOpen, setIsOrdersModalOpen] = useState(false);
 
-  useEffect(() => {
-    if (user) {
-      fetchCompanyOrders();
-    } else {
-      setError("No se encontró usuario. Por favor, inicie sesión de nuevo.");
-      setLoading(false);
-    }
-  }, [user, selectedDate]);
-
-  const fetchCompanyOrders = async () => {
+  // Use useCallback to memoize the fetchCompanyOrders function
+  const fetchCompanyOrders = useCallback(async () => {
     setLoading(true);
     setError(null);
     
@@ -77,7 +68,6 @@ const ProviderOrderDashboard = () => {
       }
 
       console.log(`Se encontraron ${providerCompanies.length} empresas para el proveedor`);
-      console.log("Lista de empresas:", providerCompanies.map(c => ({ id: c.id, name: c.name })));
       
       const selectedDateStr = format(selectedDate, 'yyyy-MM-dd');
       
@@ -94,7 +84,12 @@ const ProviderOrderDashboard = () => {
       console.log(`QUERY EXACTA: Buscando pedidos para la fecha ${selectedDateStr} en las empresas [${companyIds.join(', ')}]`);
       const { data: orders, error: ordersError } = await supabase
         .from('orders')
-        .select('id, user_id, status, company_id')
+        .select(`
+          id, 
+          user_id, 
+          status, 
+          company_id
+        `)
         .in('company_id', companyIds)
         .eq('date', selectedDateStr);
 
@@ -106,13 +101,11 @@ const ProviderOrderDashboard = () => {
       }
 
       console.log(`Se encontraron ${orders?.length || 0} pedidos en total para la fecha ${selectedDateStr}`);
-      console.log("Muestra de pedidos recibidos:", orders?.slice(0, 5));
       
       // Process each company's orders
       const companiesWithOrders = providerCompanies.map(company => {
         // Filter orders for this company
         const companyOrders = orders?.filter(order => order.company_id === company.id) || [];
-        console.log(`QUERY EXACTA: Empresa ${company.name} (${company.id}) tiene ${companyOrders.length} pedidos`);
         
         // Only count approved, prepared, and delivered orders for display
         const approvedOrders = companyOrders.filter(order => 
@@ -147,12 +140,6 @@ const ProviderOrderDashboard = () => {
       const filteredCompanies = companiesWithOrders.filter(company => company.orders > 0);
       console.log(`Se encontraron ${filteredCompanies.length} empresas con pedidos aprobados el ${selectedDateStr}`);
       
-      if (filteredCompanies.length > 0) {
-        console.log("Empresas con pedidos:", filteredCompanies);
-      } else {
-        console.log("IMPORTANTE: No se encontraron empresas con pedidos aprobados para la fecha seleccionada");
-      }
-      
       setCompanyOrders(filteredCompanies);
     } catch (error) {
       console.error('Error al obtener pedidos de empresas:', error);
@@ -165,7 +152,16 @@ const ProviderOrderDashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, selectedDate, toast]);
+
+  useEffect(() => {
+    if (user) {
+      fetchCompanyOrders();
+    } else {
+      setError("No se encontró usuario. Por favor, inicie sesión de nuevo.");
+      setLoading(false);
+    }
+  }, [user, selectedDate, fetchCompanyOrders]);
 
   const handleCompanyClick = (company: CompanyOrderSummary) => {
     setSelectedCompany(company);

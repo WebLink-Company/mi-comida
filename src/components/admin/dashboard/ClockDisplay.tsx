@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
 import { LucideIcon } from 'lucide-react';
 
@@ -36,41 +37,27 @@ export const ClockDisplay: React.FC<ClockDisplayProps> = ({ user, quickActions }
   };
 
   return (
-    <div className="win11-clock-container flex-grow flex flex-col items-center justify-center">
+    <div className="win11-clock-container flex-grow flex flex-col items-center justify-center pb-4">
       <div className="text-center">
-        {/* Display the user's first name prominently where the time was */}
-        <div className="win11-clock fade-up">{getFirstName()}</div>
+        <div className="win11-clock text-gradient fade-up">{getFirstName()}</div>
         
-        {/* Display the date */}
-        <div className="win11-date fade-up">{format(time, 'EEEE, d MMMM')}</div>
+        <div className="win11-date fade-up" style={{ animationDelay: "0.1s" }}>
+          {format(time, 'EEEE, d MMMM', { locale: es })}
+        </div>
         
-        {/* Display the time in a smaller size under the date */}
-        <div className="text-white/80 text-xl font-light mt-1 fade-up">{format(time, 'h:mm a')}</div>
+        <div className="text-white/80 text-xl font-light mt-1 fade-up" style={{ animationDelay: "0.2s" }}>
+          {format(time, 'h:mm a')}
+        </div>
 
-        <div className="mt-4 text-white/80 text-lg font-light fade-up">
+        <div className="mt-4 text-white/80 text-lg font-light fade-up" style={{ animationDelay: "0.3s" }}>
           {getGreeting()}, {getFirstName()} 👋
         </div>
-        <div className="mt-2 text-white/60 text-base font-light fade-up">
+        
+        <div className="mt-2 text-white/60 text-base font-light fade-up" style={{ animationDelay: "0.4s" }}>
           ¿En qué te gustaría trabajar hoy?
         </div>
 
-        {/* Quick action badges */}
-        <div className="flex flex-wrap justify-center gap-3 mt-6 fade-up" style={{ animationDelay: "0.5s" }}>
-          {quickActions.map((action, index) => {
-            const Icon = action.icon;
-            return (
-              <Badge
-                key={index}
-                variant="default"
-                onClick={action.action}
-                className="py-2 px-4 cursor-pointer bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-md transition-all duration-300 flex items-center gap-2 shadow-sm hover:shadow-md"
-              >
-                <Icon size={16} />
-                {action.label}
-              </Badge>
-            );
-          })}
-        </div>
+        {/* Quick action badges - moved to main dashboard page for better spacing */}
       </div>
     </div>
   );

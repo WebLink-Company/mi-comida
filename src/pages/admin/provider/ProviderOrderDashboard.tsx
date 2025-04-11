@@ -1,5 +1,7 @@
+
 import { useState, useEffect } from 'react';
 import { format, isToday, isThisWeek, subDays } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -34,7 +36,7 @@ const ProviderOrderDashboard = () => {
     if (user) {
       fetchCompanyOrders();
     } else {
-      setError("No user found. Please login again.");
+      setError("No se encontró usuario. Por favor, inicie sesión de nuevo.");
       setLoading(false);
     }
   }, [user, selectedDate]);
@@ -45,12 +47,12 @@ const ProviderOrderDashboard = () => {
     
     try {
       if (!user?.provider_id) {
-        setError("Provider ID not found in user profile");
+        setError("No se encontró ID de proveedor en el perfil del usuario");
         setLoading(false);
         return;
       }
       
-      console.log("Fetching companies for provider:", user.provider_id);
+      console.log("Buscando empresas para el proveedor:", user.provider_id);
       
       // First get companies for this provider
       const { data: providerCompanies, error: companiesError } = await supabase
@@ -59,20 +61,20 @@ const ProviderOrderDashboard = () => {
         .eq('provider_id', user?.provider_id);
 
       if (companiesError) {
-        console.error("Error fetching companies:", companiesError);
-        setError(`Failed to load companies: ${companiesError.message}`);
+        console.error("Error al obtener empresas:", companiesError);
+        setError(`No se pudieron cargar las empresas: ${companiesError.message}`);
         setLoading(false);
         return;
       }
 
       if (!providerCompanies || providerCompanies.length === 0) {
-        console.log("No companies found for provider");
+        console.log("No se encontraron empresas para este proveedor");
         setCompanyOrders([]);
         setLoading(false);
         return;
       }
 
-      console.log(`Found ${providerCompanies.length} companies for provider`);
+      console.log(`Se encontraron ${providerCompanies.length} empresas para el proveedor`);
       const selectedDateStr = format(selectedDate, 'yyyy-MM-dd');
       
       // For each company, get order stats
@@ -86,7 +88,7 @@ const ProviderOrderDashboard = () => {
             .eq('date', selectedDateStr);
 
           if (ordersError) {
-            console.error(`Error fetching orders for company ${company.id}:`, ordersError);
+            console.error(`Error al obtener pedidos para la empresa ${company.id}:`, ordersError);
             return null;
           }
 
@@ -117,14 +119,14 @@ const ProviderOrderDashboard = () => {
 
       // Filter out null values and companies with no orders
       const filteredCompanies = companiesWithOrders.filter(Boolean) as CompanyOrderSummary[];
-      console.log(`Found ${filteredCompanies.length} companies with orders on ${selectedDateStr}`);
+      console.log(`Se encontraron ${filteredCompanies.length} empresas con pedidos el ${selectedDateStr}`);
       setCompanyOrders(filteredCompanies);
     } catch (error) {
-      console.error('Error fetching company orders:', error);
-      setError(`An unexpected error occurred: ${error instanceof Error ? error.message : String(error)}`);
+      console.error('Error al obtener pedidos de empresas:', error);
+      setError(`Ocurrió un error inesperado: ${error instanceof Error ? error.message : String(error)}`);
       toast({
         title: 'Error',
-        description: 'Failed to load company orders',
+        description: 'No se pudieron cargar los pedidos de las empresas',
         variant: 'destructive',
       });
     } finally {
@@ -140,17 +142,17 @@ const ProviderOrderDashboard = () => {
   if (error) {
     return (
       <div className="space-y-6">
-        <Card className="border-destructive">
+        <Card className="border-destructive glass">
           <CardContent className="flex flex-col items-center justify-center py-10">
             <AlertTriangle className="h-16 w-16 text-destructive mb-4" />
-            <h3 className="text-lg font-medium text-destructive">Error Loading Orders</h3>
+            <h3 className="text-lg font-medium text-destructive">Error al Cargar Pedidos</h3>
             <p className="text-muted-foreground text-center max-w-md mt-2">{error}</p>
             <Button 
               variant="outline" 
-              className="mt-4"
+              className="mt-4 glass"
               onClick={fetchCompanyOrders}
             >
-              Try Again
+              Intentar de Nuevo
             </Button>
           </CardContent>
         </Card>
@@ -158,25 +160,13 @@ const ProviderOrderDashboard = () => {
     );
   }
 
-  const filterCompanies = (companies: CompanyOrderSummary[], filterFn: (date: Date) => boolean) => {
-    return companies.filter(company => {
-      // Implementation would depend on how we track dates for companies
-      // For now, just return all companies
-      return true;
-    });
-  };
-
-  const todayCompanies = companyOrders;
-  const thisWeekCompanies = companyOrders;
-  const earlierCompanies = companyOrders;
-
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold">Provider Order Dashboard</h1>
-          <p className="text-muted-foreground">
-            Manage your client orders across all companies
+          <h1 className="text-2xl font-bold text-white">Panel de Pedidos</h1>
+          <p className="text-white/70">
+            Gestione los pedidos de sus clientes en todas las empresas
           </p>
         </div>
         
@@ -184,27 +174,27 @@ const ProviderOrderDashboard = () => {
           <DatePicker 
             date={selectedDate}
             onSelect={setSelectedDate}
-            className="w-[180px]"
+            className="w-[180px] bg-white/10 text-white border-white/20"
           />
-          <Button variant="outline" onClick={fetchCompanyOrders}>
+          <Button variant="outline" onClick={fetchCompanyOrders} className="glass">
             <Filter className="mr-2 h-4 w-4" />
-            Refresh
+            Actualizar
           </Button>
         </div>
       </div>
 
       {loading ? (
         <div className="flex justify-center py-8">
-          <p>Loading company orders...</p>
+          <p className="text-white">Cargando pedidos de empresas...</p>
         </div>
       ) : (
         <div className="space-y-6">
           {/* Today's Orders */}
           {companyOrders.length > 0 && (
             <div>
-              <h2 className="text-lg font-semibold mb-3 flex items-center">
+              <h2 className="text-lg font-semibold mb-3 flex items-center text-white">
                 <Calendar className="mr-2 h-5 w-5" />
-                Orders for {format(selectedDate, 'PPP')}
+                Pedidos para {format(selectedDate, 'PPP', { locale: es })}
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {companyOrders.map(company => (
@@ -219,12 +209,12 @@ const ProviderOrderDashboard = () => {
           )}
 
           {companyOrders.length === 0 && (
-            <Card>
+            <Card className="glass">
               <CardContent className="flex flex-col items-center justify-center py-10">
-                <Package className="h-16 w-16 text-muted-foreground mb-4 opacity-30" />
-                <h3 className="text-lg font-medium">No orders found</h3>
-                <p className="text-muted-foreground text-center max-w-md mt-2">
-                  There are no orders for the selected date. Try selecting a different date or check back later.
+                <Package className="h-16 w-16 text-white mb-4 opacity-30" />
+                <h3 className="text-lg font-medium text-white">No se encontraron pedidos</h3>
+                <p className="text-white/70 text-center max-w-md mt-2">
+                  No hay pedidos para la fecha seleccionada. Intente seleccionar una fecha diferente o revise más tarde.
                 </p>
               </CardContent>
             </Card>

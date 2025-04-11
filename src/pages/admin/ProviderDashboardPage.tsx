@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { Building, UserPlus, Package, Receipt } from 'lucide-react';
+import { Building, UserPlus, Package, Receipt, PlusCircle, FileText, Clock, CreditCard } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import '@/styles/dashboard.css';
 import { useProviderDashboardData } from '@/hooks/useProviderDashboardData';
@@ -16,6 +17,7 @@ import { DebugSection } from '@/components/admin/dashboard/DebugSection';
 import { NoOrdersCard } from '@/components/admin/dashboard/NoOrdersCard';
 import { DashboardDialogs } from '@/components/admin/dashboard/DashboardDialogs';
 import DashboardMetrics from '@/components/admin/dashboard/DashboardMetrics';
+import { Badge } from '@/components/ui/badge';
 
 const ProviderDashboardPage = () => {
   const navigate = useNavigate();
@@ -123,12 +125,12 @@ const ProviderDashboardPage = () => {
   // Fetch dashboard stats using our hook with the provider ID from user profile
   const stats = useProviderDashboardData();
   
-  // Quick actions for the provider - make sure to use Lucide icons directly
+  // Quick actions for the provider
   const quickActions = [
     {
       label: 'Agregar Empresa',
       icon: Building,
-      action: () => openDialog('create-company'),
+      action: () => navigate('/provider/companies'),
       path: '/provider/companies'
     },
     {
@@ -140,13 +142,37 @@ const ProviderDashboardPage = () => {
     {
       label: 'Ver Pedidos',
       icon: Package,
-      action: () => openDialog('view-orders'),
+      action: () => navigate('/provider/orders'),
       path: '/provider/orders'
     },
     {
       label: 'Revisar Facturas',
       icon: Receipt,
-      action: () => openDialog('review-invoices'),
+      action: () => navigate('/provider/billing'),
+      path: '/provider/billing'
+    },
+    {
+      label: 'Crear Menú',
+      icon: PlusCircle,
+      action: () => navigate('/provider/menus'),
+      path: '/provider/menus'
+    },
+    {
+      label: 'Reportes',
+      icon: FileText,
+      action: () => navigate('/provider/reports'),
+      path: '/provider/reports'
+    },
+    {
+      label: 'Programar Entregas',
+      icon: Clock,
+      action: () => navigate('/provider/delivery'),
+      path: '/provider/delivery'
+    },
+    {
+      label: 'Facturación',
+      icon: CreditCard,
+      action: () => navigate('/provider/billing'),
       path: '/provider/billing'
     }
   ];
@@ -182,6 +208,24 @@ const ProviderDashboardPage = () => {
         quickActions={quickActions} 
         refreshData={refreshData}
       />
+      
+      {/* Acciones rápidas como badges */}
+      <div className="flex flex-wrap justify-center gap-3 mb-8 mt-4">
+        {quickActions.slice(0, 6).map((action, index) => {
+          const Icon = action.icon;
+          return (
+            <Badge
+              key={index}
+              variant="outline"
+              onClick={action.action}
+              className="quick-action-badge glass"
+            >
+              <Icon className="h-4 w-4 mr-1" />
+              {action.label}
+            </Badge>
+          );
+        })}
+      </div>
       
       {/* Dashboard metrics */}
       <DashboardMetrics 

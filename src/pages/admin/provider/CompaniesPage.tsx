@@ -229,56 +229,56 @@ const CompaniesPage = () => {
           <h1 className="text-3xl font-bold mb-2 text-white">Gestión de Empresas</h1>
           <p className="text-white/70">Administre sus empresas y su configuración</p>
         </div>
-        <Button className="mt-4 md:mt-0 glass-dark" onClick={openCreateDialog}>
+        <Button className="mt-4 md:mt-0 glass" onClick={openCreateDialog}>
           <Plus className="mr-2 h-4 w-4" />
           Agregar Empresa
         </Button>
       </div>
 
-      <Card className="neo-blur text-white">
+      <Card className="glass">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Sus Empresas</CardTitle>
+          <CardTitle className="text-white">Sus Empresas</CardTitle>
           <div className="w-72">
             <Input
               placeholder="Buscar empresas..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="bg-white/20 border-white/20"
+              className="bg-white/10 border-white/20 text-white"
             />
           </div>
         </CardHeader>
         <CardContent>
           <ScrollArea className="h-[600px]">
-            <Table>
+            <Table className="blue-glass-table">
               <TableHeader>
-                <TableRow className="border-white/10 hover:bg-white/5">
-                  <TableHead className="text-white/70">Nombre de Empresa</TableHead>
-                  <TableHead className="text-white/70">Subsidio %</TableHead>
-                  <TableHead className="text-white/70">Subsidio Fijo</TableHead>
-                  <TableHead className="text-white/70">Creada</TableHead>
-                  <TableHead className="text-right text-white/70">Acciones</TableHead>
+                <TableRow className="border-white/10">
+                  <TableHead className="text-white">Nombre de Empresa</TableHead>
+                  <TableHead className="text-white">Subsidio %</TableHead>
+                  <TableHead className="text-white">Subsidio Fijo</TableHead>
+                  <TableHead className="text-white">Creada</TableHead>
+                  <TableHead className="text-right text-white">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-white/70">
+                    <TableCell colSpan={5} className="text-center py-8 text-white">
                       Cargando empresas...
                     </TableCell>
                   </TableRow>
                 ) : filteredCompanies.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-white/70">
+                    <TableCell colSpan={5} className="text-center py-8 text-white">
                       {searchTerm ? 'No hay empresas que coincidan con su búsqueda' : 'No se encontraron empresas. ¡Agregue su primera empresa!'}
                     </TableCell>
                   </TableRow>
                 ) : (
                   filteredCompanies.map((company) => (
-                    <TableRow key={company.id} className="border-white/10 hover:bg-white/5">
-                      <TableCell className="font-medium">{company.name}</TableCell>
-                      <TableCell>{company.subsidy_percentage}%</TableCell>
-                      <TableCell>${company.fixed_subsidy_amount.toFixed(2)}</TableCell>
-                      <TableCell>
+                    <TableRow key={company.id} className="border-white/10 table-row-hover">
+                      <TableCell className="font-medium text-white">{company.name}</TableCell>
+                      <TableCell className="text-white">{company.subsidy_percentage}%</TableCell>
+                      <TableCell className="text-white">${company.fixed_subsidy_amount.toFixed(2)}</TableCell>
+                      <TableCell className="text-white">
                         {new Date(company.created_at).toLocaleDateString()}
                       </TableCell>
                       <TableCell className="text-right">
@@ -288,7 +288,7 @@ const CompaniesPage = () => {
                           className="h-8 w-8 mr-2 bg-white/10 border-white/20 hover:bg-white/20"
                           onClick={() => openEditDialog(company)}
                         >
-                          <PencilIcon className="h-4 w-4" />
+                          <PencilIcon className="h-4 w-4 text-white" />
                         </Button>
                         <Button
                           variant="outline"
@@ -296,7 +296,7 @@ const CompaniesPage = () => {
                           className="h-8 w-8 bg-white/10 border-white/20 hover:bg-white/20 hover:text-red-500"
                           onClick={() => openDeleteDialog(company)}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-4 w-4 text-white" />
                         </Button>
                       </TableCell>
                     </TableRow>

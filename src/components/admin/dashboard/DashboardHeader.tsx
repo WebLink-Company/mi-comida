@@ -28,7 +28,14 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
       </div>
 
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-semibold text-white fade-up" style={{ animationDelay: "0.1s" }}>Panel General</h2>
+        <div className="flex items-center">
+          <div className="mr-4">
+            <h1 className="text-2xl font-bold text-white fade-up" style={{ animationDelay: "0.1s" }}>
+              MiComida<span className="text-primary text-xl">.online</span>
+            </h1>
+            <p className="text-sm text-white/70">Panel General</p>
+          </div>
+        </div>
         
         <Button
           variant="outline"

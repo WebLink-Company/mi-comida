@@ -116,9 +116,9 @@ const NavigationBar = ({ userRole, userName }: NavigationBarProps) => {
       )}
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <Link to="/" className="flex items-center" onClick={closeMenu}>
-          <span className="text-xl font-medium">Lunch</span>
-          <span className="text-xl font-bold text-primary">Wise</span>
+        <Link to="/" className="flex flex-col items-start" onClick={closeMenu}>
+          <span className="text-xl font-bold text-white">MiComida</span>
+          <span className="text-sm font-medium text-primary -mt-1">.online</span>
         </Link>
 
         {/* Desktop navigation */}

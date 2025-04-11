@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   CalendarDays, ChefHat, ShoppingBag, DollarSign, 
-  Users, FileText, Building, Edit
+  Users, FileText, Building, Edit, UtensilsCrossed
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -205,7 +205,10 @@ const ProviderDashboard = () => {
   // Display a simple message about the dashboard metrics being temporarily disabled
   const dashboardInfo = () => (
     <div className="glass p-6 rounded-lg border border-orange-500/30 mb-6">
-      <h3 className="text-lg font-medium text-white mb-2">Métricas en Tiempo Real</h3>
+      <div className="flex items-center mb-2">
+        <UtensilsCrossed className="text-orange-400 mr-2 h-5 w-5" />
+        <h3 className="text-lg font-medium text-white">MiComida<span className="text-orange-400">.online</span> - Métricas en Tiempo Real</h3>
+      </div>
       <p className="text-white/70">
         Las métricas del panel muestran datos actualizados del mes en curso.
         Para ver información más detallada, utilice las páginas específicas.
@@ -274,8 +277,11 @@ const ProviderDashboard = () => {
         <div className="glass p-6 rounded-lg shadow-md border border-cyan-400/30">
           <div className="flex flex-col md:flex-row justify-between">
             <div>
-              <h3 className="text-lg font-medium text-white">{providerName}</h3>
-              <p className="text-white/70">Proveedor de servicios de alimentación</p>
+              <div className="flex items-center">
+                <ChefHat className="h-5 w-5 text-cyan-400 mr-2" />
+                <h3 className="text-lg font-medium text-white">{providerName}</h3>
+              </div>
+              <p className="text-white/70">Proveedor de servicios de MiComida<span className="text-cyan-400">.online</span></p>
               
               <div className="mt-4 space-y-2">
                 <div className="flex items-center">

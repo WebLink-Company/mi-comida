@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -7,6 +8,7 @@ import '@/styles/dashboard.css';
 import { useProviderDashboardData } from '@/hooks/useProviderDashboardData';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/lib/constants';
 import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button'; // Added missing Button import
 
 // Newly created components
 import { DashboardErrorState } from '@/components/admin/dashboard/DashboardErrorState';

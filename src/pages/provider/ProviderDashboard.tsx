@@ -18,6 +18,7 @@ import "@/styles/dashboard.css";
 import { useProviderDashboardStats } from '@/hooks/useProviderDashboardStats';
 import { useProviderUserStats } from '@/hooks/provider/useProviderUserStats';
 import { useProviderCompanies } from '@/hooks/provider/useProviderCompanies';
+import { useProviderCompanyStats } from '@/hooks/provider/useProviderCompanyStats';
 
 const ProviderDashboard = () => {
   const navigate = useNavigate();
@@ -33,7 +34,7 @@ const ProviderDashboard = () => {
     loadingOrdersToday,
     totalMealsToday,
     loadingMealsToday,
-    companiesWithOrdersToday,
+    companiesWithOrdersToday: companiesOrderingToday,
     loadingCompaniesOrders,
     topOrderedMeal,
     loadingTopMeal,
@@ -47,6 +48,7 @@ const ProviderDashboard = () => {
   
   const { newUsers, loadingNewUsers } = useProviderUserStats();
   const { activeCompanies, loading: loadingCompanies } = useProviderCompanies();
+  const { companiesWithOrdersToday, loading: loadingCompanyStats } = useProviderCompanyStats();
 
   // Fetch the provider name when the component mounts
   useEffect(() => {
@@ -157,6 +159,7 @@ const ProviderDashboard = () => {
           loading={loadingOrdersToday}
           linkTo="/provider/orders"
           className="glass"
+          borderColor="border-blue-500/40" 
         />
 
         {/* Active Companies Card */}
@@ -168,6 +171,7 @@ const ProviderDashboard = () => {
           loading={loadingCompanies}
           linkTo="/provider/companies"
           className="glass"
+          borderColor="border-indigo-400/40"
         />
 
         {/* Orders This Month Card */}
@@ -180,6 +184,7 @@ const ProviderDashboard = () => {
           trend={{ value: 12, isPositive: true }}
           linkTo="/provider/orders"
           className="glass"
+          borderColor="border-purple-400/40"
         />
 
         {/* Monthly Revenue Card */}
@@ -192,6 +197,7 @@ const ProviderDashboard = () => {
           trend={{ value: 5, isPositive: true }}
           linkTo="/provider/billing"
           className="glass"
+          borderColor="border-green-500/40"
         />
 
         {/* Total Meals Today Card */}
@@ -203,6 +209,7 @@ const ProviderDashboard = () => {
           loading={loadingMealsToday}
           linkTo="/provider/orders"
           className="glass"
+          borderColor="border-amber-400/40"
         />
 
         {/* Companies With Orders Today Card */}
@@ -211,9 +218,10 @@ const ProviderDashboard = () => {
           value={companiesWithOrdersToday}
           icon={<Package size={20} />}
           description="Empresas con pedidos para hoy"
-          loading={loadingCompaniesOrders}
+          loading={loadingCompanyStats}
           linkTo="/provider/companies"
           className="glass"
+          borderColor="border-orange-400/40"
         />
 
         {/* Pending Orders Card */}
@@ -225,6 +233,7 @@ const ProviderDashboard = () => {
           loading={loadingPending}
           linkTo="/provider/orders"
           className="glass"
+          borderColor="border-red-400/40"
         />
 
         {/* Top Ordered Meal Card */}
@@ -236,13 +245,14 @@ const ProviderDashboard = () => {
           loading={loadingTopMeal}
           linkTo="/provider/menu"
           className="glass"
+          borderColor="border-pink-400/40"
         />
       </div>
 
       {/* Provider Information Section */}
       <div className="mt-8">
         <h2 className="text-xl font-semibold text-white mb-4">Información del Proveedor</h2>
-        <div className="glass p-6 rounded-lg shadow-md">
+        <div className="glass p-6 rounded-lg shadow-md border border-cyan-400/30">
           <div className="flex flex-col md:flex-row justify-between">
             <div>
               <h3 className="text-lg font-medium text-white">{providerName}</h3>
@@ -263,7 +273,7 @@ const ProviderDashboard = () => {
             <div className="mt-4 md:mt-0">
               <Button 
                 variant="outline" 
-                className="glass mr-2"
+                className="glass mr-2 hover:border-blue-400/50 hover:bg-blue-400/10"
                 onClick={() => navigate('/provider/billing')}
               >
                 <FileText className="h-4 w-4 mr-2" />
@@ -271,7 +281,7 @@ const ProviderDashboard = () => {
               </Button>
               <Button
                 variant="outline" 
-                className="glass"
+                className="glass hover:border-green-400/50 hover:bg-green-400/10"
                 onClick={() => navigate('/provider/menu')}
               >
                 <Edit className="h-4 w-4 mr-2" />

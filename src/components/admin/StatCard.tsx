@@ -22,6 +22,7 @@ interface StatCardProps {
   linkTo?: string;
   lastUpdated?: string;
   quickViewComponent?: ReactNode;
+  borderColor?: string; // Nueva prop para color de borde
 }
 
 const StatCard = ({ 
@@ -34,7 +35,8 @@ const StatCard = ({
   loading = false,
   linkTo,
   lastUpdated,
-  quickViewComponent
+  quickViewComponent,
+  borderColor = "border-white/20" // Color predeterminado
 }: StatCardProps) => {
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
   const navigate = useNavigate();
@@ -78,8 +80,9 @@ const StatCard = ({
     <>
       <Card 
         className={cn(
-          "overflow-hidden transition-all duration-200", 
-          linkTo && "hover:shadow-md hover:border-primary/30 cursor-pointer backdrop-blur-md bg-white/10 border-white/20", 
+          "overflow-hidden transition-all duration-300", 
+          linkTo && "hover:shadow-lg hover:scale-105 hover:border-opacity-100 cursor-pointer backdrop-blur-md bg-white/10",
+          borderColor, // Aplicamos el color de borde personalizado
           className
         )}
         onClick={handleCardClick}
@@ -89,7 +92,7 @@ const StatCard = ({
             <Button 
               variant="ghost" 
               size="icon" 
-              className="absolute top-2 right-2 opacity-70 hover:opacity-100" 
+              className="absolute top-2 right-2 opacity-70 hover:opacity-100 hover:bg-white/20" 
               onClick={handleQuickViewClick}
             >
               <Eye className="h-4 w-4" />
@@ -122,7 +125,7 @@ const StatCard = ({
               )}
             </div>
             
-            <div className="h-12 w-12 rounded-lg bg-white/10 flex items-center justify-center text-white/90">
+            <div className="h-12 w-12 rounded-lg bg-white/10 flex items-center justify-center text-white/90 transition-colors hover:bg-white/15">
               {icon}
             </div>
           </div>

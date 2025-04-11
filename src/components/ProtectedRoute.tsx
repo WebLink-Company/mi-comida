@@ -1,6 +1,6 @@
 
 import { Navigate, useLocation } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useState, memo } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { UserRole } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -10,9 +10,42 @@ interface ProtectedRouteProps {
   allowedRoles: UserRole[];
 }
 
-const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
+// Memoize the component to prevent unnecessary re-renders
+const ProtectedRoute = memo(({ children, allowedRoles }: ProtectedRouteProps) => {
   const { user, isLoading } = useAuth();
   const location = useLocation();
+  const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
+
+  // Only calculate redirect URL once when needed
+  useEffect(() => {
+    if (!isLoading && !user) {
+      setRedirectUrl("/auth");
+    } else if (!isLoading && user && !allowedRoles.includes(user.role)) {
+      // Determine redirect path based on user role
+      switch (user.role) {
+        case 'admin':
+          setRedirectUrl("/admin");
+          break;
+        case 'provider':
+          setRedirectUrl("/provider");
+          break;
+        case 'company':
+          setRedirectUrl("/company");
+          break;
+        case 'supervisor':
+          setRedirectUrl("/supervisor");
+          break;
+        case 'employee':
+          setRedirectUrl("/employee");
+          break;
+        default:
+          setRedirectUrl("/");
+          break;
+      }
+    } else {
+      setRedirectUrl(null);
+    }
+  }, [isLoading, user, allowedRoles]);
 
   // Add max loading time
   useEffect(() => {
@@ -22,7 +55,6 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
     if (isLoading) {
       timeoutId = window.setTimeout(() => {
         console.warn("Loading timeout reached, redirecting to auth");
-        window.location.href = "/auth";
       }, 5000); // 5 seconds max loading time
     }
     
@@ -47,30 +79,15 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
     );
   }
 
-  if (!user) {
-    // Redirect to login if not authenticated
-    return <Navigate to="/auth" state={{ from: location }} replace />;
+  // Redirect if needed
+  if (redirectUrl) {
+    return <Navigate to={redirectUrl} state={{ from: location }} replace />;
   }
 
-  if (!allowedRoles.includes(user.role)) {
-    // Redirect based on user role if they don't have permission
-    switch (user.role) {
-      case 'admin':
-        return <Navigate to="/admin" replace />;
-      case 'provider':
-        return <Navigate to="/provider" replace />;
-      case 'company':
-        return <Navigate to="/company" replace />;
-      case 'supervisor':
-        return <Navigate to="/supervisor" replace />;
-      case 'employee':
-        return <Navigate to="/employee" replace />;
-      default:
-        return <Navigate to="/" replace />;
-    }
-  }
-
+  // If we're here, user is allowed to access this route
   return <>{children}</>;
-};
+});
+
+ProtectedRoute.displayName = 'ProtectedRoute';
 
 export default ProtectedRoute;

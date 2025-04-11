@@ -1,3 +1,4 @@
+
 import * as React from "react"
 
 import type {
@@ -147,9 +148,11 @@ export const reducer = (state: State, action: Action): State => {
   }
 }
 
-const listeners: Array<(state: State) => void> = []
+// Use a stable reference that doesn't cause re-renders
+const memoryState: State = { toasts: [] }
 
-let memoryState: State = { toasts: [] }
+// Use a single dispatcher function
+const listeners = new Set<(state: State) => void>()
 
 function dispatch(action: Action) {
   memoryState = reducer(memoryState, action)
@@ -229,14 +232,16 @@ function useToast() {
   const [state, setState] = React.useState<State>(memoryState)
 
   React.useEffect(() => {
-    listeners.push(setState)
-    return () => {
-      const index = listeners.indexOf(setState)
-      if (index > -1) {
-        listeners.splice(index, 1)
-      }
+    // Use a stable function reference to prevent unnecessary re-renders
+    const listener = (newState: State) => {
+      setState(newState)
     }
-  }, [state])
+    
+    listeners.add(listener)
+    return () => {
+      listeners.delete(listener)
+    }
+  }, [])
 
   return {
     ...state,

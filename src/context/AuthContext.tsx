@@ -1,5 +1,5 @@
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -18,6 +18,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [authChecked, setAuthChecked] = useState(false); 
   const { toast } = useToast();
+  const refreshInProgress = useRef(false);
 
   // Add function to update JWT claims for admin users
   const updateJwtClaimsIfAdmin = async () => {
@@ -36,8 +37,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const refreshUser = async () => {
+    // Prevent concurrent refresh calls
+    if (refreshInProgress.current) return;
+    
     try {
+      refreshInProgress.current = true;
       setIsLoading(true);
+      
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session?.user) {
@@ -92,7 +98,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     } finally {
       setIsLoading(false);
-      setAuthChecked(true); 
+      setAuthChecked(true);
+      refreshInProgress.current = false;
     }
   };
 
@@ -127,20 +134,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (!isMounted) return;
       
       console.log("Auth state change:", event);
-      try {
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          refreshUser();
-        } else if (event === 'SIGNED_OUT') {
-          setUser(null);
-          setAuthChecked(true);
-          setIsLoading(false);
-        }
-      } catch (error) {
-        console.error('Auth state change error:', error);
-        if (isMounted) {
-          setIsLoading(false);
-          setAuthChecked(true);
-        }
+      // Prevent handling the same events multiple times
+      if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && !refreshInProgress.current) {
+        refreshUser();
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setAuthChecked(true);
+        setIsLoading(false);
       }
     });
 

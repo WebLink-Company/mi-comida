@@ -9,6 +9,12 @@ export interface TopMeal {
   count: number;
 }
 
+// Interface for meal counter dictionary
+interface MealCounterItem {
+  count: number;
+  name: string;
+}
+
 export const useProviderDashboardStats = () => {
   const { user } = useAuth();
   const providerId = user?.provider_id;
@@ -138,7 +144,7 @@ export const useProviderDashboardStats = () => {
       let topOrderedMeal: TopMeal = { name: 'No hay datos', count: 0 };
       
       if (todayApprovedOrders.length > 0) {
-        const mealCounter = {};
+        const mealCounter: Record<string, MealCounterItem> = {};
         
         // Contar ocurrencias de cada plato de forma más eficiente
         todayApprovedOrders.forEach(order => {
@@ -154,8 +160,8 @@ export const useProviderDashboardStats = () => {
         });
         
         // Encontrar el plato más pedido
-        const topMeal = Object.values(mealCounter).reduce((max, current) => 
-          current.count > max.count ? current : max, 
+        const topMeal = Object.values(mealCounter).reduce<MealCounterItem>(
+          (max, current) => current.count > max.count ? current : max, 
           { count: 0, name: 'No hay datos' }
         );
         

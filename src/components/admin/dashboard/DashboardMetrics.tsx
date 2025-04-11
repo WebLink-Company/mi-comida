@@ -14,7 +14,7 @@ interface DashboardMetricsProps {
   loadingMealsToday: boolean;
   companiesWithOrdersToday: number | undefined;
   loadingCompaniesOrders: boolean;
-  topOrderedMeal: string | undefined;
+  topOrderedMeal: TopMeal | undefined;
   loadingTopMeal: boolean;
   pendingOrders: number | undefined;
   loadingPending: boolean;
@@ -48,9 +48,9 @@ const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
   monthlyRevenue,
   loadingMonthlyRevenue
 }) => {
-  const formatTopMeal = (meal: string | undefined): string => {
+  const formatTopMeal = (meal: TopMeal | undefined): string => {
     if (!meal) return 'No data yet';
-    return meal;
+    return meal.name;
   };
 
   const formatCurrency = (value: number | undefined): string => {

@@ -62,12 +62,19 @@ const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
     }).format(value);
   };
 
+  // Helper to ensure 0 values display as "0" rather than empty
+  const formatNumber = (value: number | undefined): string => {
+    if (value === 0) return "0";
+    if (!value) return "0";
+    return value.toString();
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       {/* Orders Today */}
       <StatCard
         title="Orders Today"
-        value={ordersToday === 0 ? "0" : ordersToday} // Explicitly convert 0 to "0" string
+        value={formatNumber(ordersToday)}
         icon={<Calendar className="h-6 w-6" />}
         className="bg-white/10 border-blue-400/20 border text-white backdrop-blur-md"
         loading={loadingOrdersToday}
@@ -78,7 +85,7 @@ const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
       {/* Total Meals Today */}
       <StatCard
         title="Total Meals Today"
-        value={totalMealsToday === 0 ? "0" : totalMealsToday}
+        value={formatNumber(totalMealsToday)}
         icon={<ShoppingBag className="h-6 w-6" />}
         className="bg-white/10 border-green-400/20 border text-white backdrop-blur-md"
         loading={loadingMealsToday}
@@ -89,7 +96,7 @@ const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
       {/* Companies with Orders Today */}
       <StatCard
         title="Companies Ordering Today"
-        value={companiesWithOrdersToday === 0 ? "0" : companiesWithOrdersToday}
+        value={formatNumber(companiesWithOrdersToday)}
         icon={<Building className="h-6 w-6" />}
         className="bg-white/10 border-yellow-400/20 border text-white backdrop-blur-md"
         loading={loadingCompaniesOrders}
@@ -111,7 +118,7 @@ const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
       {/* Pending Orders */}
       <StatCard
         title="Pending Orders"
-        value={pendingOrders === 0 ? "0" : pendingOrders}
+        value={formatNumber(pendingOrders)}
         icon={<Clock className="h-6 w-6" />}
         className="bg-white/10 border-red-400/20 border text-white backdrop-blur-md"
         loading={loadingPending}
@@ -122,7 +129,7 @@ const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
       {/* Active Companies Total */}
       <StatCard
         title="Active Companies"
-        value={activeCompanies === 0 ? "0" : activeCompanies}
+        value={formatNumber(activeCompanies)}
         icon={<Briefcase className="h-6 w-6" />}
         className="bg-white/10 border-orange-400/20 border text-white backdrop-blur-md"
         loading={loadingActiveCompanies}
@@ -133,7 +140,7 @@ const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
       {/* New Users This Week */}
       <StatCard
         title="New Users This Week"
-        value={newUsers === 0 ? "0" : newUsers}
+        value={formatNumber(newUsers)}
         icon={<UserPlus className="h-6 w-6" />}
         className="bg-white/10 border-amber-400/20 border text-white backdrop-blur-md"
         loading={loadingNewUsers}
@@ -144,7 +151,7 @@ const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
       {/* Monthly Orders Total */}
       <StatCard
         title="Monthly Orders Total"
-        value={monthlyOrders === 0 ? "0" : monthlyOrders}
+        value={formatNumber(monthlyOrders)}
         icon={<ListOrdered className="h-6 w-6" />}
         className="bg-white/10 border-blue-400/20 border text-white backdrop-blur-md"
         loading={loadingMonthlyOrders}

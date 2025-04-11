@@ -37,6 +37,11 @@ export const useProviderDashboardData = (providerId?: string) => {
       try {
         console.log(`Fetching active companies with provider_id: ${effectiveProviderId}`);
         
+        if (!effectiveProviderId) {
+          console.error('No provider ID available for query');
+          return 0;
+        }
+        
         console.log(`QUERY: SELECT * FROM companies WHERE provider_id = '${effectiveProviderId}'`);
         
         const { count, error, data } = await supabase
@@ -335,12 +340,20 @@ export const useProviderDashboardData = (providerId?: string) => {
     queryKey: ['monthlyRevenue', effectiveProviderId],
     queryFn: async () => {
       try {
+        if (!effectiveProviderId) {
+          console.error('No provider ID available for monthly revenue query');
+          return 0;
+        }
+        
         const { data: companies, error: companiesError } = await supabase
           .from('companies')
           .select('id')
           .eq('provider_id', effectiveProviderId);
           
-        if (companiesError) throw companiesError;
+        if (companiesError) {
+          console.error('Error fetching companies for revenue:', companiesError);
+          throw companiesError;
+        }
         
         if (!companies || companies.length === 0) {
           console.log("No companies found for provider, returning 0 for monthly revenue");
@@ -357,18 +370,21 @@ export const useProviderDashboardData = (providerId?: string) => {
           .lte('date', formattedToday)
           .in('company_id', companyIds);
           
-        if (error) throw error;
+        if (error) {
+          console.error('Error fetching orders for revenue:', error);
+          throw error;
+        }
         
         if (!data || data.length === 0) {
           console.log("No orders found for this month, returning 0 for monthly revenue");
           return 0;
         }
         
-        // Fix for TypeScript error and numerical calculation
+        // Fix for TypeScript error in numerical calculation
         const averageMealPrice = 12.50;
         const orderCount = data.length;
         
-        // Use Number() to explicitly convert strings to number types
+        // Convert to numbers explicitly for TypeScript
         const calculatedRevenue = Number(averageMealPrice) * Number(orderCount);
         console.log(`Calculated monthly revenue: ${calculatedRevenue} from ${orderCount} orders at $${averageMealPrice} each`);
         

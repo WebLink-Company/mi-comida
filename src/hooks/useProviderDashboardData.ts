@@ -360,11 +360,15 @@ export const useProviderDashboardData = (providerId?: string) => {
           return 0;
         }
         
-        // Fix for TypeScript error - ensuring both values are explicitly treated as numbers
+        // Fix for TypeScript error and numerical calculation
         const averageMealPrice = 12.50;
         const orderCount = data.length;
-        // Convert both to numbers explicitly to satisfy TypeScript's type checking
-        return Number(orderCount) * Number(averageMealPrice);
+        
+        // Explicitly convert to number types and perform calculation
+        const calculatedRevenue = parseFloat(averageMealPrice.toString()) * parseInt(orderCount.toString());
+        console.log(`Calculated monthly revenue: ${calculatedRevenue} from ${orderCount} orders at $${averageMealPrice} each`);
+        
+        return calculatedRevenue;
       } catch (error) {
         console.error('Error fetching monthly revenue:', error);
         return 0;

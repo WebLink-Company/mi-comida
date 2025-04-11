@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { ClockDisplay } from '@/components/admin/dashboard/ClockDisplay';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { Building, Package, Receipt, UserPlus, AlertTriangle, ExternalLink } from 'lucide-react';
+import { Building, Package, Receipt, UserPlus, AlertTriangle, ExternalLink, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import DashboardMetrics from '@/components/admin/dashboard/DashboardMetrics';
 import '@/styles/dashboard.css';
@@ -26,9 +26,20 @@ const ProviderDashboardPage = () => {
   const [hasError, setHasError] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [showDebugInfo, setShowDebugInfo] = useState<boolean>(false);
+  const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
   const [debugInfo, setDebugInfo] = useState<any>({});
   
   console.log("Provider dashboard - Current user:", user);
+  
+  // Function to manually refresh data
+  const refreshData = () => {
+    console.log("Manual refresh triggered");
+    setRefreshTrigger(prev => prev + 1);
+    toast({
+      title: "Refreshing dashboard",
+      description: "Fetching latest data from the server...",
+    });
+  };
   
   useEffect(() => {
     // Check for missing environment variables
@@ -58,14 +69,17 @@ const ProviderDashboardPage = () => {
       hasSupabaseKey: !!SUPABASE_ANON_KEY,
       userExists: !!user,
       userHasProviderId: !!user?.provider_id,
+      providerId: user?.provider_id,
       currentEnv: import.meta.env.MODE,
       baseUrl: window.location.origin,
+      hostname: window.location.hostname,
       timestamp: new Date().toISOString()
     });
     
     // Test Supabase connection
     const testConnection = async () => {
       try {
+        console.log("Testing Supabase connection...");
         const { data, error } = await supabase.from('companies').select('count(*)', { count: 'exact', head: true });
         if (error) {
           console.error("Supabase connection test failed:", error);
@@ -85,7 +99,7 @@ const ProviderDashboardPage = () => {
     };
     
     testConnection();
-  }, [user]);
+  }, [user, refreshTrigger]);
   
   // Fetch dashboard stats using our hook with the provider ID from user profile
   const stats = useProviderDashboardData(user?.provider_id);
@@ -178,6 +192,17 @@ const ProviderDashboardPage = () => {
                 </li>
               </ol>
             </div>
+            
+            <div className="mt-6">
+              <Button 
+                variant="default" 
+                onClick={refreshData}
+                className="mt-2"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Retry Connection
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -190,7 +215,19 @@ const ProviderDashboardPage = () => {
         <ClockDisplay user={user} quickActions={quickActions} />
       </div>
 
-      <h2 className="text-2xl font-semibold text-white mb-6 fade-up" style={{ animationDelay: "0.1s" }}>Dashboard Overview</h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-semibold text-white fade-up" style={{ animationDelay: "0.1s" }}>Dashboard Overview</h2>
+        
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={refreshData}
+          className="text-white"
+        >
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Refresh Data
+        </Button>
+      </div>
       
       {/* Dashboard metrics */}
       <DashboardMetrics 
@@ -213,6 +250,30 @@ const ProviderDashboardPage = () => {
         monthlyRevenue={stats.monthlyRevenue}
         loadingMonthlyRevenue={stats.loadingMonthlyRevenue}
       />
+
+      {/* Debug section - visible in all environments */}
+      <div className="mt-8">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={() => setShowDebugInfo(!showDebugInfo)}
+          className="text-white/70 hover:text-white"
+        >
+          {showDebugInfo ? "Hide Debug Info" : "Show Connection Status"}
+        </Button>
+        
+        {showDebugInfo && (
+          <div className="mt-4 p-4 bg-white/5 border border-white/10 rounded-md overflow-auto max-h-[200px]">
+            <pre className="text-xs text-white/80">{JSON.stringify({ 
+              connection: debugInfo.supabaseTestSuccess ? "Connected" : "Failed",
+              providerId: user?.provider_id,
+              environment: import.meta.env.MODE,
+              host: window.location.host,
+              timestamp: new Date().toISOString()
+            }, null, 2)}</pre>
+          </div>
+        )}
+      </div>
 
       {/* Modals */}
       <Dialog 

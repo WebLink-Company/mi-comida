@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -13,7 +12,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { AlertTriangle, Package, CheckCircle, Clock, TruckDelivery, Users } from 'lucide-react';
+import { AlertTriangle, Package, CheckCircle, Clock, Truck, Users } from 'lucide-react';
 import OrderStatusBadge from '@/components/employee/OrderStatusBadge';
 import { Badge } from '@/components/ui/badge';
 
@@ -98,7 +97,6 @@ const OrdersModal: React.FC<OrdersModalProps> = ({ company, date, onClose, onOrd
       
       if (error) throw error;
       
-      // Update local state
       setOrders(prevOrders => 
         prevOrders.map(order => 
           order.id === orderId ? { ...order, status: newStatus } : order
@@ -110,7 +108,6 @@ const OrdersModal: React.FC<OrdersModalProps> = ({ company, date, onClose, onOrd
         description: `El estado del pedido ha sido actualizado a "${getStatusText(newStatus)}"`,
       });
       
-      // Notify parent component that an order status has changed
       if (onOrderStatusChange) {
         onOrderStatusChange();
       }
@@ -208,7 +205,7 @@ const OrdersModal: React.FC<OrdersModalProps> = ({ company, date, onClose, onOrd
                   Preparados ({preparedCount})
                 </TabsTrigger>
                 <TabsTrigger value="delivered" className="flex-1">
-                  <TruckDelivery className="h-4 w-4 mr-1" />
+                  <Truck className="h-4 w-4 mr-1" />
                   Entregados ({deliveredCount})
                 </TabsTrigger>
               </TabsList>
@@ -281,7 +278,7 @@ const OrdersModal: React.FC<OrdersModalProps> = ({ company, date, onClose, onOrd
                               disabled={isUpdating}
                               size="sm"
                             >
-                              <TruckDelivery className="h-4 w-4 mr-1" />
+                              <Truck className="h-4 w-4 mr-1" />
                               Marcar como Entregado
                             </Button>
                           )}

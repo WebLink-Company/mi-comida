@@ -1,14 +1,13 @@
 
 import { useState, useEffect } from 'react';
-import { format, isToday, isThisWeek, subDays } from 'date-fns';
+import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, Filter, Package, PlusCircle, Search, Users, AlertTriangle } from 'lucide-react';
+import { Calendar, Filter, Package, AlertTriangle } from 'lucide-react';
 import { DatePicker } from '@/components/ui/date-picker';
 import OrdersModal from '@/components/provider/orders/OrdersModal';
 import CompanyOrderCard from '@/components/provider/orders/CompanyOrderCard';
@@ -20,7 +19,7 @@ interface CompanyOrderSummary {
   users: number;
   dispatched: number;
   pending: number;
-  approved: number; // Add approved field
+  approved: number;
 }
 
 const ProviderOrderDashboard = () => {
@@ -124,6 +123,11 @@ const ProviderOrderDashboard = () => {
       // Filter out null values and companies with no orders
       const filteredCompanies = companiesWithOrders.filter(Boolean) as CompanyOrderSummary[];
       console.log(`Se encontraron ${filteredCompanies.length} empresas con pedidos el ${selectedDateStr}`);
+      
+      if (filteredCompanies.length > 0) {
+        console.log("Companies with orders:", filteredCompanies);
+      }
+      
       setCompanyOrders(filteredCompanies);
     } catch (error) {
       console.error('Error al obtener pedidos de empresas:', error);

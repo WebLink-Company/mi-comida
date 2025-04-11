@@ -4,7 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
-import { Calendar, Filter, Package, CheckCircle2, Clock, TruckIcon, Users } from 'lucide-react';
+import { Calendar, Filter, Package, CheckCircle2, Clock, Truck, Users } from 'lucide-react';
 import { 
   Card,
   CardContent,
@@ -22,25 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-
-// Define the Order type with a specific status type that matches the database
-interface Order {
-  id: string;
-  user_id: string;
-  lunch_option_id: string;
-  company_id: string;
-  date: string;
-  status: 'pending' | 'approved' | 'rejected' | 'prepared' | 'delivered';
-  approved_by?: string;
-  created_at: string;
-  updated_at: string;
-  user_name?: string;
-  meal_name?: string;
-  company_name?: string;
-  profiles?: any;
-  lunch_options?: any;
-  companies?: any;
-}
+import { Order } from '@/lib/types';
 
 const OrdersPage = () => {
   const { user } = useAuth();
@@ -49,41 +31,79 @@ const OrdersPage = () => {
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [companyIds, setCompanyIds] = useState<string[]>([]);
 
   useEffect(() => {
-    if (user) {
+    // When component mounts, fetch companies associated with the provider
+    if (user?.provider_id) {
+      fetchProviderCompanies();
+    }
+  }, [user]);
+
+  useEffect(() => {
+    // Only fetch orders if we have the company IDs and a date selected
+    if (companyIds.length > 0 && selectedDate) {
       fetchOrders();
     }
-  }, [user, selectedDate, statusFilter]);
+  }, [companyIds, selectedDate, statusFilter]);
+
+  const fetchProviderCompanies = async () => {
+    try {
+      console.log("Fetching companies for provider:", user?.provider_id);
+      
+      const { data: companies, error } = await supabase
+        .from('companies')
+        .select('id')
+        .eq('provider_id', user?.provider_id);
+      
+      if (error) throw error;
+      
+      if (companies && companies.length > 0) {
+        const ids = companies.map(company => company.id);
+        console.log("Found company IDs:", ids);
+        setCompanyIds(ids);
+      } else {
+        console.log("No companies found for this provider");
+        setCompanyIds([]);
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error("Error fetching provider companies:", error);
+      toast({
+        title: 'Error',
+        description: 'No se pudieron cargar las empresas asociadas a este proveedor.',
+        variant: 'destructive',
+      });
+      setLoading(false);
+    }
+  };
 
   const fetchOrders = async () => {
     setLoading(true);
     
     try {
+      // Only proceed if we have companies to query
+      if (companyIds.length === 0) {
+        setOrders([]);
+        setLoading(false);
+        return;
+      }
+      
+      console.log("Fetching orders for date:", format(selectedDate, 'yyyy-MM-dd'));
+      console.log("With status filter:", statusFilter);
+      console.log("For companies:", companyIds);
+      
       let query = supabase
         .from('orders')
         .select(`
           *,
           profiles!orders_user_id_fkey(first_name, last_name),
-          lunch_options(name),
+          lunch_options(name, price),
           companies(name)
         `)
-        .eq('date', format(selectedDate, 'yyyy-MM-dd'));
+        .eq('date', format(selectedDate, 'yyyy-MM-dd'))
+        .in('company_id', companyIds);
       
-      // If provider is logged in, filter by companies associated with this provider
-      if (user?.role === 'provider') {
-        // First get companies for this provider
-        const { data: providerCompanies } = await supabase
-          .from('companies')
-          .select('id')
-          .eq('provider_id', user.provider_id);
-
-        if (providerCompanies && providerCompanies.length > 0) {
-          const companyIds = providerCompanies.map(company => company.id);
-          query = query.in('company_id', companyIds);
-        }
-      }
-
       // Apply status filter if not "all"
       if (statusFilter !== 'all') {
         query = query.eq('status', statusFilter);
@@ -96,6 +116,8 @@ const OrdersPage = () => {
       }
 
       if (data) {
+        console.log(`Found ${data.length} orders for selected date and filters`);
+        
         // Transform the data to add user_name and meal_name
         const processedOrders = data.map(order => ({
           ...order,
@@ -105,6 +127,8 @@ const OrdersPage = () => {
         }));
 
         setOrders(processedOrders as Order[]);
+      } else {
+        setOrders([]);
       }
     } catch (error) {
       console.error('Error fetching orders:', error);
@@ -247,7 +271,7 @@ const OrdersPage = () => {
                               onClick={() => handleStatusChange(order.id, 'delivered')}
                               className="bg-green-600 hover:bg-green-700"
                             >
-                              <TruckIcon className="mr-1 h-4 w-4" />
+                              <Truck className="mr-1 h-4 w-4" />
                               Mark Delivered
                             </Button>
                           )}
@@ -280,6 +304,9 @@ const OrdersPage = () => {
             <div className="text-center py-8 text-muted-foreground">
               <Package className="mx-auto h-12 w-12 opacity-30 mb-2" />
               <p>No orders found for the selected date and filters</p>
+              {companyIds.length === 0 && (
+                <p className="mt-2 text-sm">No companies associated with this provider.</p>
+              )}
             </div>
           )}
         </CardContent>

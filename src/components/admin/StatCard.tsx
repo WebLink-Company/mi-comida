@@ -41,7 +41,7 @@ const StatCard: React.FC<StatCardProps> = ({
     
     // Handle TopMeal object type - convert it to string for rendering
     if (typeof value === 'object' && value !== null && 'name' in value) {
-      return value.name;
+      return value.name.toString();
     }
     
     // Handle currency-related titles

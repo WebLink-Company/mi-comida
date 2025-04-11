@@ -31,8 +31,25 @@ export const useProviderDashboardStats = () => {
     queryKey: ['providerStats', providerId, companyId],
     queryFn: async () => {
       console.log('Fetching provider stats for:', { providerId, companyId });
+      
+      // Log the current month for debugging the monthly orders query
+      const today = new Date();
+      const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      console.log('Monthly orders query period:', {
+        firstDay: firstDayOfMonth.toISOString().split('T')[0],
+        today: today.toISOString().split('T')[0]
+      });
+      
+      // This will output the exact query parameters being used
+      console.log('QUERY DETAILS: Monthly orders will search for orders with:');
+      console.log('- Provider ID:', providerId);
+      console.log('- Company ID (for supervisors):', companyId);
+      console.log('- Date range: from', firstDayOfMonth.toISOString().split('T')[0], 'to', today.toISOString().split('T')[0]);
+      console.log('- Status filter: ["approved", "prepared", "delivered"]');
+      
       const stats = await fetchProviderStats(providerId, companyId);
       console.log('Provider stats fetched:', stats);
+      console.log('Monthly orders count from fetched stats:', stats?.monthlyOrders);
       return stats;
     },
     enabled: !!(providerId || companyId),
@@ -43,7 +60,7 @@ export const useProviderDashboardStats = () => {
   });
 
   // Log the monthly order count for debugging
-  console.log('Monthly orders from stats:', data?.monthlyOrders);
+  console.log('Monthly orders from stats hook:', data?.monthlyOrders);
 
   return {
     // Datos

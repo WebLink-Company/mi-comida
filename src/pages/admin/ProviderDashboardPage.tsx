@@ -38,8 +38,8 @@ const ProviderDashboardPage = () => {
     setRefreshTrigger(prev => prev + 1);
     setIsLoading(true);
     toast({
-      title: "Refreshing dashboard",
-      description: "Fetching latest data from the server...",
+      title: "Actualizando panel",
+      description: "Cargando la información más reciente del servidor...",
     });
     
     // Set a timeout to ensure the loading state is shown even if the data loads quickly
@@ -53,21 +53,21 @@ const ProviderDashboardPage = () => {
     if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       console.error("Missing Supabase environment variables");
       setHasError(true);
-      setErrorMessage("Supabase URL or Anon Key is missing. Please check your environment variables in Netlify.");
+      setErrorMessage("Falta la URL de Supabase o la clave anónima. Por favor, verifique sus variables de entorno en Netlify.");
       return;
     }
     
     if (!user) {
       console.error("No user found in auth context");
       setHasError(true);
-      setErrorMessage("No user found. This could be caused by an authentication issue.");
+      setErrorMessage("No se encontró ningún usuario. Esto podría deberse a un problema de autenticación.");
       return;
     }
     
     if (!user?.provider_id) {
       console.error("Missing provider_id in user profile", user);
       setHasError(true);
-      setErrorMessage("No provider ID found in your profile. This could be caused by an authentication issue or missing environment variables.");
+      setErrorMessage("No se encontró el ID del proveedor en su perfil. Esto podría deberse a un problema de autenticación o a variables de entorno faltantes.");
     }
     
     // Collect debug info
@@ -91,7 +91,7 @@ const ProviderDashboardPage = () => {
         if (error) {
           console.error("Supabase connection test failed:", error);
           setHasError(true);
-          setErrorMessage(`Supabase connection failed: ${error.message}`);
+          setErrorMessage(`Falló la conexión con Supabase: ${error.message}`);
           setDebugInfo(prev => ({ ...prev, supabaseTestError: error }));
         } else {
           console.log("Supabase connection successful");
@@ -101,7 +101,7 @@ const ProviderDashboardPage = () => {
       } catch (error) {
         console.error("Unexpected error testing Supabase connection:", error);
         setHasError(true);
-        setErrorMessage(`Unexpected error: ${error instanceof Error ? error.message : String(error)}`);
+        setErrorMessage(`Error inesperado: ${error instanceof Error ? error.message : String(error)}`);
         setDebugInfo(prev => ({ ...prev, unexpectedError: error }));
       }
     };
@@ -123,30 +123,30 @@ const ProviderDashboardPage = () => {
   }, [user, refreshTrigger]);
   
   // Fetch dashboard stats using our hook with the provider ID from user profile
-  const stats = useProviderDashboardData(user?.provider_id);
+  const stats = useProviderDashboardData();
   
   // Quick actions for the provider
   const quickActions = [
     {
-      label: 'Add Company',
+      label: 'Agregar Empresa',
       icon: Building,
       action: () => openDialog('create-company'),
       path: '/provider/companies'
     },
     {
-      label: 'Add User',
+      label: 'Agregar Usuario',
       icon: UserPlus,
       action: () => navigate('/provider/users'),
       path: '/provider/users'
     },
     {
-      label: 'View Orders',
+      label: 'Ver Pedidos',
       icon: Package,
       action: () => openDialog('view-orders'),
       path: '/provider/orders'
     },
     {
-      label: 'Review Invoices',
+      label: 'Revisar Facturas',
       icon: Receipt,
       action: () => openDialog('review-invoices'),
       path: '/provider/billing'
@@ -170,27 +170,27 @@ const ProviderDashboardPage = () => {
           <CardHeader>
             <CardTitle className="flex items-center text-destructive">
               <AlertTriangle className="h-5 w-5 mr-2" />
-              Connection Error
+              Error de Conexión
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <p>{errorMessage}</p>
             <p className="text-muted-foreground text-sm">
-              Please check your Netlify environment variables and ensure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set correctly.
-              Also make sure your Supabase project has your Netlify domain added to the allowed CORS origins.
+              Por favor, verifique sus variables de entorno de Netlify y asegúrese de que VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY estén configuradas correctamente.
+              También asegúrese de que su proyecto Supabase tenga su dominio de Netlify agregado a los orígenes CORS permitidos.
             </p>
             
             <div className="bg-amber-100 dark:bg-amber-950 border border-amber-300 dark:border-amber-800 p-4 rounded-md text-amber-800 dark:text-amber-300 mt-4">
               <div className="flex gap-2 items-start">
                 <InfoIcon className="h-5 w-5 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="font-medium">CORS Configuration Required</p>
-                  <p className="text-sm mt-1">If you're hosting this application on a different domain than where it was developed, you need to add your domain to the allowed origins in your Supabase project settings.</p>
+                  <p className="font-medium">Configuración CORS Requerida</p>
+                  <p className="text-sm mt-1">Si está alojando esta aplicación en un dominio diferente al que se desarrolló, debe agregar su dominio a los orígenes permitidos en la configuración de su proyecto Supabase.</p>
                   <ol className="list-decimal list-inside text-sm mt-2 space-y-1">
-                    <li>Go to your Supabase Dashboard</li>
-                    <li>Navigate to Project Settings &gt; API</li>
-                    <li>Scroll to "CORS Origins"</li>
-                    <li>Add your domain: {window.location.origin}</li>
+                    <li>Vaya a su Panel de Supabase</li>
+                    <li>Navegue a Configuración del Proyecto &gt; API</li>
+                    <li>Desplácese hasta "Orígenes CORS"</li>
+                    <li>Añada su dominio: {window.location.origin}</li>
                   </ol>
                 </div>
               </div>
@@ -202,7 +202,7 @@ const ProviderDashboardPage = () => {
                 size="sm" 
                 onClick={() => setShowDebugInfo(!showDebugInfo)}
               >
-                {showDebugInfo ? "Hide Debug Info" : "Show Debug Info"}
+                {showDebugInfo ? "Ocultar Información de Depuración" : "Mostrar Información de Depuración"}
               </Button>
               
               {showDebugInfo && (
@@ -213,19 +213,19 @@ const ProviderDashboardPage = () => {
             </div>
             
             <div className="flex flex-col gap-2 mt-4">
-              <h3 className="text-sm font-medium">How to fix:</h3>
+              <h3 className="text-sm font-medium">Cómo solucionarlo:</h3>
               <ol className="list-decimal list-inside text-sm space-y-2">
                 <li>
-                  Check if VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set in Netlify environment variables
+                  Verifique si VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY están configurados en las variables de entorno de Netlify
                 </li>
                 <li>
-                  Verify that your Supabase project has CORS configured to allow requests from your domain: {window.location.origin}
+                  Verifique que su proyecto Supabase tenga CORS configurado para permitir solicitudes desde su dominio: {window.location.origin}
                 </li>
                 <li>
-                  Try logging out and logging back in
+                  Intente cerrar sesión e iniciar sesión nuevamente
                 </li>
                 <li>
-                  Check browser console for more detailed error messages
+                  Verifique la consola del navegador para ver mensajes de error más detallados
                 </li>
               </ol>
             </div>
@@ -237,7 +237,7 @@ const ProviderDashboardPage = () => {
                 className="mt-2"
               >
                 <RefreshCw className="h-4 w-4 mr-2" />
-                Retry Connection
+                Reintentar Conexión
               </Button>
             </div>
           </CardContent>
@@ -254,8 +254,8 @@ const ProviderDashboardPage = () => {
         </div>
         <div className="text-center py-12">
           <Server className="h-16 w-16 mx-auto mb-4 animate-pulse text-blue-400" />
-          <h2 className="text-xl font-medium mb-2">Loading Dashboard Data...</h2>
-          <p className="text-muted-foreground">Connecting to Supabase and fetching your provider data...</p>
+          <h2 className="text-xl font-medium mb-2">Cargando Datos del Panel...</h2>
+          <p className="text-muted-foreground">Conectando a Supabase y recuperando los datos de su proveedor...</p>
         </div>
       </div>
     );
@@ -268,7 +268,7 @@ const ProviderDashboardPage = () => {
       </div>
 
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-semibold text-white fade-up" style={{ animationDelay: "0.1s" }}>Dashboard Overview</h2>
+        <h2 className="text-2xl font-semibold text-white fade-up" style={{ animationDelay: "0.1s" }}>Vista General del Panel</h2>
         
         <Button
           variant="outline"
@@ -277,7 +277,7 @@ const ProviderDashboardPage = () => {
           className="text-white"
         >
           <RefreshCw className="h-4 w-4 mr-2" />
-          Refresh Data
+          Actualizar Datos
         </Button>
       </div>
       
@@ -308,9 +308,9 @@ const ProviderDashboardPage = () => {
         <Card className="mt-8 border-blue-500/20">
           <CardContent className="flex flex-col items-center justify-center py-10">
             <Package className="h-16 w-16 text-blue-400 mb-4 opacity-50" />
-            <h3 className="text-lg font-medium">No Orders Today</h3>
+            <h3 className="text-lg font-medium">No Hay Pedidos Hoy</h3>
             <p className="text-muted-foreground text-center max-w-md mt-2">
-              There are no orders for today yet. You have {stats.activeCompanies} active companies that can place orders.
+              No hay pedidos para hoy todavía. Tiene {stats.activeCompanies} empresas activas que pueden realizar pedidos.
             </p>
             <Button
               variant="outline"
@@ -318,7 +318,7 @@ const ProviderDashboardPage = () => {
               onClick={() => navigate('/provider/companies')}
             >
               <Building className="h-4 w-4 mr-2" />
-              Manage Companies
+              Administrar Empresas
             </Button>
           </CardContent>
         </Card>
@@ -332,13 +332,13 @@ const ProviderDashboardPage = () => {
           onClick={() => setShowDebugInfo(!showDebugInfo)}
           className="text-white/70 hover:text-white"
         >
-          {showDebugInfo ? "Hide Connection Status" : "Show Connection Status"}
+          {showDebugInfo ? "Ocultar Estado de Conexión" : "Mostrar Estado de Conexión"}
         </Button>
         
         {showDebugInfo && (
           <div className="mt-4 p-4 bg-white/5 border border-white/10 rounded-md overflow-auto max-h-[200px]">
             <pre className="text-xs text-white/80">{JSON.stringify({ 
-              connection: debugInfo.supabaseTestSuccess ? "Connected" : "Failed",
+              connection: debugInfo.supabaseTestSuccess ? "Conectado" : "Fallido",
               providerId: user?.provider_id,
               environment: import.meta.env.MODE,
               host: window.location.host,

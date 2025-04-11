@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
-import { Order, CompanyType } from '@/lib/types';
+import { Order, Company } from '@/lib/types';
 
 interface DashboardMetrics {
   todaysOrders: number;
@@ -53,7 +53,27 @@ export const useProviderDashboardData = () => {
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date().toISOString().split('T')[0]);
   const [companyFilter, setCompanyFilter] = useState<string>('');
-  const [companies, setCompanies] = useState<CompanyType[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]);
+
+  // Stats for the dashboard metrics component
+  const [ordersToday, setOrdersToday] = useState<number>(0);
+  const [loadingOrdersToday, setLoadingOrdersToday] = useState<boolean>(true);
+  const [totalMealsToday, setTotalMealsToday] = useState<number>(0);
+  const [loadingMealsToday, setLoadingMealsToday] = useState<boolean>(true);
+  const [companiesWithOrdersToday, setCompaniesWithOrdersToday] = useState<number>(0);
+  const [loadingCompaniesOrders, setLoadingCompaniesOrders] = useState<boolean>(true);
+  const [topOrderedMeal, setTopOrderedMeal] = useState<{name: string, count: number} | null>(null);
+  const [loadingTopMeal, setLoadingTopMeal] = useState<boolean>(true);
+  const [pendingOrders, setPendingOrders] = useState<number>(0);
+  const [loadingPending, setLoadingPending] = useState<boolean>(true);
+  const [activeCompanies, setActiveCompanies] = useState<number>(0);
+  const [loadingActiveCompanies, setLoadingActiveCompanies] = useState<boolean>(true);
+  const [newUsers, setNewUsers] = useState<number>(0);
+  const [loadingNewUsers, setLoadingNewUsers] = useState<boolean>(true);
+  const [monthlyOrders, setMonthlyOrders] = useState<number>(0);
+  const [loadingMonthlyOrders, setLoadingMonthlyOrders] = useState<boolean>(true);
+  const [monthlyRevenue, setMonthlyRevenue] = useState<number>(0);
+  const [loadingMonthlyRevenue, setLoadingMonthlyRevenue] = useState<boolean>(true);
 
   useEffect(() => {
     if (!user) return;
@@ -84,6 +104,9 @@ export const useProviderDashboardData = () => {
         if (companiesError) throw companiesError;
         
         setCompanies(companiesData || []);
+        setActiveCompanies(companiesData?.length || 0);
+        setLoadingActiveCompanies(false);
+        
         const companyIds = companiesData?.map(c => c.id) || [];
         
         // Fetch orders for these companies
@@ -101,50 +124,79 @@ export const useProviderDashboardData = () => {
         // Process orders data
         if (ordersData) {
           // Count today's orders
-          const todaysOrders = ordersData.filter(order => 
+          const todaysOrderCount = ordersData.filter(order => 
             order.date && order.date.startsWith(today)
           ).length;
           
+          setOrdersToday(todaysOrderCount);
+          setLoadingOrdersToday(false);
+          
           // Count pending orders
-          const pendingOrders = ordersData.filter(order => 
+          const pendingOrdersCount = ordersData.filter(order => 
             order.status === 'pending'
           ).length;
+          
+          setPendingOrders(pendingOrdersCount);
+          setLoadingPending(false);
           
           // Calculate total revenue (delivered + approved orders)
           const revenueOrders = ordersData.filter(order => 
             ['delivered', 'approved'].includes(order.status)
           );
           
-          const totalRevenue = revenueOrders.reduce((sum, order) => {
+          const totalRevenueAmount = revenueOrders.reduce((sum, order) => {
             // Safely convert to number then add
-            const orderTotal = typeof order.total === 'number' ? 
-              order.total : 
-              (typeof order.total === 'string' ? parseFloat(order.total) : 0);
-            
-            return sum + orderTotal;
+            const orderPrice = order.lunch_option ? Number(order.lunch_option.price) : 0;
+            return sum + orderPrice;
           }, 0);
           
-          // Count unique companies
-          const uniqueCompanies = new Set(ordersData.map(order => order.company_id)).size;
+          setMonthlyRevenue(totalRevenueAmount);
+          setLoadingMonthlyRevenue(false);
+          
+          // Count unique companies with orders today
+          const companiesWithOrdersTodayCount = new Set(
+            ordersData
+              .filter(order => order.date && order.date.startsWith(today))
+              .map(order => order.company_id)
+          ).size;
+          
+          setCompaniesWithOrdersToday(companiesWithOrdersTodayCount);
+          setLoadingCompaniesOrders(false);
           
           // Find most popular dish
-          const dishCounts = ordersData.reduce((acc: {[key: string]: number}, order) => {
+          const dishCounts: {[key: string]: number} = {};
+          
+          ordersData.forEach(order => {
             if (order.lunch_option && order.lunch_option.name) {
               const dishName = order.lunch_option.name;
-              acc[dishName] = (acc[dishName] || 0) + 1;
+              dishCounts[dishName] = (dishCounts[dishName] || 0) + 1;
             }
-            return acc;
-          }, {});
+          });
           
-          let mostPopularDish = '';
+          let mostPopularDishName = '';
           let maxCount = 0;
           
           Object.entries(dishCounts).forEach(([dish, count]) => {
             if (count > maxCount) {
-              mostPopularDish = dish;
+              mostPopularDishName = dish;
               maxCount = count;
             }
           });
+          
+          setTopOrderedMeal({ name: mostPopularDishName, count: maxCount });
+          setLoadingTopMeal(false);
+          
+          // Set total meals today (just use order count for now)
+          setTotalMealsToday(todaysOrderCount);
+          setLoadingMealsToday(false);
+          
+          // Set monthly orders
+          setMonthlyOrders(ordersData.length);
+          setLoadingMonthlyOrders(false);
+          
+          // Set new users (mock data for now)
+          setNewUsers(5);
+          setLoadingNewUsers(false);
           
           // Generate chart data
           
@@ -188,7 +240,7 @@ export const useProviderDashboardData = () => {
           const topDishes = Object.entries(dishCounts)
             .sort((a, b) => b[1] - a[1])
             .slice(0, 5)
-            .map(([name, value]) => ({ name, value: Number(value) }));
+            .map(([name, value]) => ({ name, value }));
           
           // Create company order summaries
           const companyOrderSummaries = companyIds.map(companyId => {
@@ -219,11 +271,11 @@ export const useProviderDashboardData = () => {
           
           // Update metrics
           setMetrics({
-            todaysOrders,
-            pendingOrders,
-            totalRevenue,
-            companies: uniqueCompanies,
-            mostPopularDish,
+            todaysOrders: todaysOrderCount,
+            pendingOrders: pendingOrdersCount,
+            totalRevenue: totalRevenueAmount,
+            companies: companiesWithOrdersTodayCount,
+            mostPopularDish: mostPopularDishName,
             recentActivities: [], // Could be populated with actual activity data in the future
             chartData: {
               ordersTimeline,
@@ -273,6 +325,25 @@ export const useProviderDashboardData = () => {
     companyOrders,
     companies,
     setCurrentDate,
-    setCompanyFilter
+    setCompanyFilter,
+    // Export the dashboard metrics
+    ordersToday,
+    loadingOrdersToday,
+    totalMealsToday,
+    loadingMealsToday,
+    companiesWithOrdersToday,
+    loadingCompaniesOrders,
+    topOrderedMeal,
+    loadingTopMeal,
+    pendingOrders,
+    loadingPending,
+    activeCompanies,
+    loadingActiveCompanies,
+    newUsers,
+    loadingNewUsers,
+    monthlyOrders,
+    loadingMonthlyOrders,
+    monthlyRevenue,
+    loadingMonthlyRevenue
   };
 };

@@ -25,6 +25,7 @@ import ReportsPage from "./pages/admin/ReportsPage";
 import SettingsPage from "./pages/admin/SettingsPage";
 
 // Provider Pages
+import ProviderDashboard from "./pages/provider/ProviderDashboard";
 import ProviderOrderDashboard from "./pages/admin/provider/ProviderOrderDashboard";
 import MenuManagementPage from "./pages/admin/provider/MenuManagementPage";
 import CompaniesProviderPage from "./pages/admin/provider/CompaniesPage";
@@ -71,9 +72,9 @@ const AppRoutes: React.FC = () => {
         <Route path="settings" element={<ProtectedRoute allowedRoles={['admin']}><SettingsPage /></ProtectedRoute>} />
       </Route>
       
-      {/* Provider routes - Modified to use OrdersPage as the dashboard temporarily */}
+      {/* Provider routes - NEW: Use our new dashboard as default landing page */}
       <Route path="/provider" element={<AdminLayout />}>
-        <Route index element={<ProtectedRoute allowedRoles={['provider']}><ProviderOrderDashboard /></ProtectedRoute>} />
+        <Route index element={<ProtectedRoute allowedRoles={['provider']}><ProviderDashboard /></ProtectedRoute>} />
         <Route path="orders" element={<ProtectedRoute allowedRoles={['provider']}><OrdersPage /></ProtectedRoute>} />
         <Route path="menu" element={<ProtectedRoute allowedRoles={['provider']}><MenuManagementPage /></ProtectedRoute>} />
         <Route path="companies" element={<ProtectedRoute allowedRoles={['provider']}><CompaniesProviderPage /></ProtectedRoute>} />
